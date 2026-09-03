@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
-  Truck, 
-  Car, 
   Users, 
+  UserCheck, 
   Search, 
   Settings, 
   Plus, 
@@ -21,12 +20,12 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { syncStatus, lastSyncTime, pushToGitHub, exportToExcel, lockApp } = useData();
 
+  // Simplified streamlined navigation: Dashboard, Clients, Others, Search, Settings
   const navItems = [
     { id: 'dashboard', label: 'Дашборд', icon: LayoutDashboard },
-    { id: 'suppliers', label: 'Поставщики', icon: Truck },
-    { id: 'cars', label: 'Авто & Заказы', icon: Car },
-    { id: 'other', label: 'Другие', icon: Users },
-    { id: 'parts', label: 'Артикулы', icon: Search },
+    { id: 'clients', label: 'Мои клиенты', icon: Users },
+    { id: 'other', label: 'Другие расчеты', icon: UserCheck },
+    { id: 'parts', label: 'Поиск артикула', icon: Search },
     { id: 'settings', label: 'Настройки', icon: Settings },
   ];
 
@@ -37,8 +36,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
           
           {/* Logo */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-              <Car className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-bold text-lg">
+              Д
             </div>
             <div>
               <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">

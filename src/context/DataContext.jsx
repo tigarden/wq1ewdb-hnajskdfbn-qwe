@@ -19,7 +19,7 @@ export function DataProvider({ children }) {
   const [currentSha, setCurrentSha] = useState(() => settings.lastSha);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Security & Authentication State
+  // Auth State
   const [isUnlocked, setIsUnlocked] = useState(() => {
     const saved = localStorage.getItem(AUTH_STORAGE_KEY) || sessionStorage.getItem(AUTH_STORAGE_KEY);
     return saved === 'unlocked';
@@ -58,7 +58,7 @@ export function DataProvider({ children }) {
     setCurrentPassword(newPassword);
   }, []);
 
-  // Update local storage when data changes
+  // Update local storage
   const updateData = useCallback((updater) => {
     setData((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -69,7 +69,6 @@ export function DataProvider({ children }) {
     });
   }, []);
 
-  // Update settings
   const updateSettings = useCallback((newSettings) => {
     setSettings((prev) => {
       const merged = { ...prev, ...newSettings };
@@ -78,7 +77,7 @@ export function DataProvider({ children }) {
     });
   }, []);
 
-  // Sync to GitHub with AES-256-GCM Encryption
+  // GitHub Push with AES-256
   const pushToGitHub = useCallback(async (customCommitMsg) => {
     if (!settings.token) {
       setSyncStatus('no_token');
@@ -95,12 +94,8 @@ export function DataProvider({ children }) {
         if (remote.exists && remote.sha) {
           shaToUse = remote.sha;
         }
-      } catch (e) {
-        // file might not exist yet
-      }
+      } catch (e) {}
 
-      // ENCRYPT with AES-256 before sending to GitHub!
-      // This guarantees that even in a public repository, nobody can read your data!
       const payloadToSave = await encryptData(data, currentPassword);
 
       const res = await saveRepoFile(
@@ -110,7 +105,7 @@ export function DataProvider({ children }) {
         settings.path,
         payloadToSave,
         shaToUse,
-        customCommitMsg || `Update encrypted debet records [${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}]`
+        customCommitMsg || `Update debet records [${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}]`
       );
 
       const now = new Date().toISOString();
@@ -129,7 +124,7 @@ export function DataProvider({ children }) {
     }
   }, [settings, data, currentSha, currentPassword, updateSettings]);
 
-  // Pull from GitHub with AES-256-GCM Decryption
+  // GitHub Pull with AES-256
   const pullFromGitHub = useCallback(async () => {
     if (!settings.token) {
       setSyncStatus('no_token');
@@ -142,11 +137,17 @@ export function DataProvider({ children }) {
     try {
       const res = await fetchRepoFile(settings.token, settings.owner, settings.repo, settings.path);
       if (res.exists && res.data) {
-        // Decrypt with current password
         const decrypted = await decryptData(res.data, currentPassword);
-        if (decrypted && decrypted.suppliers) {
-          setData(decrypted);
-          saveLocalData(decrypted);
+        if (decrypted) {
+          // Normalize if old format was saved
+          const normalized = {
+            ...loadLocalData(),
+            ...decrypted,
+            clients: decrypted.clients || decrypted.suppliers || loadLocalData().clients,
+            clientTransactions: decrypted.clientTransactions || decrypted.supplierTransactions?.map(t => ({ ...t, clientId: t.supplierId })) || [],
+          };
+          setData(normalized);
+          saveLocalData(normalized);
         }
         setCurrentSha(res.sha);
         const now = new Date().toISOString();
@@ -175,10 +176,10 @@ export function DataProvider({ children }) {
     }
   }, [isUnlocked]);
 
-  // --- CRUD: Suppliers ---
-  const addSupplier = useCallback((name, initialBalance = 0, notes = '') => {
-    const newSup = {
-      id: 'sup-' + Date.now(),
+  // --- CRUD: Clients (Тотус, Тотус 2, Эрик, Витя...) ---
+  const addClient = useCallback((name, initialBalance = 0, notes = '') => {
+    const newCli = {
+      id: 'cli-' + Date.now(),
       name: name.trim(),
       initialBalance: parseFloat(initialBalance) || 0,
       notes: notes.trim(),
@@ -186,73 +187,75 @@ export function DataProvider({ children }) {
     };
     updateData((prev) => ({
       ...prev,
-      suppliers: [...prev.suppliers, newSup],
+      clients: [...prev.clients, newCli],
     }));
-    return newSup;
+    return newCli;
   }, [updateData]);
 
-  const updateSupplier = useCallback((id, updates) => {
+  const updateClient = useCallback((id, updates) => {
     updateData((prev) => ({
       ...prev,
-      suppliers: prev.suppliers.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+      clients: prev.clients.map((c) => (c.id === id ? { ...c, ...updates } : c)),
     }));
   }, [updateData]);
 
-  const deleteSupplier = useCallback((id) => {
+  const deleteClient = useCallback((id) => {
     updateData((prev) => ({
       ...prev,
-      suppliers: prev.suppliers.filter((s) => s.id !== id),
-      supplierTransactions: prev.supplierTransactions.filter((t) => t.supplierId !== id),
+      clients: prev.clients.filter((c) => c.id !== id),
+      clientTransactions: prev.clientTransactions.filter((t) => t.clientId !== id),
     }));
   }, [updateData]);
 
-  // --- CRUD: Supplier Transactions ---
-  const addSupplierTransaction = useCallback(({ supplierId, type, article = '', description = '', amount, date, carOrderId = null, note = '' }) => {
+  // --- CRUD: Client Transactions (Детали/Заказы и Оплаты) ---
+  const addClientTransaction = useCallback(({ clientId, type, article = '', description = '', carName = '', supplierName = '', amount, date, note = '' }) => {
     const newTx = {
-      id: 'stx-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-      supplierId,
-      type,
+      id: 'ctx-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+      clientId,
+      type, // 'item' (деталь) or 'payment' (оплата)
       article: article.trim(),
       description: description.trim(),
+      carName: carName.trim(), // Опционально: только для Эрика или Вити
+      supplierName: supplierName.trim(), // Опционально: поставщик детали
       amount: parseFloat(amount) || 0,
       date: date || new Date().toISOString().split('T')[0],
-      carOrderId,
       note: note.trim(),
       createdAt: new Date().toISOString(),
     };
 
     updateData((prev) => ({
       ...prev,
-      supplierTransactions: [newTx, ...prev.supplierTransactions],
+      clientTransactions: [newTx, ...prev.clientTransactions],
     }));
     return newTx;
   }, [updateData]);
 
-  const updateSupplierTransaction = useCallback((id, updates) => {
+  const updateClientTransaction = useCallback((id, updates) => {
     updateData((prev) => ({
       ...prev,
-      supplierTransactions: prev.supplierTransactions.map((t) =>
+      clientTransactions: prev.clientTransactions.map((t) =>
         t.id === id ? { ...t, ...updates, amount: updates.amount !== undefined ? parseFloat(updates.amount) || 0 : t.amount } : t
       ),
     }));
   }, [updateData]);
 
-  const deleteSupplierTransaction = useCallback((id) => {
+  const deleteClientTransaction = useCallback((id) => {
     updateData((prev) => ({
       ...prev,
-      supplierTransactions: prev.supplierTransactions.filter((t) => t.id !== id),
+      clientTransactions: prev.clientTransactions.filter((t) => t.id !== id),
     }));
   }, [updateData]);
 
-  const getSupplierStats = useCallback((supplierId) => {
-    const supplier = data.suppliers.find((s) => s.id === supplierId);
-    if (!supplier) return null;
+  // Calculation for Client: Initial + Items - Payments = Current Debt
+  const getClientStats = useCallback((clientId) => {
+    const client = data.clients.find((c) => c.id === clientId);
+    if (!client) return null;
 
-    const txs = data.supplierTransactions
-      .filter((t) => t.supplierId === supplierId)
+    const txs = (data.clientTransactions || [])
+      .filter((t) => t.clientId === clientId)
       .sort((a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt) || (a.createdAt > b.createdAt ? 1 : -1));
 
-    let runningDebt = supplier.initialBalance || 0;
+    let runningDebt = client.initialBalance || 0;
     const timeline = txs.map((tx) => {
       if (tx.type === 'item') {
         runningDebt += tx.amount;
@@ -267,128 +270,32 @@ export function DataProvider({ children }) {
 
     const totalItems = txs.filter((t) => t.type === 'item').reduce((sum, t) => sum + t.amount, 0);
     const totalPayments = txs.filter((t) => t.type === 'payment').reduce((sum, t) => sum + t.amount, 0);
-    const currentDebt = (supplier.initialBalance || 0) + totalItems - totalPayments;
+    const currentDebt = (client.initialBalance || 0) + totalItems - totalPayments;
 
     return {
-      supplier,
-      initialBalance: supplier.initialBalance || 0,
+      client,
+      initialBalance: client.initialBalance || 0,
       totalItems,
       totalPayments,
       currentDebt,
-      timeline: timeline.reverse(),
-      rawItemsCount: txs.filter((t) => t.type === 'item').length,
-      rawPaymentsCount: txs.filter((t) => t.type === 'payment').length,
+      timeline: timeline.reverse(), // latest first
+      itemsCount: txs.filter((t) => t.type === 'item').length,
+      paymentsCount: txs.filter((t) => t.type === 'payment').length,
     };
-  }, [data.suppliers, data.supplierTransactions]);
+  }, [data.clients, data.clientTransactions]);
 
-  // --- CRUD: Car Orders ---
-  const addCarOrder = useCallback(({ carModel, clientName = '', licensePlate = '', status = 'in_progress', notes = '' }) => {
-    const newOrder = {
-      id: 'car-' + Date.now(),
-      carModel: carModel.trim(),
-      clientName: clientName.trim(),
-      licensePlate: licensePlate.trim(),
-      status,
-      notes: notes.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    updateData((prev) => ({
-      ...prev,
-      carOrders: [newOrder, ...prev.carOrders],
-    }));
-    return newOrder;
+  // --- Suppliers List (Справочник поставщиков для деталей) ---
+  const addSupplierToDirectory = useCallback((supplierName) => {
+    const name = supplierName.trim();
+    if (!name) return;
+    updateData((prev) => {
+      const list = prev.suppliersList || [];
+      if (list.includes(name)) return prev;
+      return { ...prev, suppliersList: [...list, name] };
+    });
   }, [updateData]);
 
-  const updateCarOrder = useCallback((id, updates) => {
-    updateData((prev) => ({
-      ...prev,
-      carOrders: prev.carOrders.map((o) => (o.id === id ? { ...o, ...updates } : o)),
-    }));
-  }, [updateData]);
-
-  const deleteCarOrder = useCallback((id) => {
-    updateData((prev) => ({
-      ...prev,
-      carOrders: prev.carOrders.filter((o) => o.id !== id),
-      carItems: prev.carItems.filter((i) => i.carOrderId !== id),
-      carPayments: prev.carPayments.filter((p) => p.carOrderId !== id),
-    }));
-  }, [updateData]);
-
-  const addCarItem = useCallback(({ carOrderId, name, article = '', purchasePrice = 0, salePrice = 0, supplierId = null }) => {
-    const newItem = {
-      id: 'ci-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-      carOrderId,
-      name: name.trim(),
-      article: article.trim(),
-      purchasePrice: parseFloat(purchasePrice) || 0,
-      salePrice: parseFloat(salePrice) || 0,
-      supplierId,
-      createdAt: new Date().toISOString(),
-    };
-    updateData((prev) => ({
-      ...prev,
-      carItems: [...prev.carItems, newItem],
-    }));
-    return newItem;
-  }, [updateData]);
-
-  const deleteCarItem = useCallback((id) => {
-    updateData((prev) => ({
-      ...prev,
-      carItems: prev.carItems.filter((i) => i.id !== id),
-    }));
-  }, [updateData]);
-
-  const addCarPayment = useCallback(({ carOrderId, amount, date, note = '' }) => {
-    const newPmt = {
-      id: 'cp-' + Date.now(),
-      carOrderId,
-      amount: parseFloat(amount) || 0,
-      date: date || new Date().toISOString().split('T')[0],
-      note: note.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    updateData((prev) => ({
-      ...prev,
-      carPayments: [newPmt, ...prev.carPayments],
-    }));
-    return newPmt;
-  }, [updateData]);
-
-  const deleteCarPayment = useCallback((id) => {
-    updateData((prev) => ({
-      ...prev,
-      carPayments: prev.carPayments.filter((p) => p.id !== id),
-    }));
-  }, [updateData]);
-
-  const getCarOrderStats = useCallback((orderId) => {
-    const order = data.carOrders.find((o) => o.id === orderId);
-    if (!order) return null;
-
-    const items = data.carItems.filter((i) => i.carOrderId === orderId);
-    const payments = data.carPayments.filter((p) => p.carOrderId === orderId);
-
-    const totalPurchase = items.reduce((sum, i) => sum + (i.purchasePrice || 0), 0);
-    const totalSale = items.reduce((sum, i) => sum + (i.salePrice || 0), 0);
-    const margin = totalSale - totalPurchase;
-    const totalPaid = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
-    const clientDebt = totalSale - totalPaid;
-
-    return {
-      order,
-      items,
-      payments,
-      totalPurchase,
-      totalSale,
-      margin,
-      totalPaid,
-      clientDebt,
-    };
-  }, [data.carOrders, data.carItems, data.carPayments]);
-
-  // --- CRUD: Other Counterparties ---
+  // --- CRUD: Other Counterparties («Другие») ---
   const addOtherCounterparty = useCallback(({ name, phone = '', notes = '' }) => {
     const newP = {
       id: 'oth-' + Date.now(),
@@ -399,7 +306,7 @@ export function DataProvider({ children }) {
     };
     updateData((prev) => ({
       ...prev,
-      otherCounterparties: [...prev.otherCounterparties, newP],
+      otherCounterparties: [...(prev.otherCounterparties || []), newP],
     }));
     return newP;
   }, [updateData]);
@@ -436,9 +343,9 @@ export function DataProvider({ children }) {
   }, [updateData]);
 
   const getOtherCounterpartyStats = useCallback((counterpartyId) => {
-    const p = data.otherCounterparties.find((item) => item.id === counterpartyId);
+    const p = (data.otherCounterparties || []).find((item) => item.id === counterpartyId);
     if (!p) return null;
-    const txs = data.otherTransactions.filter((t) => t.counterpartyId === counterpartyId);
+    const txs = (data.otherTransactions || []).filter((t) => t.counterpartyId === counterpartyId);
     const balance = txs.reduce((sum, t) => sum + (t.amount || 0), 0);
     return {
       person: p,
@@ -449,41 +356,29 @@ export function DataProvider({ children }) {
 
   // --- Global Summary Stats ---
   const globalSummary = useMemo(() => {
-    let totalSupplierDebt = 0;
-    data.suppliers.forEach((s) => {
-      const stats = getSupplierStats(s.id);
-      if (stats) totalSupplierDebt += stats.currentDebt;
-    });
-
     let totalClientDebt = 0;
-    let totalCarMargin = 0;
-    data.carOrders.forEach((o) => {
-      const stats = getCarOrderStats(o.id);
-      if (stats) {
-        totalClientDebt += stats.clientDebt;
-        totalCarMargin += stats.margin;
-      }
+    (data.clients || []).forEach((c) => {
+      const stats = getClientStats(c.id);
+      if (stats) totalClientDebt += stats.currentDebt;
     });
 
     let totalOtherBalance = 0;
-    data.otherCounterparties.forEach((p) => {
+    (data.otherCounterparties || []).forEach((p) => {
       const stats = getOtherCounterpartyStats(p.id);
       if (stats) totalOtherBalance += stats.balance;
     });
 
-    const grandBalance = totalSupplierDebt + totalOtherBalance;
+    const grandBalance = totalClientDebt + totalOtherBalance;
 
     return {
-      totalSupplierDebt,
       totalClientDebt,
       totalOtherBalance,
-      totalCarMargin,
       grandBalance,
-      suppliersCount: data.suppliers.length,
-      activeOrdersCount: data.carOrders.filter((o) => o.status !== 'completed').length,
-      totalItemsCount: data.supplierTransactions.filter((t) => t.type === 'item').length,
+      clientsCount: (data.clients || []).length,
+      totalItemsCount: (data.clientTransactions || []).filter((t) => t.type === 'item').length,
+      totalPaymentsCount: (data.clientTransactions || []).filter((t) => t.type === 'payment').length,
     };
-  }, [data, getSupplierStats, getCarOrderStats, getOtherCounterpartyStats]);
+  }, [data, getClientStats, getOtherCounterpartyStats]);
 
   // --- Export to Excel (.xlsx) ---
   const exportToExcel = useCallback(() => {
@@ -493,38 +388,39 @@ export function DataProvider({ children }) {
       ['Отчет Debet.auto', new Date().toLocaleString('ru-RU')],
       [],
       ['Показатель', 'Сумма (грн)'],
-      ['Общий долг перед поставщиками', globalSummary.totalSupplierDebt],
-      ['Задолженность клиентов (авто)', globalSummary.totalClientDebt],
-      ['Взаиморасчеты с физлицами', globalSummary.totalOtherBalance],
+      ['Общий долг клиентов', globalSummary.totalClientDebt],
+      ['Взаиморасчеты (Другие)', globalSummary.totalOtherBalance],
       ['Общий сводный баланс', globalSummary.grandBalance],
       [],
-      ['Поставщик', 'Начальный долг', 'Закупки', 'Оплаты', 'Текущий долг'],
+      ['Клиент', 'Начальный долг', 'Начислено деталей', 'Оплачено', 'Текущий долг'],
     ];
 
-    data.suppliers.forEach((s) => {
-      const st = getSupplierStats(s.id);
-      summaryData.push([s.name, st.initialBalance, st.totalItems, st.totalPayments, st.currentDebt]);
+    data.clients.forEach((c) => {
+      const st = getClientStats(c.id);
+      summaryData.push([c.name, st.initialBalance, st.totalItems, st.totalPayments, st.currentDebt]);
     });
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Сводка');
 
-    data.suppliers.forEach((s) => {
-      const st = getSupplierStats(s.id);
+    data.clients.forEach((c) => {
+      const st = getClientStats(c.id);
       const rows = [
-        ['Поставщик:', s.name],
-        ['Начало:', st.initialBalance, 'Остаток долга:', st.currentDebt],
+        ['Клиент:', c.name],
+        ['Начало:', st.initialBalance, 'Текущий долг:', st.currentDebt],
         [],
-        ['Дата', 'Тип', 'Артикул', 'Наименование', 'Цена (закупка)', 'Оплата', 'Текущий долг'],
+        ['Дата', 'Тип', 'Артикул', 'Наименование', 'Авто', 'Поставщик', 'Начислено (+)', 'Оплата (-)', 'Текущий долг'],
       ];
 
       const chronological = [...st.timeline].reverse();
       chronological.forEach((t) => {
         rows.push([
           t.date,
-          t.type === 'item' ? 'Закупка' : 'Оплата',
+          t.type === 'item' ? 'Деталь' : 'Оплата',
           t.article || '',
           t.description || '',
+          t.carName || '',
+          t.supplierName || '',
           t.type === 'item' ? t.amount : '',
           t.type === 'payment' ? t.amount : '',
           t.runningDebt,
@@ -532,32 +428,12 @@ export function DataProvider({ children }) {
       });
 
       const ws = XLSX.utils.aoa_to_sheet(rows);
-      const safeName = s.name.substring(0, 30).replace(/[:\\/?*\[\]]/g, '_');
+      const safeName = c.name.substring(0, 30).replace(/[:\\/?*\[\]]/g, '_');
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
 
-    const carRows = [
-      ['Автомобиль', 'Клиент', 'Госномер', 'Статус', 'Себестоимость', 'Цена продажи', 'Маржа', 'Оплачено', 'Долг клиента'],
-    ];
-    data.carOrders.forEach((o) => {
-      const st = getCarOrderStats(o.id);
-      carRows.push([
-        o.carModel,
-        o.clientName,
-        o.licensePlate,
-        o.status === 'in_progress' ? 'В работе' : o.status === 'waiting_payment' ? 'Ожидает оплаты' : 'Закрыт',
-        st.totalPurchase,
-        st.totalSale,
-        st.margin,
-        st.totalPaid,
-        st.clientDebt,
-      ]);
-    });
-    const wsCars = XLSX.utils.aoa_to_sheet(carRows);
-    XLSX.utils.book_append_sheet(wb, wsCars, 'Заказы авто');
-
-    const otherRows = [['Контрагент', 'Телефон', 'Баланс']];
-    data.otherCounterparties.forEach((p) => {
+    const otherRows = [['Контрагент', 'Телефон', 'Баланс (грн)']];
+    (data.otherCounterparties || []).forEach((p) => {
       const st = getOtherCounterpartyStats(p.id);
       otherRows.push([p.name, p.phone, st.balance]);
     });
@@ -566,7 +442,7 @@ export function DataProvider({ children }) {
 
     const fileName = `Debet_Auto_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
-  }, [data, globalSummary, getSupplierStats, getCarOrderStats, getOtherCounterpartyStats]);
+  }, [data, globalSummary, getClientStats, getOtherCounterpartyStats]);
 
   const exportJsonBackup = useCallback(() => {
     const jsonStr = JSON.stringify(data, null, 2);
@@ -582,7 +458,7 @@ export function DataProvider({ children }) {
   const importJsonBackup = useCallback((jsonString) => {
     try {
       const parsed = JSON.parse(jsonString);
-      if (!parsed.suppliers) {
+      if (!parsed.clients && !parsed.suppliers) {
         throw new Error('Некорректный формат файла резервной копии');
       }
       updateData(parsed);
@@ -607,23 +483,16 @@ export function DataProvider({ children }) {
     unlockApp,
     lockApp,
     changeMasterPassword,
-    // Suppliers
-    addSupplier,
-    updateSupplier,
-    deleteSupplier,
-    addSupplierTransaction,
-    updateSupplierTransaction,
-    deleteSupplierTransaction,
-    getSupplierStats,
-    // Car Orders
-    addCarOrder,
-    updateCarOrder,
-    deleteCarOrder,
-    addCarItem,
-    deleteCarItem,
-    addCarPayment,
-    deleteCarPayment,
-    getCarOrderStats,
+    // Clients
+    addClient,
+    updateClient,
+    deleteClient,
+    addClientTransaction,
+    updateClientTransaction,
+    deleteClientTransaction,
+    getClientStats,
+    // Suppliers directory
+    addSupplierToDirectory,
     // Other Counterparties
     addOtherCounterparty,
     deleteOtherCounterparty,

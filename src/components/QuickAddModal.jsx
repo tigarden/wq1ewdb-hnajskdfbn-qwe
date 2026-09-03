@@ -1,59 +1,76 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { useData } from '../context/DataContext';
-import { Package, CreditCard, Car, UserPlus } from 'lucide-react';
+import { Package, CreditCard, UserPlus } from 'lucide-react';
 
 export default function QuickAddModal({ isOpen, onClose }) {
-  const { data, addSupplierTransaction, addCarOrder, addOtherTransaction } = useData();
-  const [tab, setTab] = useState('item'); // 'item' | 'payment' | 'car' | 'other'
+  const { data, addClientTransaction, addOtherTransaction, addSupplierToDirectory } = useData();
+  const [tab, setTab] = useState('item'); // 'item' | 'payment' | 'other'
 
   // Item form
-  const [supplierId, setSupplierId] = useState(data.suppliers[0]?.id || '');
+  const [clientId, setClientId] = useState(data.clients?.[0]?.id || '');
   const [article, setArticle] = useState('');
   const [description, setDescription] = useState('');
+  const [carName, setCarName] = useState('');
+  const [supplierName, setSupplierName] = useState('');
+  const [newSupplierInput, setNewSupplierInput] = useState('');
   const [price, setPrice] = useState('');
   const [itemDate, setItemDate] = useState(new Date().toISOString().split('T')[0]);
-  const [carOrderId, setCarOrderId] = useState('');
 
   // Payment form
+  const [paymentClientId, setPaymentClientId] = useState(data.clients?.[0]?.id || '');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentNote, setPaymentNote] = useState('');
 
-  // Car form
-  const [carModel, setCarModel] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [licensePlate, setLicensePlate] = useState('');
-
   // Other form
-  const [otherCounterpartyId, setOtherCounterpartyId] = useState(data.otherCounterparties[0]?.id || '');
+  const [otherCounterpartyId, setOtherCounterpartyId] = useState(data.otherCounterparties?.[0]?.id || '');
   const [otherAmount, setOtherAmount] = useState('');
   const [otherNote, setOtherNote] = useState('');
-  const [otherType, setOtherType] = useState('plus'); // 'plus' = долг нам, 'minus' = оплата/уменьшение
+  const [otherType, setOtherType] = useState('plus');
+
+  const selectedClient = data.clients?.find((c) => c.id === clientId);
+  // Is this Eric or Vitya?
+  const isEricOrVitya = selectedClient && (
+    selectedClient.name.toLowerCase().includes('эрик') || 
+    selectedClient.name.toLowerCase().includes('эрнест') || 
+    selectedClient.name.toLowerCase().includes('витя')
+  );
 
   const handleAddItem = (e) => {
     e.preventDefault();
-    if (!supplierId || !price) return;
-    addSupplierTransaction({
-      supplierId,
+    if (!clientId || !price) return;
+    
+    let finalSupplier = supplierName;
+    if (newSupplierInput.trim()) {
+      finalSupplier = newSupplierInput.trim();
+      addSupplierToDirectory(finalSupplier);
+    }
+
+    addClientTransaction({
+      clientId,
       type: 'item',
       article,
       description,
+      carName: carName || '',
+      supplierName: finalSupplier || '',
       amount: parseFloat(price),
       date: itemDate,
-      carOrderId: carOrderId || null,
     });
+
     setArticle('');
     setDescription('');
+    setCarName('');
     setPrice('');
+    setNewSupplierInput('');
     onClose();
   };
 
   const handleAddPayment = (e) => {
     e.preventDefault();
-    if (!supplierId || !paymentAmount) return;
-    addSupplierTransaction({
-      supplierId,
+    if (!paymentClientId || !paymentAmount) return;
+    addClientTransaction({
+      clientId: paymentClientId,
       type: 'payment',
       amount: parseFloat(paymentAmount),
       date: paymentDate,
@@ -61,21 +78,6 @@ export default function QuickAddModal({ isOpen, onClose }) {
     });
     setPaymentAmount('');
     setPaymentNote('');
-    onClose();
-  };
-
-  const handleAddCar = (e) => {
-    e.preventDefault();
-    if (!carModel) return;
-    addCarOrder({
-      carModel,
-      clientName,
-      licensePlate,
-      status: 'in_progress',
-    });
-    setCarModel('');
-    setClientName('');
-    setLicensePlate('');
     onClose();
   };
 
@@ -95,7 +97,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Быстрое добавление записи">
-      <div className="flex border-b border-slate-800 mb-5 overflow-x-auto pb-1 space-x-2">
+      <div className="flex border-b border-slate-800 mb-5 space-x-2">
         <button
           onClick={() => setTab('item')}
           className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
@@ -103,7 +105,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           }`}
         >
           <Package className="w-3.5 h-3.5" />
-          <span>Закупка детали</span>
+          <span>Деталь клиенту</span>
         </button>
         <button
           onClick={() => setTab('payment')}
@@ -112,16 +114,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           }`}
         >
           <CreditCard className="w-3.5 h-3.5" />
-          <span>Оплата поставщику</span>
-        </button>
-        <button
-          onClick={() => setTab('car')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-            tab === 'car' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-          }`}
-        >
-          <Car className="w-3.5 h-3.5" />
-          <span>Новое авто</span>
+          <span>Оплата от клиента</span>
         </button>
         <button
           onClick={() => setTab('other')}
@@ -137,15 +130,15 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'item' && (
         <form onSubmit={handleAddItem} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Поставщик *</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Клиент *</label>
             <select
-              value={supplierId}
-              onChange={(e) => setSupplierId(e.target.value)}
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
               required
             >
-              {data.suppliers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+              {(data.clients || []).map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -158,64 +151,102 @@ export default function QuickAddModal({ isOpen, onClose }) {
                 placeholder="напр. S TL C00117/8"
                 value={article}
                 onChange={(e) => setArticle(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 uppercase"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 uppercase font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Цена (закупка) *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Цена (грн) *</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono font-semibold text-emerald-400"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono font-semibold text-amber-400"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Наименование / Примечание</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Наименование детали</label>
             <input
               type="text"
-              placeholder="напр. Ремень ГРМ, фильтр масляный"
+              placeholder="Сцепление, масло, тяжки, колодки..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
             />
           </div>
 
+          {/* Optional Car Binding (especially for Eric and Vitya) */}
+          <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-300">
+                Автомобиль (опционально)
+              </span>
+              {isEricOrVitya && (
+                <span className="text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">
+                  для {selectedClient?.name}
+                </span>
+              )}
+            </div>
+            <input
+              type="text"
+              placeholder="напр. Чери, Ренж, Тойота, Форд, Пассат..."
+              value={carName}
+              onChange={(e) => setCarName(e.target.value)}
+              className="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 text-xs focus:outline-hidden focus:border-blue-500"
+            />
+          </div>
+
+          {/* Optional Supplier */}
           <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Поставщик (опционально)</label>
+              <select
+                value={supplierName}
+                onChange={(e) => {
+                  setSupplierName(e.target.value);
+                  if (e.target.value !== '__new__') setNewSupplierInput('');
+                }}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500"
+              >
+                <option value="">(Не выбран)</option>
+                {(data.suppliersList || []).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+                <option value="__new__">+ Новый поставщик...</option>
+              </select>
+            </div>
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">Дата</label>
               <input
                 type="date"
                 value={itemDate}
                 onChange={(e) => setItemDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Привязать к авто</label>
-              <select
-                value={carOrderId}
-                onChange={(e) => setCarOrderId(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
-              >
-                <option value="">(Не привязано)</option>
-                {data.carOrders.map((o) => (
-                  <option key={o.id} value={o.id}>{o.carModel} {o.clientName ? `(${o.clientName})` : ''}</option>
-                ))}
-              </select>
-            </div>
           </div>
+
+          {supplierName === '__new__' && (
+            <div>
+              <input
+                type="text"
+                placeholder="Имя нового поставщика (напр. Склад Орел)"
+                value={newSupplierInput}
+                onChange={(e) => setNewSupplierInput(e.target.value)}
+                className="w-full px-3 py-1.5 bg-slate-800 border border-blue-500 rounded-xl text-slate-100 text-xs"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
             className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all"
           >
-            Добавить закупку детали
+            Записать деталь клиенту
           </button>
         </form>
       )}
@@ -223,29 +254,29 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'payment' && (
         <form onSubmit={handleAddPayment} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Поставщик *</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Клиент *</label>
             <select
-              value={supplierId}
-              onChange={(e) => setSupplierId(e.target.value)}
+              value={paymentClientId}
+              onChange={(e) => setPaymentClientId(e.target.value)}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
               required
             >
-              {data.suppliers.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
+              {(data.clients || []).map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Сумма оплаты *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Сумма оплаты (грн) *</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono font-semibold text-blue-400"
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono font-semibold text-emerald-400"
                 required
               />
             </div>
@@ -261,10 +292,10 @@ export default function QuickAddModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Комментарий (напр. карта, нал)</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Примечание (карта, наличные, расчет...)</label>
             <input
               type="text"
-              placeholder="Оплата через банк, на руки и т.д."
+              placeholder="Перевод на карту, на руки и т.д."
               value={paymentNote}
               onChange={(e) => setPaymentNote(e.target.value)}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
@@ -275,53 +306,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
             type="submit"
             className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all"
           >
-            Внести оплату поставщику
-          </button>
-        </form>
-      )}
-
-      {tab === 'car' && (
-        <form onSubmit={handleAddCar} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Автомобиль / Модель *</label>
-            <input
-              type="text"
-              placeholder="напр. Чери Тигго, Range Rover Sport"
-              value={carModel}
-              onChange={(e) => setCarModel(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Имя владельца / Клиента</label>
-              <input
-                type="text"
-                placeholder="напр. Сергей, Вадим"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Госномер</label>
-              <input
-                type="text"
-                placeholder="напр. А777АА77"
-                value={licensePlate}
-                onChange={(e) => setLicensePlate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 uppercase"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all"
-          >
-            Создать заказ по авто
+            Внести оплату от клиента
           </button>
         </form>
       )}
@@ -330,20 +315,20 @@ export default function QuickAddModal({ isOpen, onClose }) {
         <form onSubmit={handleAddOther} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">Контрагент *</label>
-            {data.otherCounterparties.length > 0 ? (
+            {(data.otherCounterparties || []).length > 0 ? (
               <select
                 value={otherCounterpartyId}
                 onChange={(e) => setOtherCounterpartyId(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
                 required
               >
-                {data.otherCounterparties.map((p) => (
+                {(data.otherCounterparties || []).map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             ) : (
               <p className="text-xs text-amber-400">
-                Сначала добавьте человека во вкладке «Другие»!
+                Сначала добавьте человека во вкладке «Другие расчеты»!
               </p>
             )}
           </div>
@@ -356,12 +341,12 @@ export default function QuickAddModal({ isOpen, onClose }) {
                 onChange={(e) => setOtherType(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
               >
-                <option value="plus">+ Долг (+ нам должны)</option>
+                <option value="plus">+ Долг нам (+ должен нам)</option>
                 <option value="minus">- Оплата / Возврат (- уменьшение)</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Сумма *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Сумма (грн) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -387,7 +372,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <button
             type="submit"
-            disabled={data.otherCounterparties.length === 0}
+            disabled={(data.otherCounterparties || []).length === 0}
             className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all"
           >
             Записать операцию
