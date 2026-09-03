@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-03T20:32:05.324Z",
+  "suppliers": [
+    {
+      "id": "sup-1",
+      "name": "Тотус",
+      "initialBalance": 0,
+      "createdAt": "2026-09-03T20:32:05.325Z"
+    },
+    {
+      "id": "sup-2",
+      "name": "Эрнест",
+      "initialBalance": 0,
+      "createdAt": "2026-09-03T20:32:05.325Z"
+    },
+    {
+      "id": "sup-3",
+      "name": "Витя",
+      "initialBalance": 0,
+      "createdAt": "2026-09-03T20:32:05.325Z"
+    }
+  ],
+  "supplierTransactions": [],
+  "carOrders": [],
+  "carItems": [],
+  "carPayments": [],
+  "otherCounterparties": [],
+  "otherTransactions": []
+}
