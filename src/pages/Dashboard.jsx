@@ -20,7 +20,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectSuppli
 
   // Format currency
   const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
+    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
   };
 
   // Recent transactions across all suppliers

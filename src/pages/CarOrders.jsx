@@ -54,7 +54,7 @@ export default function CarOrders({ selectedCarId, onSelectCar }) {
   const [paymentNote, setPaymentNote] = useState('');
 
   const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
+    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
   };
 
   const handleCreateCar = (e) => {
@@ -284,8 +284,8 @@ export default function CarOrders({ selectedCarId, onSelectCar }) {
                       <tr className="border-b border-slate-800 text-slate-400 uppercase">
                         <th className="py-2.5 px-3">Наименование</th>
                         <th className="py-2.5 px-3">Артикул</th>
-                        <th className="py-2.5 px-3 text-right">Закупка (руб)</th>
-                        <th className="py-2.5 px-3 text-right">Продажа (руб)</th>
+                        <th className="py-2.5 px-3 text-right">Закупка (грн)</th>
+                        <th className="py-2.5 px-3 text-right">Продажа (грн)</th>
                         <th className="py-2.5 px-3 text-right">Маржа</th>
                         <th className="py-2.5 px-3 text-center"></th>
                       </tr>

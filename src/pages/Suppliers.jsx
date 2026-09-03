@@ -61,7 +61,7 @@ export default function Suppliers({ selectedSupplierId, onSelectSupplier }) {
   const [payNote, setPayNote] = useState('');
 
   const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
+    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
   };
 
   const handleCreateSupplier = (e) => {
@@ -505,7 +505,7 @@ export default function Suppliers({ selectedSupplierId, onSelectSupplier }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Начальный долг (руб)</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Начальный долг (грн)</label>
             <input
               type="number"
               step="0.01"
@@ -541,7 +541,7 @@ export default function Suppliers({ selectedSupplierId, onSelectSupplier }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Начальный долг (руб)</label>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Начальный долг (грн)</label>
             <input
               type="number"
               step="0.01"

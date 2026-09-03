@@ -7,7 +7,7 @@ export default function PartsCatalog() {
   const [query, setQuery] = useState('');
 
   const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
+    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
   };
 
   // Group all supplier item transactions by article

@@ -30,7 +30,7 @@ export default function OtherSettlements() {
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0]);
 
   const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₽';
+    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
   };
 
   const handleCreatePerson = (e) => {
@@ -289,7 +289,7 @@ export default function OtherSettlements() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Сумма (руб) *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Сумма (грн) *</label>
               <input
                 type="number"
                 step="0.01"

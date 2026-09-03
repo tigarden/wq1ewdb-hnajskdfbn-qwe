@@ -473,7 +473,7 @@ export function DataProvider({ children }) {
     const summaryData = [
       ['Отчет Debet.auto', new Date().toLocaleString('ru-RU')],
       [],
-      ['Показатель', 'Сумма (руб)'],
+      ['Показатель', 'Сумма (грн)'],
       ['Общий долг перед поставщиками', globalSummary.totalSupplierDebt],
       ['Задолженность клиентов (авто)', globalSummary.totalClientDebt],
       ['Взаиморасчеты с физлицами', globalSummary.totalOtherBalance],
