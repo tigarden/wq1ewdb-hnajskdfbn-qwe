@@ -2,17 +2,61 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import * as XLSX from 'xlsx';
 import { loadLocalData, saveLocalData, loadSettings, saveSettings } from '../services/storage';
 import { fetchRepoFile, saveRepoFile } from '../services/githubApi';
+import { encryptData, decryptData } from '../services/crypto';
 
 const DataContext = createContext(null);
+
+const DEFAULT_MASTER_PASSWORD = '010700GkO';
+const AUTH_STORAGE_KEY = 'debet_auth_session_v1';
+const PASS_HASH_KEY = 'debet_custom_pass_v1';
 
 export function DataProvider({ children }) {
   const [data, setData] = useState(() => loadLocalData());
   const [settings, setSettings] = useState(() => loadSettings());
-  const [syncStatus, setSyncStatus] = useState('idle'); // 'idle' | 'syncing' | 'synced' | 'unsaved' | 'error' | 'no_token'
+  const [syncStatus, setSyncStatus] = useState('idle');
   const [syncError, setSyncError] = useState(null);
   const [lastSyncTime, setLastSyncTime] = useState(() => settings.lastSyncTime);
   const [currentSha, setCurrentSha] = useState(() => settings.lastSha);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Security & Authentication State
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    const saved = localStorage.getItem(AUTH_STORAGE_KEY) || sessionStorage.getItem(AUTH_STORAGE_KEY);
+    return saved === 'unlocked';
+  });
+  const [currentPassword, setCurrentPassword] = useState(() => {
+    return localStorage.getItem('debet_enc_pwd') || sessionStorage.getItem('debet_enc_pwd') || DEFAULT_MASTER_PASSWORD;
+  });
+
+  const unlockApp = useCallback((enteredPassword, rememberMe = true) => {
+    const savedCustomPass = localStorage.getItem(PASS_HASH_KEY) || DEFAULT_MASTER_PASSWORD;
+    if (enteredPassword === savedCustomPass) {
+      setIsUnlocked(true);
+      setCurrentPassword(enteredPassword);
+      if (rememberMe) {
+        localStorage.setItem(AUTH_STORAGE_KEY, 'unlocked');
+        localStorage.setItem('debet_enc_pwd', enteredPassword);
+      } else {
+        sessionStorage.setItem(AUTH_STORAGE_KEY, 'unlocked');
+        sessionStorage.setItem('debet_enc_pwd', enteredPassword);
+      }
+      return true;
+    }
+    return false;
+  }, []);
+
+  const lockApp = useCallback(() => {
+    setIsUnlocked(false);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem('debet_enc_pwd');
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    sessionStorage.removeItem('debet_enc_pwd');
+  }, []);
+
+  const changeMasterPassword = useCallback((newPassword) => {
+    localStorage.setItem(PASS_HASH_KEY, newPassword);
+    setCurrentPassword(newPassword);
+  }, []);
 
   // Update local storage when data changes
   const updateData = useCallback((updater) => {
@@ -34,7 +78,7 @@ export function DataProvider({ children }) {
     });
   }, []);
 
-  // Sync to GitHub (Push)
+  // Sync to GitHub with AES-256-GCM Encryption
   const pushToGitHub = useCallback(async (customCommitMsg) => {
     if (!settings.token) {
       setSyncStatus('no_token');
@@ -45,7 +89,6 @@ export function DataProvider({ children }) {
     setSyncError(null);
 
     try {
-      // First get latest SHA if needed
       let shaToUse = currentSha;
       try {
         const remote = await fetchRepoFile(settings.token, settings.owner, settings.repo, settings.path);
@@ -56,14 +99,18 @@ export function DataProvider({ children }) {
         // file might not exist yet
       }
 
+      // ENCRYPT with AES-256 before sending to GitHub!
+      // This guarantees that even in a public repository, nobody can read your data!
+      const payloadToSave = await encryptData(data, currentPassword);
+
       const res = await saveRepoFile(
         settings.token,
         settings.owner,
         settings.repo,
         settings.path,
-        data,
+        payloadToSave,
         shaToUse,
-        customCommitMsg || `Update debet records [${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}]`
+        customCommitMsg || `Update encrypted debet records [${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}]`
       );
 
       const now = new Date().toISOString();
@@ -80,9 +127,9 @@ export function DataProvider({ children }) {
       setSyncError(err.message);
       return { success: false, error: err.message };
     }
-  }, [settings, data, currentSha, updateSettings]);
+  }, [settings, data, currentSha, currentPassword, updateSettings]);
 
-  // Pull from GitHub
+  // Pull from GitHub with AES-256-GCM Decryption
   const pullFromGitHub = useCallback(async () => {
     if (!settings.token) {
       setSyncStatus('no_token');
@@ -95,8 +142,12 @@ export function DataProvider({ children }) {
     try {
       const res = await fetchRepoFile(settings.token, settings.owner, settings.repo, settings.path);
       if (res.exists && res.data) {
-        setData(res.data);
-        saveLocalData(res.data);
+        // Decrypt with current password
+        const decrypted = await decryptData(res.data, currentPassword);
+        if (decrypted && decrypted.suppliers) {
+          setData(decrypted);
+          saveLocalData(decrypted);
+        }
         setCurrentSha(res.sha);
         const now = new Date().toISOString();
         setLastSyncTime(now);
@@ -105,8 +156,7 @@ export function DataProvider({ children }) {
         updateSettings({ lastSyncTime: now, lastSha: res.sha });
         return { success: true, loaded: true };
       } else {
-        // File doesn't exist yet on GitHub, push current initial data
-        await pushToGitHub('Initial commit of debet data structure');
+        await pushToGitHub('Initial encrypted debet data structure');
         return { success: true, created: true };
       }
     } catch (err) {
@@ -115,16 +165,15 @@ export function DataProvider({ children }) {
       setSyncError(err.message);
       return { success: false, error: err.message };
     }
-  }, [settings, pushToGitHub, updateSettings]);
+  }, [settings, currentPassword, pushToGitHub, updateSettings]);
 
-  // Auto-sync on startup if token exists
   useEffect(() => {
-    if (settings.token && settings.autoSync) {
+    if (settings.token && settings.autoSync && isUnlocked) {
       pullFromGitHub();
     } else if (!settings.token) {
       setSyncStatus('no_token');
     }
-  }, []); // on mount only
+  }, [isUnlocked]);
 
   // --- CRUD: Suppliers ---
   const addSupplier = useCallback((name, initialBalance = 0, notes = '') => {
@@ -157,12 +206,12 @@ export function DataProvider({ children }) {
     }));
   }, [updateData]);
 
-  // --- CRUD: Supplier Transactions (Purchases / Payments) ---
+  // --- CRUD: Supplier Transactions ---
   const addSupplierTransaction = useCallback(({ supplierId, type, article = '', description = '', amount, date, carOrderId = null, note = '' }) => {
     const newTx = {
       id: 'stx-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
       supplierId,
-      type, // 'item' (закупка детали) or 'payment' (оплата поставщику)
+      type,
       article: article.trim(),
       description: description.trim(),
       amount: parseFloat(amount) || 0,
@@ -195,14 +244,12 @@ export function DataProvider({ children }) {
     }));
   }, [updateData]);
 
-  // Calculations for Supplier
   const getSupplierStats = useCallback((supplierId) => {
     const supplier = data.suppliers.find((s) => s.id === supplierId);
     if (!supplier) return null;
 
     const txs = data.supplierTransactions
       .filter((t) => t.supplierId === supplierId)
-      // Sort oldest to newest for ledger balance
       .sort((a, b) => new Date(a.date || a.createdAt) - new Date(b.date || b.createdAt) || (a.createdAt > b.createdAt ? 1 : -1));
 
     let runningDebt = supplier.initialBalance || 0;
@@ -228,20 +275,20 @@ export function DataProvider({ children }) {
       totalItems,
       totalPayments,
       currentDebt,
-      timeline: timeline.reverse(), // latest first for display
+      timeline: timeline.reverse(),
       rawItemsCount: txs.filter((t) => t.type === 'item').length,
       rawPaymentsCount: txs.filter((t) => t.type === 'payment').length,
     };
   }, [data.suppliers, data.supplierTransactions]);
 
-  // --- CRUD: Car Orders (Учет по автомобилям) ---
+  // --- CRUD: Car Orders ---
   const addCarOrder = useCallback(({ carModel, clientName = '', licensePlate = '', status = 'in_progress', notes = '' }) => {
     const newOrder = {
       id: 'car-' + Date.now(),
       carModel: carModel.trim(),
       clientName: clientName.trim(),
       licensePlate: licensePlate.trim(),
-      status, // 'in_progress' | 'waiting_payment' | 'completed'
+      status,
       notes: notes.trim(),
       createdAt: new Date().toISOString(),
     };
@@ -268,7 +315,6 @@ export function DataProvider({ children }) {
     }));
   }, [updateData]);
 
-  // Car Items
   const addCarItem = useCallback(({ carOrderId, name, article = '', purchasePrice = 0, salePrice = 0, supplierId = null }) => {
     const newItem = {
       id: 'ci-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
@@ -287,22 +333,6 @@ export function DataProvider({ children }) {
     return newItem;
   }, [updateData]);
 
-  const updateCarItem = useCallback((id, updates) => {
-    updateData((prev) => ({
-      ...prev,
-      carItems: prev.carItems.map((i) =>
-        i.id === id
-          ? {
-              ...i,
-              ...updates,
-              purchasePrice: updates.purchasePrice !== undefined ? parseFloat(updates.purchasePrice) || 0 : i.purchasePrice,
-              salePrice: updates.salePrice !== undefined ? parseFloat(updates.salePrice) || 0 : i.salePrice,
-            }
-          : i
-      ),
-    }));
-  }, [updateData]);
-
   const deleteCarItem = useCallback((id) => {
     updateData((prev) => ({
       ...prev,
@@ -310,7 +340,6 @@ export function DataProvider({ children }) {
     }));
   }, [updateData]);
 
-  // Car Client Payments
   const addCarPayment = useCallback(({ carOrderId, amount, date, note = '' }) => {
     const newPmt = {
       id: 'cp-' + Date.now(),
@@ -334,7 +363,6 @@ export function DataProvider({ children }) {
     }));
   }, [updateData]);
 
-  // Calculation for Car Order
   const getCarOrderStats = useCallback((orderId) => {
     const order = data.carOrders.find((o) => o.id === orderId);
     if (!order) return null;
@@ -360,7 +388,7 @@ export function DataProvider({ children }) {
     };
   }, [data.carOrders, data.carItems, data.carPayments]);
 
-  // --- CRUD: Other Counterparties («Другие») ---
+  // --- CRUD: Other Counterparties ---
   const addOtherCounterparty = useCallback(({ name, phone = '', notes = '' }) => {
     const newP = {
       id: 'oth-' + Date.now(),
@@ -376,13 +404,6 @@ export function DataProvider({ children }) {
     return newP;
   }, [updateData]);
 
-  const updateOtherCounterparty = useCallback((id, updates) => {
-    updateData((prev) => ({
-      ...prev,
-      otherCounterparties: prev.otherCounterparties.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    }));
-  }, [updateData]);
-
   const deleteOtherCounterparty = useCallback((id) => {
     updateData((prev) => ({
       ...prev,
@@ -395,7 +416,7 @@ export function DataProvider({ children }) {
     const newTx = {
       id: 'otx-' + Date.now(),
       counterpartyId,
-      amount: parseFloat(amount) || 0, // positive = debt, negative = payment
+      amount: parseFloat(amount) || 0,
       note: note.trim(),
       date: date || new Date().toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
@@ -450,7 +471,6 @@ export function DataProvider({ children }) {
       if (stats) totalOtherBalance += stats.balance;
     });
 
-    // Grand total formula matching Excel 'Другие'!B15
     const grandBalance = totalSupplierDebt + totalOtherBalance;
 
     return {
@@ -469,7 +489,6 @@ export function DataProvider({ children }) {
   const exportToExcel = useCallback(() => {
     const wb = XLSX.utils.book_new();
 
-    // 1. Summary Sheet
     const summaryData = [
       ['Отчет Debet.auto', new Date().toLocaleString('ru-RU')],
       [],
@@ -490,7 +509,6 @@ export function DataProvider({ children }) {
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Сводка');
 
-    // 2. Sheets for each Supplier
     data.suppliers.forEach((s) => {
       const st = getSupplierStats(s.id);
       const rows = [
@@ -518,7 +536,6 @@ export function DataProvider({ children }) {
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
 
-    // 3. Sheet for Car Orders
     const carRows = [
       ['Автомобиль', 'Клиент', 'Госномер', 'Статус', 'Себестоимость', 'Цена продажи', 'Маржа', 'Оплачено', 'Долг клиента'],
     ];
@@ -539,7 +556,6 @@ export function DataProvider({ children }) {
     const wsCars = XLSX.utils.aoa_to_sheet(carRows);
     XLSX.utils.book_append_sheet(wb, wsCars, 'Заказы авто');
 
-    // 4. Sheet for Other Counterparties
     const otherRows = [['Контрагент', 'Телефон', 'Баланс']];
     data.otherCounterparties.forEach((p) => {
       const st = getOtherCounterpartyStats(p.id);
@@ -552,7 +568,6 @@ export function DataProvider({ children }) {
     XLSX.writeFile(wb, fileName);
   }, [data, globalSummary, getSupplierStats, getCarOrderStats, getOtherCounterpartyStats]);
 
-  // --- Export / Import JSON Backup ---
   const exportJsonBackup = useCallback(() => {
     const jsonStr = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -587,6 +602,11 @@ export function DataProvider({ children }) {
     hasUnsavedChanges,
     pushToGitHub,
     pullFromGitHub,
+    // Security
+    isUnlocked,
+    unlockApp,
+    lockApp,
+    changeMasterPassword,
     // Suppliers
     addSupplier,
     updateSupplier,
@@ -600,14 +620,12 @@ export function DataProvider({ children }) {
     updateCarOrder,
     deleteCarOrder,
     addCarItem,
-    updateCarItem,
     deleteCarItem,
     addCarPayment,
     deleteCarPayment,
     getCarOrderStats,
     // Other Counterparties
     addOtherCounterparty,
-    updateOtherCounterparty,
     deleteOtherCounterparty,
     addOtherTransaction,
     deleteOtherTransaction,

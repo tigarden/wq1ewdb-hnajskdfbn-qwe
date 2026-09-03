@@ -12,13 +12,14 @@ import {
   RefreshCw, 
   Menu, 
   X,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Lock
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { syncStatus, lastSyncTime, pushToGitHub, pullFromGitHub, exportToExcel } = useData();
+  const { syncStatus, lastSyncTime, pushToGitHub, exportToExcel, lockApp } = useData();
 
   const navItems = [
     { id: 'dashboard', label: 'Дашборд', icon: LayoutDashboard },
@@ -44,7 +45,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
                 Debet.auto
               </span>
               <span className="hidden sm:inline-block ml-2 text-xs text-slate-400 font-medium px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700/50">
-                v1.0
+                грн
               </span>
             </div>
           </div>
@@ -119,6 +120,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
               <FileSpreadsheet className="w-4 h-4" />
             </button>
 
+            {/* Lock App Button */}
+            <button
+              onClick={lockApp}
+              title="Заблокировать экран (выйти)"
+              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 rounded-xl transition-colors"
+            >
+              <Lock className="w-4 h-4" />
+            </button>
+
             {/* Quick Add Button */}
             <button
               onClick={onOpenQuickAdd}
@@ -165,15 +175,14 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
           })}
           
           <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 px-2">
-            <span>Статус:</span>
-            {syncStatus === 'synced' ? (
-              <span className="text-emerald-400">Синхронизировано с GitHub</span>
-            ) : syncStatus === 'unsaved' ? (
+            <button onClick={lockApp} className="text-rose-400 flex items-center space-x-1 py-1">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Заблокировать вход</span>
+            </button>
+            {syncStatus === 'unsaved' && (
               <button onClick={() => pushToGitHub()} className="text-blue-400 underline">
                 Сохранить в GitHub
               </button>
-            ) : (
-              <span>Только локальный кэш</span>
             )}
           </div>
         </div>

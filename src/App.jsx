@@ -1,18 +1,26 @@
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import QuickAddModal from './components/QuickAddModal';
+import LockScreen from './components/LockScreen';
 import Dashboard from './pages/Dashboard';
 import Suppliers from './pages/Suppliers';
 import CarOrders from './pages/CarOrders';
 import OtherSettlements from './pages/OtherSettlements';
 import PartsCatalog from './pages/PartsCatalog';
 import Settings from './pages/Settings';
+import { useData } from './context/DataContext';
 
 export default function App() {
+  const { isUnlocked, unlockApp } = useData();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedSupplierId, setSelectedSupplierId] = useState(null);
   const [selectedCarId, setSelectedCarId] = useState(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+
+  // If not authenticated, show PIN Lock Screen
+  if (!isUnlocked) {
+    return <LockScreen onUnlock={unlockApp} />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
@@ -69,7 +77,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 py-4 text-center text-xs text-slate-500">
-        Debet.auto — Учет взаиморасчетов, запчастей и авто • Синхронизация с GitHub @tigarden
+        Debet.auto — Защищено сквозным шифрованием AES-256 • Синхронизация @tigarden
       </footer>
     </div>
   );
