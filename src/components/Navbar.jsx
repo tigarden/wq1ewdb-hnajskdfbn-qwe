@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
+  DollarSign, 
   UserCheck, 
   Search, 
   Settings, 
@@ -18,12 +19,12 @@ import { useData } from '../context/DataContext';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { syncStatus, lastSyncTime, pushToGitHub, exportToExcel, lockApp } = useData();
+  const { syncStatus, lastSyncTime, pushToGitHub, exportToExcel, lockApp, incomeStats } = useData();
 
-  // Simplified streamlined navigation: Dashboard, Clients, Others, Search, Settings
   const navItems = [
     { id: 'dashboard', label: 'Дашборд', icon: LayoutDashboard },
     { id: 'clients', label: 'Мои клиенты', icon: Users },
+    { id: 'income', label: 'Доход & Очередь', icon: DollarSign, badge: incomeStats?.pendingCount },
     { id: 'other', label: 'Другие расчеты', icon: UserCheck },
     { id: 'parts', label: 'Поиск артикула', icon: Search },
     { id: 'settings', label: 'Настройки', icon: Settings },
@@ -58,7 +59,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all ${
+                  className={`relative flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -66,6 +67,11 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
                 >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950">
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -161,14 +167,21 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
                   setActiveTab(item.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-base font-medium ${
                   isActive
                     ? 'bg-blue-600 text-white'
                     : 'text-slate-300 hover:bg-slate-800/80'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span>{item.label}</span>
+                <div className="flex items-center space-x-3">
+                  <Icon className="w-5 h-5" />
+                  <span>{item.label}</span>
+                </div>
+                {item.badge > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-slate-950">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}

@@ -58,7 +58,6 @@ export function DataProvider({ children }) {
     setCurrentPassword(newPassword);
   }, []);
 
-  // Update local storage
   const updateData = useCallback((updater) => {
     setData((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -77,7 +76,7 @@ export function DataProvider({ children }) {
     });
   }, []);
 
-  // GitHub Push with AES-256
+  // GitHub Push
   const pushToGitHub = useCallback(async (customCommitMsg) => {
     if (!settings.token) {
       setSyncStatus('no_token');
@@ -124,7 +123,7 @@ export function DataProvider({ children }) {
     }
   }, [settings, data, currentSha, currentPassword, updateSettings]);
 
-  // GitHub Pull with AES-256
+  // GitHub Pull
   const pullFromGitHub = useCallback(async () => {
     if (!settings.token) {
       setSyncStatus('no_token');
@@ -139,12 +138,18 @@ export function DataProvider({ children }) {
       if (res.exists && res.data) {
         const decrypted = await decryptData(res.data, currentPassword);
         if (decrypted) {
-          // Normalize if old format was saved
           const normalized = {
             ...loadLocalData(),
             ...decrypted,
-            clients: decrypted.clients || decrypted.suppliers || loadLocalData().clients,
-            clientTransactions: decrypted.clientTransactions || decrypted.supplierTransactions?.map(t => ({ ...t, clientId: t.supplierId })) || [],
+            clients: (decrypted.clients || decrypted.suppliers || loadLocalData().clients).map(c => ({
+              ...c,
+              phone: c.phone || '',
+              car: c.car || '',
+            })),
+            clientTransactions: (decrypted.clientTransactions || decrypted.supplierTransactions?.map(t => ({ ...t, clientId: t.supplierId })) || []).map(t => ({
+              ...t,
+              purchasePrice: t.purchasePrice !== undefined ? parseFloat(t.purchasePrice) || 0 : 0,
+            })),
           };
           setData(normalized);
           saveLocalData(normalized);
@@ -176,11 +181,13 @@ export function DataProvider({ children }) {
     }
   }, [isUnlocked]);
 
-  // --- CRUD: Clients (Тотус, Тотус 2, Эрик, Витя...) ---
-  const addClient = useCallback((name, initialBalance = 0, notes = '') => {
+  // --- CRUD: Clients with Phone and Car ---
+  const addClient = useCallback((name, initialBalance = 0, phone = '', car = '', notes = '') => {
     const newCli = {
       id: 'cli-' + Date.now(),
       name: name.trim(),
+      phone: phone.trim(),
+      car: car.trim(),
       initialBalance: parseFloat(initialBalance) || 0,
       notes: notes.trim(),
       createdAt: new Date().toISOString(),
@@ -207,17 +214,18 @@ export function DataProvider({ children }) {
     }));
   }, [updateData]);
 
-  // --- CRUD: Client Transactions (Детали/Заказы и Оплаты) ---
-  const addClientTransaction = useCallback(({ clientId, type, article = '', description = '', carName = '', supplierName = '', amount, date, note = '' }) => {
+  // --- CRUD: Client Transactions ---
+  const addClientTransaction = useCallback(({ clientId, type, article = '', description = '', carName = '', supplierName = '', amount, purchasePrice = 0, date, note = '' }) => {
     const newTx = {
       id: 'ctx-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
       clientId,
-      type, // 'item' (деталь) or 'payment' (оплата)
+      type, // 'item' or 'payment'
       article: article.trim(),
       description: description.trim(),
-      carName: carName.trim(), // Опционально: только для Эрика или Вити
-      supplierName: supplierName.trim(), // Опционально: поставщик детали
-      amount: parseFloat(amount) || 0,
+      carName: carName.trim(),
+      supplierName: supplierName.trim(),
+      amount: parseFloat(amount) || 0, // client sale price
+      purchasePrice: parseFloat(purchasePrice) || 0, // supplier cost
       date: date || new Date().toISOString().split('T')[0],
       note: note.trim(),
       createdAt: new Date().toISOString(),
@@ -234,7 +242,12 @@ export function DataProvider({ children }) {
     updateData((prev) => ({
       ...prev,
       clientTransactions: prev.clientTransactions.map((t) =>
-        t.id === id ? { ...t, ...updates, amount: updates.amount !== undefined ? parseFloat(updates.amount) || 0 : t.amount } : t
+        t.id === id ? { 
+          ...t, 
+          ...updates, 
+          amount: updates.amount !== undefined ? parseFloat(updates.amount) || 0 : t.amount,
+          purchasePrice: updates.purchasePrice !== undefined ? parseFloat(updates.purchasePrice) || 0 : t.purchasePrice,
+        } : t
       ),
     }));
   }, [updateData]);
@@ -246,7 +259,22 @@ export function DataProvider({ children }) {
     }));
   }, [updateData]);
 
-  // Calculation for Client: Initial + Items - Payments = Current Debt
+  // Update item purchase price (from queue)
+  const updateItemPurchasePrice = useCallback((txId, purchasePrice, supplierName) => {
+    updateData((prev) => ({
+      ...prev,
+      clientTransactions: prev.clientTransactions.map((t) => {
+        if (t.id !== txId) return t;
+        const updates = { purchasePrice: parseFloat(purchasePrice) || 0 };
+        if (supplierName !== undefined && supplierName !== null) {
+          updates.supplierName = supplierName;
+        }
+        return { ...t, ...updates };
+      }),
+    }));
+  }, [updateData]);
+
+  // Client stats
   const getClientStats = useCallback((clientId) => {
     const client = data.clients.find((c) => c.id === clientId);
     if (!client) return null;
@@ -268,9 +296,16 @@ export function DataProvider({ children }) {
       };
     });
 
-    const totalItems = txs.filter((t) => t.type === 'item').reduce((sum, t) => sum + t.amount, 0);
+    const items = txs.filter((t) => t.type === 'item');
+    const totalItems = items.reduce((sum, t) => sum + t.amount, 0);
     const totalPayments = txs.filter((t) => t.type === 'payment').reduce((sum, t) => sum + t.amount, 0);
     const currentDebt = (client.initialBalance || 0) + totalItems - totalPayments;
+
+    // Profit stats for this client
+    const itemsWithPurchase = items.filter((t) => (t.purchasePrice || 0) > 0);
+    const clientSalesWithCost = itemsWithPurchase.reduce((sum, t) => sum + t.amount, 0);
+    const clientPurchaseTotal = itemsWithPurchase.reduce((sum, t) => sum + t.purchasePrice, 0);
+    const clientProfit = clientSalesWithCost - clientPurchaseTotal;
 
     return {
       client,
@@ -278,13 +313,15 @@ export function DataProvider({ children }) {
       totalItems,
       totalPayments,
       currentDebt,
-      timeline: timeline.reverse(), // latest first
-      itemsCount: txs.filter((t) => t.type === 'item').length,
+      timeline: timeline.reverse(),
+      itemsCount: items.length,
       paymentsCount: txs.filter((t) => t.type === 'payment').length,
+      clientProfit,
+      pendingCostCount: items.filter((t) => !t.purchasePrice || t.purchasePrice === 0).length,
     };
   }, [data.clients, data.clientTransactions]);
 
-  // --- Suppliers List (Справочник поставщиков для деталей) ---
+  // Suppliers directory
   const addSupplierToDirectory = useCallback((supplierName) => {
     const name = supplierName.trim();
     if (!name) return;
@@ -295,7 +332,7 @@ export function DataProvider({ children }) {
     });
   }, [updateData]);
 
-  // --- CRUD: Other Counterparties («Другие») ---
+  // Other Counterparties
   const addOtherCounterparty = useCallback(({ name, phone = '', notes = '' }) => {
     const newP = {
       id: 'oth-' + Date.now(),
@@ -354,7 +391,34 @@ export function DataProvider({ children }) {
     };
   }, [data.otherCounterparties, data.otherTransactions]);
 
-  // --- Global Summary Stats ---
+  // --- Income & Profit Statistics across all clients ---
+  const incomeStats = useMemo(() => {
+    const items = (data.clientTransactions || []).filter((t) => t.type === 'item');
+    const itemsWithCost = items.filter((t) => (t.purchasePrice || 0) > 0);
+    const pendingItems = items.filter((t) => !t.purchasePrice || t.purchasePrice === 0);
+
+    const totalRevenueWithCost = itemsWithCost.reduce((sum, t) => sum + (t.amount || 0), 0);
+    const totalPurchaseCost = itemsWithCost.reduce((sum, t) => sum + (t.purchasePrice || 0), 0);
+    const totalProfit = totalRevenueWithCost - totalPurchaseCost;
+    const marginPercent = totalPurchaseCost > 0 ? (totalProfit / totalPurchaseCost) * 100 : 0;
+
+    const totalAllRevenue = items.reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    return {
+      totalAllRevenue,
+      totalRevenueWithCost,
+      totalPurchaseCost,
+      totalProfit,
+      marginPercent,
+      pendingCount: pendingItems.length,
+      filledCount: itemsWithCost.length,
+      totalItemsCount: items.length,
+      pendingItems,
+      filledItems: itemsWithCost,
+    };
+  }, [data.clientTransactions]);
+
+  // Global Summary
   const globalSummary = useMemo(() => {
     let totalClientDebt = 0;
     (data.clients || []).forEach((c) => {
@@ -377,10 +441,12 @@ export function DataProvider({ children }) {
       clientsCount: (data.clients || []).length,
       totalItemsCount: (data.clientTransactions || []).filter((t) => t.type === 'item').length,
       totalPaymentsCount: (data.clientTransactions || []).filter((t) => t.type === 'payment').length,
+      totalProfit: incomeStats.totalProfit,
+      pendingCostCount: incomeStats.pendingCount,
     };
-  }, [data, getClientStats, getOtherCounterpartyStats]);
+  }, [data, getClientStats, getOtherCounterpartyStats, incomeStats]);
 
-  // --- Export to Excel (.xlsx) ---
+  // Export to Excel
   const exportToExcel = useCallback(() => {
     const wb = XLSX.utils.book_new();
 
@@ -391,13 +457,14 @@ export function DataProvider({ children }) {
       ['Общий долг клиентов', globalSummary.totalClientDebt],
       ['Взаиморасчеты (Другие)', globalSummary.totalOtherBalance],
       ['Общий сводный баланс', globalSummary.grandBalance],
+      ['Общий чистый доход (маржа)', incomeStats.totalProfit],
       [],
-      ['Клиент', 'Начальный долг', 'Начислено деталей', 'Оплачено', 'Текущий долг'],
+      ['Клиент', 'Телефон', 'Авто', 'Начальный долг', 'Начислено деталей', 'Оплачено', 'Текущий долг'],
     ];
 
     data.clients.forEach((c) => {
       const st = getClientStats(c.id);
-      summaryData.push([c.name, st.initialBalance, st.totalItems, st.totalPayments, st.currentDebt]);
+      summaryData.push([c.name, c.phone || '', c.car || '', st.initialBalance, st.totalItems, st.totalPayments, st.currentDebt]);
     });
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
@@ -406,22 +473,25 @@ export function DataProvider({ children }) {
     data.clients.forEach((c) => {
       const st = getClientStats(c.id);
       const rows = [
-        ['Клиент:', c.name],
+        ['Клиент:', c.name, 'Телефон:', c.phone || '', 'Авто:', c.car || ''],
         ['Начало:', st.initialBalance, 'Текущий долг:', st.currentDebt],
         [],
-        ['Дата', 'Тип', 'Артикул', 'Наименование', 'Авто', 'Поставщик', 'Начислено (+)', 'Оплата (-)', 'Текущий долг'],
+        ['Дата', 'Тип', 'Артикул', 'Наименование', 'Авто', 'Поставщик', 'Цена закупки', 'Продажа клиенту', 'Доход (маржа)', 'Оплата', 'Текущий долг'],
       ];
 
       const chronological = [...st.timeline].reverse();
       chronological.forEach((t) => {
+        const profit = t.type === 'item' && (t.purchasePrice || 0) > 0 ? t.amount - t.purchasePrice : '';
         rows.push([
           t.date,
           t.type === 'item' ? 'Деталь' : 'Оплата',
           t.article || '',
           t.description || '',
-          t.carName || '',
+          t.carName || c.car || '',
           t.supplierName || '',
+          t.type === 'item' ? (t.purchasePrice || '') : '',
           t.type === 'item' ? t.amount : '',
+          profit,
           t.type === 'payment' ? t.amount : '',
           t.runningDebt,
         ]);
@@ -431,6 +501,28 @@ export function DataProvider({ children }) {
       const safeName = c.name.substring(0, 30).replace(/[:\\/?*\[\]]/g, '_');
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
+
+    // Sheet: Profit & Purchases Queue
+    const profitRows = [
+      ['Дата', 'Клиент', 'Артикул', 'Наименование', 'Авто', 'Поставщик', 'Цена закупки (грн)', 'Продано клиенту (грн)', 'Чистый доход (грн)'],
+    ];
+    (data.clientTransactions || []).filter(t => t.type === 'item').forEach(t => {
+      const cli = data.clients.find(c => c.id === t.clientId);
+      const profit = (t.purchasePrice || 0) > 0 ? t.amount - t.purchasePrice : 'Не заполнено';
+      profitRows.push([
+        t.date,
+        cli?.name || '',
+        t.article || '',
+        t.description || '',
+        t.carName || cli?.car || '',
+        t.supplierName || '',
+        t.purchasePrice || 0,
+        t.amount,
+        profit,
+      ]);
+    });
+    const wsProfit = XLSX.utils.aoa_to_sheet(profitRows);
+    XLSX.utils.book_append_sheet(wb, wsProfit, 'Закупки и доход');
 
     const otherRows = [['Контрагент', 'Телефон', 'Баланс (грн)']];
     (data.otherCounterparties || []).forEach((p) => {
@@ -442,7 +534,7 @@ export function DataProvider({ children }) {
 
     const fileName = `Debet_Auto_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
-  }, [data, globalSummary, getClientStats, getOtherCounterpartyStats]);
+  }, [data, globalSummary, incomeStats, getClientStats, getOtherCounterpartyStats]);
 
   const exportJsonBackup = useCallback(() => {
     const jsonStr = JSON.stringify(data, null, 2);
@@ -491,6 +583,9 @@ export function DataProvider({ children }) {
     updateClientTransaction,
     deleteClientTransaction,
     getClientStats,
+    // Income and Purchases Queue
+    incomeStats,
+    updateItemPurchasePrice,
     // Suppliers directory
     addSupplierToDirectory,
     // Other Counterparties

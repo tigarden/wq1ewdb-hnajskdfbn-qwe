@@ -8,11 +8,14 @@ import {
   Plus, 
   ChevronRight,
   CreditCard,
-  Package
+  Package,
+  DollarSign,
+  Clock,
+  Car
 } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient }) {
-  const { data, globalSummary, getClientStats } = useData();
+  const { data, globalSummary, getClientStats, incomeStats } = useData();
   const [searchQuery, setSearchQuery] = useState('');
 
   const formatMoney = (val) => {
@@ -30,16 +33,25 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/60 p-5 rounded-2xl border border-slate-800">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-100">
-            Учет долгов клиентов
+            Учет клиентов и финансов
           </h1>
           <p className="text-sm text-slate-400 mt-0.5">
-            Контроль балансов: Тотус, Тотус 2, Эрик, Витя и прочие расчеты
+            Тотус, Тотус 2, Эрик, Витя • Балансы, закупки и статистика дохода
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          {incomeStats.pendingCount > 0 && (
+            <button
+              onClick={() => setActiveTab('income')}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all"
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <span>Очередь цен ({incomeStats.pendingCount})</span>
+            </button>
+          )}
           <button
             onClick={onOpenQuickAdd}
-            className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all"
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Новая запись</span>
@@ -47,32 +59,58 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* KPI Cards: 4 cards grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Card 1: Total Grand Balance */}
         <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-950 p-5 rounded-2xl border border-blue-500/30 shadow-xl shadow-blue-950/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-blue-400">
-              Общий баланс долгов
+              Общий баланс
             </span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
-              <TrendingUp className="w-5 h-5" />
+              <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className={`text-2xl sm:text-3xl font-bold font-mono tracking-tight ${
+          <div className="mt-2">
+            <div className={`text-xl sm:text-2xl font-bold font-mono tracking-tight ${
               globalSummary.grandBalance > 0 ? 'text-rose-400' : globalSummary.grandBalance < 0 ? 'text-emerald-400' : 'text-slate-200'
             }`}>
               {formatMoney(globalSummary.grandBalance)}
             </div>
-            <p className="text-xs text-slate-400 mt-1">
-              Клиенты + Другие (как в Excel ячейка B15)
+            <p className="text-[11px] text-slate-400 mt-1">
+              Клиенты + Другие (ячейка B15)
             </p>
           </div>
         </div>
 
-        {/* Card 2: Main Clients Total Debt */}
+        {/* Card 2: Чистый Доход */}
+        <div 
+          onClick={() => setActiveTab('income')}
+          className="cursor-pointer group bg-gradient-to-br from-slate-900 to-slate-950 p-5 rounded-2xl border border-emerald-500/30 hover:border-emerald-500/50 shadow-xl shadow-emerald-950/10 transition-all"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400 group-hover:text-emerald-300">
+              Чистый доход
+            </span>
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+              <DollarSign className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-emerald-400">
+              +{formatMoney(incomeStats.totalProfit)}
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+              <span>+{incomeStats.marginPercent.toFixed(1)}% наценка</span>
+              <span className="text-emerald-400 flex items-center">
+                Очередь &rarr;
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Main Clients Total Debt */}
         <div 
           onClick={() => setActiveTab('clients')}
           className="cursor-pointer group bg-slate-900/80 hover:bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all shadow-lg"
@@ -82,23 +120,23 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
               Долги клиентов
             </span>
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-              <Users className="w-5 h-5" />
+              <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-amber-400">
+          <div className="mt-2">
+            <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-amber-400">
               {formatMoney(globalSummary.totalClientDebt)}
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
               <span>{globalSummary.clientsCount} клиентов</span>
-              <span className="text-blue-400 group-hover:translate-x-0.5 transition-transform flex items-center">
-                Перейти <ChevronRight className="w-3.5 h-3.5" />
+              <span className="text-blue-400 flex items-center">
+                Перейти &rarr;
               </span>
             </div>
           </div>
         </div>
 
-        {/* Card 3: Other Counterparties */}
+        {/* Card 4: Other Counterparties */}
         <div 
           onClick={() => setActiveTab('other')}
           className="cursor-pointer group bg-slate-900/80 hover:bg-slate-900 p-5 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all shadow-lg"
@@ -107,18 +145,18 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-slate-300">
               Другие расчеты
             </span>
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-              <UserCheck className="w-5 h-5" />
+            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400">
+              <UserCheck className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-bold font-mono tracking-tight text-emerald-400">
+          <div className="mt-2">
+            <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-purple-300">
               {formatMoney(globalSummary.totalOtherBalance)}
             </div>
-            <div className="flex items-center justify-between text-xs text-slate-400 mt-1">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
               <span>{data.otherCounterparties?.length || 0} персон</span>
-              <span className="text-blue-400 group-hover:translate-x-0.5 transition-transform flex items-center">
-                Перейти <ChevronRight className="w-3.5 h-3.5" />
+              <span className="text-blue-400 flex items-center">
+                Перейти &rarr;
               </span>
             </div>
           </div>
@@ -160,9 +198,17 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                       {stats?.itemsCount || 0} детал.
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Оплат: {stats?.paymentsCount || 0}
-                  </p>
+                  {cli.car && (
+                    <div className="flex items-center space-x-1 text-[11px] text-slate-400 mt-1">
+                      <Car className="w-3 h-3 text-blue-400" />
+                      <span className="truncate">{cli.car}</span>
+                    </div>
+                  )}
+                  {cli.phone && (
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      {cli.phone}
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-3 pt-3 border-t border-slate-800 text-right">
@@ -177,7 +223,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         </div>
       </div>
 
-      {/* Two columns: Recent Movement & Quick Search */}
+      {/* Recent Activity & Parts Search */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Left: Recent Activity */}
@@ -213,9 +259,9 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                               {tx.article}
                             </span>
                           )}
-                          {tx.carName && (
+                          {(tx.carName || cli?.car) && (
                             <span className="text-[10px] text-slate-400 bg-slate-950 px-1.5 py-0.5 rounded">
-                              {tx.carName}
+                              {tx.carName || cli?.car}
                             </span>
                           )}
                         </div>

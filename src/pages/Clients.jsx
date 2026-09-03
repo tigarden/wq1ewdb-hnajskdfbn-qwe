@@ -11,7 +11,9 @@ import {
   History, 
   Settings2,
   Car,
-  Truck
+  Truck,
+  Phone,
+  DollarSign
 } from 'lucide-react';
 
 export default function Clients({ selectedClientId, onSelectClient }) {
@@ -40,10 +42,15 @@ export default function Clients({ selectedClientId, onSelectClient }) {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isAddPaymentModalOpen, setIsAddPaymentModalOpen] = useState(false);
 
-  // Client forms
+  // Client forms with Phone & Car
   const [newCliName, setNewCliName] = useState('');
+  const [newCliPhone, setNewCliPhone] = useState('');
+  const [newCliCar, setNewCliCar] = useState('');
   const [newCliInitial, setNewCliInitial] = useState('');
+
   const [editCliName, setEditCliName] = useState('');
+  const [editCliPhone, setEditCliPhone] = useState('');
+  const [editCliCar, setEditCliCar] = useState('');
   const [editCliInitial, setEditCliInitial] = useState('');
 
   // Item form
@@ -53,6 +60,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
   const [txSupplierName, setTxSupplierName] = useState('');
   const [txNewSupplier, setTxNewSupplier] = useState('');
   const [txPrice, setTxPrice] = useState('');
+  const [txPurchasePrice, setTxPurchasePrice] = useState('');
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Payment form
@@ -64,18 +72,14 @@ export default function Clients({ selectedClientId, onSelectClient }) {
     return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
   };
 
-  const isEricOrVitya = currentClient && (
-    currentClient.name.toLowerCase().includes('эрик') ||
-    currentClient.name.toLowerCase().includes('эрнест') ||
-    currentClient.name.toLowerCase().includes('витя')
-  );
-
   const handleCreateClient = (e) => {
     e.preventDefault();
     if (!newCliName.trim()) return;
-    const cli = addClient(newCliName, newCliInitial || 0);
+    const cli = addClient(newCliName, newCliInitial || 0, newCliPhone, newCliCar);
     onSelectClient(cli.id);
     setNewCliName('');
+    setNewCliPhone('');
+    setNewCliCar('');
     setNewCliInitial('');
     setIsAddCliModalOpen(false);
   };
@@ -85,6 +89,8 @@ export default function Clients({ selectedClientId, onSelectClient }) {
     if (!editCliName.trim()) return;
     updateClient(currentClient.id, {
       name: editCliName,
+      phone: editCliPhone,
+      car: editCliCar,
       initialBalance: parseFloat(editCliInitial) || 0,
     });
     setIsEditCliModalOpen(false);
@@ -98,6 +104,11 @@ export default function Clients({ selectedClientId, onSelectClient }) {
         onSelectClient(remaining[0].id);
       }
     }
+  };
+
+  const handleOpenAddItem = () => {
+    setTxCarName(currentClient?.car || '');
+    setIsAddItemModalOpen(true);
   };
 
   const handleAddItem = (e) => {
@@ -114,15 +125,17 @@ export default function Clients({ selectedClientId, onSelectClient }) {
       type: 'item',
       article: txArticle,
       description: txDescription,
-      carName: txCarName,
+      carName: txCarName || currentClient?.car || '',
       supplierName: finalSup,
       amount: parseFloat(txPrice),
+      purchasePrice: parseFloat(txPurchasePrice) || 0,
       date: txDate,
     });
     setTxArticle('');
     setTxDescription('');
     setTxCarName('');
     setTxPrice('');
+    setTxPurchasePrice('');
     setTxNewSupplier('');
     setIsAddItemModalOpen(false);
   };
@@ -145,7 +158,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       
-      {/* Top Header & Client Switcher */}
+      {/* Client Switcher Bar */}
       <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center space-x-2 overflow-x-auto pb-1 max-w-full">
           {(data.clients || []).map((cli) => {
@@ -185,11 +198,13 @@ export default function Clients({ selectedClientId, onSelectClient }) {
             <button
               onClick={() => {
                 setEditCliName(currentClient.name);
+                setEditCliPhone(currentClient.phone || '');
+                setEditCliCar(currentClient.car || '');
                 setEditCliInitial(currentClient.initialBalance || 0);
                 setIsEditCliModalOpen(true);
               }}
               className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition-colors"
-              title="Настройки клиента"
+              title="Настройки клиента, телефон, авто"
             >
               <Settings2 className="w-4 h-4" />
             </button>
@@ -204,10 +219,80 @@ export default function Clients({ selectedClientId, onSelectClient }) {
         )}
       </div>
 
-      {/* Client Stats & Operations */}
+      {/* Client Profile Banner (Phone, Car, Balances) */}
       {currentClient && stats && (
         <div className="space-y-6">
           
+          {/* Client Info Banner */}
+          <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg">
+                {currentClient.name.slice(0, 1).toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-slate-100 flex items-center space-x-2">
+                  <span>{currentClient.name}</span>
+                </h2>
+                
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1">
+                  {currentClient.phone ? (
+                    <a 
+                      href={`tel:${currentClient.phone}`}
+                      className="inline-flex items-center space-x-1 text-blue-400 hover:underline"
+                    >
+                      <Phone className="w-3 h-3" />
+                      <span>{currentClient.phone}</span>
+                    </a>
+                  ) : (
+                    <span 
+                      onClick={() => {
+                        setEditCliName(currentClient.name);
+                        setEditCliPhone(currentClient.phone || '');
+                        setEditCliCar(currentClient.car || '');
+                        setEditCliInitial(currentClient.initialBalance || 0);
+                        setIsEditCliModalOpen(true);
+                      }}
+                      className="cursor-pointer text-slate-500 hover:text-slate-300 flex items-center space-x-1"
+                    >
+                      <Phone className="w-3 h-3" />
+                      <span>+ Добавить телефон</span>
+                    </span>
+                  )}
+
+                  {currentClient.car ? (
+                    <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">
+                      <Car className="w-3 h-3 text-blue-400" />
+                      <span>Авто: {currentClient.car}</span>
+                    </span>
+                  ) : (
+                    <span 
+                      onClick={() => {
+                        setEditCliName(currentClient.name);
+                        setEditCliPhone(currentClient.phone || '');
+                        setEditCliCar(currentClient.car || '');
+                        setEditCliInitial(currentClient.initialBalance || 0);
+                        setIsEditCliModalOpen(true);
+                      }}
+                      className="cursor-pointer text-slate-500 hover:text-slate-300 flex items-center space-x-1"
+                    >
+                      <Car className="w-3 h-3" />
+                      <span>+ Добавить авто</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {stats.clientProfit > 0 && (
+              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-right">
+                <span className="text-[10px] text-slate-400 block uppercase">Доход с клиента</span>
+                <span className="text-xs font-bold font-mono text-emerald-400">
+                  +{formatMoney(stats.clientProfit)}
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Client Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
@@ -262,7 +347,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                 }`}
               >
                 <History className="w-3.5 h-3.5" />
-                <span>Лента сальдо (Все операции)</span>
+                <span>Лента сальдо</span>
               </button>
               <button
                 onClick={() => setViewMode('items')}
@@ -296,7 +381,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                 />
               </div>
               <button
-                onClick={() => setIsAddItemModalOpen(true)}
+                onClick={handleOpenAddItem}
                 className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -324,7 +409,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                       <th className="py-3 px-4">Дата</th>
                       <th className="py-3 px-4">Тип</th>
                       <th className="py-3 px-4">Артикул / Описание</th>
-                      {isEricOrVitya && <th className="py-3 px-4">Автомобиль</th>}
+                      <th className="py-3 px-4">Авто</th>
                       <th className="py-3 px-4">Поставщик</th>
                       <th className="py-3 px-4 text-right">Начислено (+)</th>
                       <th className="py-3 px-4 text-right">Оплата (-)</th>
@@ -346,6 +431,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                       })
                       .map((tx) => {
                         const isItem = tx.type === 'item';
+                        const carDisplay = tx.carName || currentClient?.car;
                         return (
                           <tr key={tx.id} className="hover:bg-slate-800/40 transition-colors">
                             <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
@@ -366,16 +452,14 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                                 {tx.description || tx.note || ''}
                               </div>
                             </td>
-                            {isEricOrVitya && (
-                              <td className="py-3 px-4 whitespace-nowrap">
-                                {tx.carName ? (
-                                  <span className="inline-flex items-center space-x-1 text-slate-300 font-medium">
-                                    <Car className="w-3 h-3 text-blue-400" />
-                                    <span>{tx.carName}</span>
-                                  </span>
-                                ) : '—'}
-                              </td>
-                            )}
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              {carDisplay ? (
+                                <span className="inline-flex items-center space-x-1 text-slate-300 font-medium">
+                                  <Car className="w-3 h-3 text-blue-400" />
+                                  <span>{carDisplay}</span>
+                                </span>
+                              ) : '—'}
+                            </td>
                             <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
                               {tx.supplierName ? (
                                 <span className="inline-flex items-center space-x-1">
@@ -406,7 +490,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                       })}
                     {stats.timeline.length === 0 && (
                       <tr>
-                        <td colSpan={isEricOrVitya ? "9" : "8"} className="py-10 text-center text-slate-500">
+                        <td colSpan="9" className="py-10 text-center text-slate-500">
                           Нет записей. Добавьте первую деталь или оплату кнопками выше.
                         </td>
                       </tr>
@@ -424,47 +508,57 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                       <th className="py-3 px-4">Дата</th>
                       <th className="py-3 px-4">Артикул</th>
                       <th className="py-3 px-4">Наименование</th>
-                      {isEricOrVitya && <th className="py-3 px-4">Авто</th>}
+                      <th className="py-3 px-4">Авто</th>
                       <th className="py-3 px-4">Поставщик</th>
-                      <th className="py-3 px-4 text-right">Цена (грн)</th>
+                      <th className="py-3 px-4 text-right">Закупка</th>
+                      <th className="py-3 px-4 text-right">Продажа (грн)</th>
+                      <th className="py-3 px-4 text-right">Доход</th>
                       <th className="py-3 px-4 text-center"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {data.clientTransactions
                       .filter((t) => t.clientId === currentClient.id && t.type === 'item')
-                      .map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
-                            {item.date || new Date(item.createdAt).toLocaleDateString('ru-RU')}
-                          </td>
-                          <td className="py-3 px-4 font-mono font-bold text-blue-300">
-                            {item.article || '—'}
-                          </td>
-                          <td className="py-3 px-4 text-slate-300">
-                            {item.description || '—'}
-                          </td>
-                          {isEricOrVitya && (
-                            <td className="py-3 px-4 text-slate-300 font-medium">
-                              {item.carName || '—'}
+                      .map((item) => {
+                        const hasCost = (item.purchasePrice || 0) > 0;
+                        const profit = hasCost ? item.amount - item.purchasePrice : null;
+                        return (
+                          <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
+                            <td className="py-3 px-4 text-slate-400 whitespace-nowrap">
+                              {item.date || new Date(item.createdAt).toLocaleDateString('ru-RU')}
                             </td>
-                          )}
-                          <td className="py-3 px-4 text-slate-400">
-                            {item.supplierName || '—'}
-                          </td>
-                          <td className="py-3 px-4 text-right font-mono font-bold text-amber-400 whitespace-nowrap">
-                            {formatMoney(item.amount)}
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <button
-                              onClick={() => deleteClientTransaction(item.id)}
-                              className="p-1 text-slate-500 hover:text-rose-400 rounded-md transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                            <td className="py-3 px-4 font-mono font-bold text-blue-300">
+                              {item.article || '—'}
+                            </td>
+                            <td className="py-3 px-4 text-slate-300">
+                              {item.description || '—'}
+                            </td>
+                            <td className="py-3 px-4 text-slate-300 font-medium">
+                              {item.carName || currentClient?.car || '—'}
+                            </td>
+                            <td className="py-3 px-4 text-slate-400">
+                              {item.supplierName || '—'}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono text-slate-300 whitespace-nowrap">
+                              {hasCost ? formatMoney(item.purchasePrice) : <span className="text-amber-500 italic">в очереди</span>}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono font-bold text-amber-400 whitespace-nowrap">
+                              {formatMoney(item.amount)}
+                            </td>
+                            <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">
+                              {profit !== null ? `+${formatMoney(profit)}` : '—'}
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <button
+                                onClick={() => deleteClientTransaction(item.id)}
+                                className="p-1 text-slate-500 hover:text-rose-400 rounded-md transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -515,7 +609,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
         </div>
       )}
 
-      {/* Modal: Add Client */}
+      {/* Modal: Add Client (Name, Phone, Car, Initial) */}
       <Modal isOpen={isAddCliModalOpen} onClose={() => setIsAddCliModalOpen(false)} title="Добавить нового клиента">
         <form onSubmit={handleCreateClient} className="space-y-4">
           <div>
@@ -529,6 +623,30 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               required
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Номер телефона</label>
+              <input
+                type="tel"
+                placeholder="+380..."
+                value={newCliPhone}
+                onChange={(e) => setNewCliPhone(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Автомобиль (для истории)</label>
+              <input
+                type="text"
+                placeholder="напр. Passat B6"
+                value={newCliCar}
+                onChange={(e) => setNewCliCar(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">Начальный долг (грн)</label>
             <input
@@ -540,6 +658,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono"
             />
           </div>
+
           <button
             type="submit"
             className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all"
@@ -549,7 +668,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
         </form>
       </Modal>
 
-      {/* Modal: Edit Client */}
+      {/* Modal: Edit Client (Name, Phone, Car, Initial) */}
       <Modal isOpen={isEditCliModalOpen} onClose={() => setIsEditCliModalOpen(false)} title="Редактировать клиента">
         <form onSubmit={handleUpdateClient} className="space-y-4">
           <div>
@@ -562,6 +681,30 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               required
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Номер телефона</label>
+              <input
+                type="tel"
+                placeholder="+380..."
+                value={editCliPhone}
+                onChange={(e) => setEditCliPhone(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Автомобиль (для истории)</label>
+              <input
+                type="text"
+                placeholder="напр. Passat B6"
+                value={editCliCar}
+                onChange={(e) => setEditCliCar(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">Начальный долг (грн)</label>
             <input
@@ -572,6 +715,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono"
             />
           </div>
+
           <button
             type="submit"
             className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all"
@@ -596,7 +740,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Цена (грн) *</label>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Цена продажи клиенту (грн) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -622,33 +766,47 @@ export default function Clients({ selectedClientId, onSelectClient }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
-                Автомобиль {isEricOrVitya ? '(для ' + currentClient.name + ')' : '(опционально)'}
+                Автомобиль
               </label>
               <input
                 type="text"
-                placeholder="Чери, Ренж, Тойота..."
+                placeholder={currentClient?.car || "Чери, Ренж, Тойота..."}
                 value={txCarName}
                 onChange={(e) => setTxCarName(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Поставщик (опционально)</label>
-              <select
-                value={txSupplierName}
-                onChange={(e) => {
-                  setTxSupplierName(e.target.value);
-                  if (e.target.value !== '__new__') setTxNewSupplier('');
-                }}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500"
-              >
-                <option value="">(Не выбран)</option>
-                {(data.suppliersList || []).map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-                <option value="__new__">+ Новый поставщик...</option>
-              </select>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Цена покупки у поставщика
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Если известно..."
+                value={txPurchasePrice}
+                onChange={(e) => setTxPurchasePrice(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500 font-mono"
+              />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">Поставщик (опционально)</label>
+            <select
+              value={txSupplierName}
+              onChange={(e) => {
+                setTxSupplierName(e.target.value);
+                if (e.target.value !== '__new__') setTxNewSupplier('');
+              }}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500"
+            >
+              <option value="">(Не выбран)</option>
+              {(data.suppliersList || []).map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+              <option value="__new__">+ Новый поставщик...</option>
+            </select>
           </div>
 
           {txSupplierName === '__new__' && (

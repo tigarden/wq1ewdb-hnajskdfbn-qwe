@@ -10,15 +10,14 @@ export const DEFAULT_SETTINGS = {
   lastSha: null,
 };
 
-// Initial clean structure with user's core clients
 export const INITIAL_DATA = {
-  version: 2,
+  version: 3,
   updatedAt: new Date().toISOString(),
   clients: [
-    { id: 'cli-1', name: 'Тотус', initialBalance: 0, notes: '', createdAt: new Date().toISOString() },
-    { id: 'cli-2', name: 'Тотус 2', initialBalance: 0, notes: '', createdAt: new Date().toISOString() },
-    { id: 'cli-3', name: 'Эрик', initialBalance: 0, notes: 'Привязка к авто (опционально)', createdAt: new Date().toISOString() },
-    { id: 'cli-4', name: 'Витя', initialBalance: 0, notes: 'Привязка к авто (опционально)', createdAt: new Date().toISOString() },
+    { id: 'cli-1', name: 'Тотус', phone: '', car: '', initialBalance: 0, notes: '', createdAt: new Date().toISOString() },
+    { id: 'cli-2', name: 'Тотус 2', phone: '', car: '', initialBalance: 0, notes: '', createdAt: new Date().toISOString() },
+    { id: 'cli-3', name: 'Эрик', phone: '', car: 'Range Rover / Chery', initialBalance: 0, notes: '', createdAt: new Date().toISOString() },
+    { id: 'cli-4', name: 'Витя', phone: '', car: 'Passat / Vito', initialBalance: 0, notes: '', createdAt: new Date().toISOString() },
   ],
   clientTransactions: [],
   suppliersList: ['Склад', 'Партс-Трейд', 'Автодок', 'Одесса'],
@@ -55,33 +54,20 @@ export function saveSettings(settings) {
 export function loadLocalData() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!raw) {
-      // Check if v1 existed and migrate
-      const v1Raw = localStorage.getItem('debet_auto_data_v1');
-      if (v1Raw) {
-        try {
-          const v1 = JSON.parse(v1Raw);
-          return {
-            ...INITIAL_DATA,
-            clients: v1.suppliers ? v1.suppliers.map(s => ({
-              ...s,
-              name: s.name === 'Эрнест' ? 'Эрик' : s.name
-            })) : INITIAL_DATA.clients,
-            clientTransactions: v1.supplierTransactions ? v1.supplierTransactions.map(t => ({
-              ...t,
-              clientId: t.supplierId
-            })) : [],
-            otherCounterparties: v1.otherCounterparties || INITIAL_DATA.otherCounterparties,
-            otherTransactions: v1.otherTransactions || [],
-          };
-        } catch (err) {}
-      }
-      return INITIAL_DATA;
-    }
+    if (!raw) return INITIAL_DATA;
     const data = JSON.parse(raw);
     return {
       ...INITIAL_DATA,
       ...data,
+      clients: (data.clients || INITIAL_DATA.clients).map(c => ({
+        ...c,
+        phone: c.phone || '',
+        car: c.car || '',
+      })),
+      clientTransactions: (data.clientTransactions || []).map(t => ({
+        ...t,
+        purchasePrice: t.purchasePrice !== undefined ? parseFloat(t.purchasePrice) || 0 : 0,
+      })),
     };
   } catch (e) {
     console.error('Failed to load local data:', e);

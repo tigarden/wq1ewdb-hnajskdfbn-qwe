@@ -4,6 +4,7 @@ import QuickAddModal from './components/QuickAddModal';
 import LockScreen from './components/LockScreen';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
+import IncomeAndQueue from './pages/IncomeAndQueue';
 import OtherSettlements from './pages/OtherSettlements';
 import PartsCatalog from './pages/PartsCatalog';
 import Settings from './pages/Settings';
@@ -15,7 +16,6 @@ export default function App() {
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
-  // If locked, show LockScreen
   if (!isUnlocked) {
     return <LockScreen onUnlock={unlockApp} />;
   }
@@ -44,6 +44,10 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'income' && (
+          <IncomeAndQueue />
+        )}
+
         {activeTab === 'other' && (
           <OtherSettlements />
         )}
@@ -63,7 +67,7 @@ export default function App() {
       />
 
       <footer className="border-t border-slate-900 py-4 text-center text-xs text-slate-500">
-        Debet.auto — Учет клиентов: Тотус, Тотус 2, Эрик, Витя • Защищено AES-256
+        Debet.auto — Учет клиентов: Тотус, Тотус 2, Эрик, Витя • Доход & Очередь закупок • AES-256
       </footer>
     </div>
   );
