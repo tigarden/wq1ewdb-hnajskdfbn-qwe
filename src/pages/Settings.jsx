@@ -18,7 +18,10 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  Server
+  Server,
+  Key,
+  ShieldAlert,
+  ArrowRight
 } from 'lucide-react';
 import { verifyGitHubToken } from '../services/githubApi';
 import { testSupabase } from '../services/supabase';
@@ -231,37 +234,40 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
       
-      {/* Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100">
+      {/* Title Header */}
+      <div className="card-emboss p-6 rounded-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-36 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <h1 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight">
           Синхронизация и безопасность
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Настройка облачного хранения данных без необходимости держать включенным компьютер, двухфакторная защита 2FA и бэкапы
+        <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+          Облачное хранилище без необходимости держать включенным компьютер, двухфакторная 2FA-защита через Google Authenticator и аварийные бэкапы.
         </p>
       </div>
 
-      {/* SECTION 1: Google Authenticator 2FA (Раз в неделю) */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 space-y-5 shadow-xl">
-        <div className="flex items-center justify-between">
+      {/* SECTION 1: Google Authenticator 2FA */}
+      <div className="card-emboss rounded-2xl p-5 sm:p-6 space-y-5 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400">
+            <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
               <Smartphone className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
-                <span>Google Authenticator (2FA)</span>
+              <div className="flex items-center space-x-2.5">
+                <h2 className="text-base font-bold text-slate-100">
+                  Google Authenticator (2FA)
+                </h2>
                 {isTotpEnabled ? (
-                  <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
-                    Подключен (активен)
+                  <span className="px-2.5 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+                    ● Активен
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 text-[10px] font-semibold bg-slate-800 text-slate-400 rounded-full">
+                  <span className="px-2.5 py-0.5 text-[10px] font-semibold bg-slate-800 text-slate-400 rounded-full">
                     Не настроен
                   </span>
                 )}
-              </h2>
-              <p className="text-xs text-slate-400">
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
                 Запрос 6-значного одноразового кода <strong>1 раз в неделю (сессия 7 дней)</strong> при входе в систему
               </p>
             </div>
@@ -271,24 +277,24 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
             {isTotpEnabled ? (
               <button
                 onClick={handleDisableTotp}
-                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/20 transition-all"
+                className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-rose-500/20 transition-all"
               >
                 Отключить 2FA
               </button>
             ) : !setupData && (
               <button
                 onClick={handleStartTotpSetup}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all flex items-center space-x-1.5"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all flex items-center space-x-2"
               >
                 <Smartphone className="w-4 h-4" />
-                <span>Подключить приложение</span>
+                <span>Подключить 2FA</span>
               </button>
             )}
           </div>
         </div>
 
         {totpMsg && (
-          <div className={`p-3 rounded-xl border text-xs font-medium ${
+          <div className={`p-3.5 rounded-xl border text-xs font-medium ${
             totpMsg.success
               ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
               : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
@@ -299,7 +305,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
 
         {/* Setup Wizard */}
         {setupData && !isTotpEnabled && (
-          <div className="p-5 rounded-2xl bg-slate-950/80 border border-indigo-500/20 space-y-4">
+          <div className="p-5 rounded-2xl bg-slate-950/90 border border-indigo-500/30 space-y-4 animate-in fade-in">
             <h3 className="text-sm font-bold text-slate-200">
               Пошаговое подключение Google Authenticator:
             </h3>
@@ -311,7 +317,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
                   alt="QR Code Google Authenticator"
                   className="w-44 h-44"
                 />
-                <span className="text-[11px] text-slate-600 font-medium">Отсканируйте камерой телефона</span>
+                <span className="text-[11px] text-slate-700 font-medium">Отсканируйте камерой телефона</span>
               </div>
 
               <div className="space-y-3 text-xs text-slate-300">
@@ -321,7 +327,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
                   <li>Или введите ключ вручную:</li>
                 </ol>
 
-                <div className="p-3 bg-slate-900 border border-slate-700 rounded-xl space-y-1.5">
+                <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-1.5">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold">Секретный ключ:</span>
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs text-indigo-300 font-bold tracking-wider break-all select-all">
@@ -340,7 +346,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
 
                 <form onSubmit={handleConfirmTotp} className="pt-2 space-y-2">
                   <label className="block text-[11px] font-semibold text-slate-300">
-                    Введите 6-значный код из приложения для подтверждения:
+                    Введите 6-значный код из приложения для активации:
                   </label>
                   <div className="flex space-x-2">
                     <input
@@ -374,7 +380,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
           </div>
         )}
 
-        <div className="p-3.5 rounded-xl bg-slate-950/40 border border-slate-800 flex items-center space-x-2.5 text-xs text-slate-400">
+        <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center space-x-3 text-xs text-slate-400">
           <Calendar className="w-4 h-4 text-indigo-400 shrink-0" />
           <span>
             При авторизации через Google Authenticator сессия действует ровно <strong>7 дней</strong>. В течение недели приложение открывается мгновенно, а через 7 дней запросит новый код.
@@ -382,33 +388,35 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
         </div>
       </div>
 
-      {/* SECTION 2: Облачный PostgreSQL через Supabase (24/7 без ПК) */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 space-y-5 shadow-xl">
+      {/* SECTION 2: Supabase Cloud PostgreSQL */}
+      <div className="card-emboss rounded-2xl p-5 sm:p-6 space-y-5 shadow-xl">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <Database className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
-              <span>Облачный PostgreSQL (Supabase)</span>
+            <div className="flex items-center space-x-2.5">
+              <h2 className="text-base font-bold text-slate-100">
+                Облачный PostgreSQL (Supabase)
+              </h2>
               {supabaseConfig.url ? (
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
-                  Подключено (Облако 24/7)
+                <span className="px-2.5 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+                  ● Подключено (24/7)
                 </span>
               ) : (
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-slate-800 text-slate-400 rounded-full">
+                <span className="px-2.5 py-0.5 text-[10px] font-semibold bg-slate-800 text-slate-400 rounded-full">
                   Не настроен
                 </span>
               )}
-            </h2>
-            <p className="text-xs text-slate-400">
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
               Полноценная база данных PostgreSQL в бесплатном облаке — работает круглосуточно с любого телефона или компьютера
             </p>
           </div>
         </div>
 
         {supabaseMsg && (
-          <div className={`p-3 rounded-xl border text-xs font-medium ${
+          <div className={`p-3.5 rounded-xl border text-xs font-medium ${
             supabaseMsg.success
               ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
               : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
@@ -428,7 +436,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
                 value={supabaseUrlInput}
                 onChange={(e) => setSupabaseUrlInput(e.target.value)}
                 placeholder="https://abcdefghijkl.supabase.co"
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-hidden focus:border-emerald-500"
+                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-hidden focus:border-emerald-500 transition-colors"
               />
             </div>
             <div>
@@ -440,13 +448,13 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
                 value={supabaseKeyInput}
                 onChange={(e) => setSupabaseKeyInput(e.target.value)}
                 placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-hidden focus:border-emerald-500"
+                className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-hidden focus:border-emerald-500 transition-colors"
               />
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="submit"
                 disabled={supabaseTesting}
@@ -459,14 +467,14 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
                   <button
                     type="button"
                     onClick={handleSupabaseSync}
-                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium"
+                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors"
                   >
-                    Отправить данные в Supabase
+                    Отправить в Supabase
                   </button>
                   <button
                     type="button"
                     onClick={handleSupabasePull}
-                    className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium"
+                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors"
                   >
                     Загрузить из Supabase
                   </button>
@@ -510,35 +518,37 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
         )}
       </div>
 
-      {/* SECTION 3: Облачное хранилище GitHub (Работает прямо сейчас!) */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 space-y-5 shadow-xl">
+      {/* SECTION 3: GitHub Storage */}
+      <div className="card-emboss rounded-2xl p-5 sm:p-6 space-y-5 shadow-xl">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400">
+          <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
             <Cloud className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
-              <span>Хранилище в GitHub (Работает без компьютера 24/7)</span>
+            <div className="flex items-center space-x-2.5">
+              <h2 className="text-base font-bold text-slate-100">
+                Хранилище в GitHub
+              </h2>
               {settings.token ? (
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
-                  Активно
+                <span className="px-2.5 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+                  ● Активно
                 </span>
               ) : (
-                <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full">
-                  Локальный режим (введите токен для синхронизации)
+                <span className="px-2.5 py-0.5 text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full">
+                  Локальный режим
                 </span>
               )}
-            </h2>
-            <p className="text-xs text-slate-400">
-              Сохранение данных прямо в репозиторий под учетной записью <strong className="text-slate-300">tigarden</strong> с шифрованием AES-256
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Синхронизация данных прямо в репозиторий учетной записи <strong className="text-slate-300">tigarden</strong> с AES-256 шифрованием
             </p>
           </div>
         </div>
 
         {/* Status Indicator */}
-        <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
-            <div className={`w-3 h-3 rounded-full ${
+            <div className={`w-3 h-3 rounded-full shrink-0 ${
               syncStatus === 'synced' ? 'bg-emerald-500 shadow-sm shadow-emerald-500' :
               syncStatus === 'unsaved' ? 'bg-amber-400 animate-pulse' :
               syncStatus === 'syncing' ? 'bg-blue-400 animate-spin' : 'bg-slate-600'
@@ -551,7 +561,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
                  syncStatus === 'no_token' ? 'Токен не указан (работает в браузере)' : 'Ошибка синхронизации'}
               </span>
               {lastSyncTime && (
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] font-mono text-slate-500 mt-0.5">
                   Последний обмен: {new Date(lastSyncTime).toLocaleString('ru-RU')}
                 </p>
               )}
@@ -561,13 +571,13 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
           <div className="flex items-center space-x-2">
             <button
               onClick={() => pushToGitHub()}
-              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/30 transition-all"
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/30 transition-all"
             >
               Отправить в GitHub
             </button>
             <button
               onClick={() => pullFromGitHub()}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
             >
               Загрузить
             </button>
@@ -575,7 +585,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
         </div>
 
         {githubVerifyMsg && (
-          <div className={`p-3 rounded-xl border text-xs font-medium ${
+          <div className={`p-3.5 rounded-xl border text-xs font-medium ${
             githubVerifyMsg.success
               ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
               : 'bg-rose-950/40 border-rose-500/30 text-rose-300'
@@ -594,42 +604,44 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
               placeholder="ghp_xxxxxxxxxxxx..."
-              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-hidden focus:border-blue-500"
+              className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-hidden focus:border-blue-500 transition-colors"
             />
           </div>
 
           <button
             type="submit"
             disabled={isVerifyingGithub}
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition-all disabled:opacity-50"
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition-all disabled:opacity-50"
           >
             {isVerifyingGithub ? 'Проверка...' : 'Сохранить токен'}
           </button>
         </form>
       </div>
 
-      {/* SECTION 4: Собственный сервер API / FastAPI (Опционально) */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 space-y-4 shadow-xl">
+      {/* SECTION 4: Self-Hosted FastAPI */}
+      <div className="card-emboss rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">
         <button
           type="button"
           onClick={() => setShowSelfHosted(!showSelfHosted)}
           className="w-full flex items-center justify-between text-left"
         >
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-slate-800 text-slate-400">
+            <div className="p-2.5 rounded-xl bg-slate-800/80 text-slate-400">
               <Server className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
-                <span>Собственный сервер API (FastAPI / Render / VPS)</span>
+              <div className="flex items-center space-x-2.5">
+                <h2 className="text-base font-bold text-slate-100">
+                  Собственный сервер API (FastAPI / VPS)
+                </h2>
                 {backendHealth?.status === 'online' && (
-                  <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
-                    Подключен
+                  <span className="px-2.5 py-0.5 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+                    ● Онлайн
                   </span>
                 )}
-              </h2>
-              <p className="text-xs text-slate-400">
-                Для тех, кто развернул бэкенд на отдельном сервере или запускает локально на ПК
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Опциональное подключение к локальному серверу FastAPI или внешнему хостингу
               </p>
             </div>
           </div>
@@ -637,14 +649,14 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
         </button>
 
         {showSelfHosted && (
-          <div className="pt-4 border-t border-slate-800 space-y-4 animate-in fade-in">
+          <div className="pt-4 border-t border-slate-800/80 space-y-4 animate-in fade-in">
             <div className="flex space-x-2">
               <input
                 type="text"
                 value={apiUrlInput}
                 onChange={(e) => setApiUrlInput(e.target.value)}
                 placeholder="https://your-server.onrender.com/api"
-                className="flex-1 px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-hidden focus:border-blue-500"
+                className="flex-1 px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-hidden focus:border-blue-500 transition-colors"
               />
               <button
                 type="button"
@@ -652,7 +664,7 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
                   updateBackendUrl(apiUrlInput.trim());
                   alert('URL API сохранен.');
                 }}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
               >
                 Сохранить
               </button>
@@ -665,17 +677,17 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
       </div>
 
       {/* SECTION 5: Export & Backups */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 space-y-5 shadow-xl">
+      <div className="card-emboss rounded-2xl p-5 sm:p-6 space-y-5 shadow-xl">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">
+          <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <FileSpreadsheet className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-100">
               Экспорт и локальные бэкапы
             </h2>
-            <p className="text-xs text-slate-400">
-              Выгрузка полной бухгалтерии в Excel или резервный JSON-файл
+            <p className="text-xs text-slate-400 mt-0.5">
+              Выгрузка полной бухгалтерии в Excel или резервный зашифрованный JSON-файл
             </p>
           </div>
         </div>
@@ -683,22 +695,22 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
           <button
             onClick={exportToExcel}
-            className="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs font-semibold transition-all"
+            className="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold transition-all shadow-sm group"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
             <span>Выгрузить Excel (.xlsx)</span>
           </button>
 
           <button
             onClick={exportJsonBackup}
-            className="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs font-semibold transition-all"
+            className="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold transition-all shadow-sm group"
           >
-            <Download className="w-4 h-4 text-blue-400" />
+            <Download className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
             <span>Скачать JSON бэкап</span>
           </button>
 
-          <label className="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs font-semibold cursor-pointer transition-all">
-            <Upload className="w-4 h-4 text-amber-400" />
+          <label className="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-semibold cursor-pointer transition-all shadow-sm group">
+            <Upload className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
             <span>Восстановить из JSON</span>
             <input
               type="file"
@@ -713,3 +725,4 @@ CREATE POLICY "Allow anon read/write" ON debet_data FOR ALL TO anon USING (true)
     </div>
   );
 }
+

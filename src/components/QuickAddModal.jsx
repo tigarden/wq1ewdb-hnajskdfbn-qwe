@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { useData } from '../context/DataContext';
-import { Package, CreditCard, UserPlus } from 'lucide-react';
+import { Package, CreditCard, UserPlus, TrendingUp, Sparkles, Check } from 'lucide-react';
+import { formatMoney } from '../utils/format';
 
 export default function QuickAddModal({ isOpen, onClose }) {
   const { data, addClientTransaction, addOtherTransaction, addSupplierToDirectory } = useData();
@@ -13,7 +14,6 @@ export default function QuickAddModal({ isOpen, onClose }) {
   const [description, setDescription] = useState('');
   const [carName, setCarName] = useState('');
   const [supplierName, setSupplierName] = useState('');
-  const [newSupplierInput, setNewSupplierInput] = useState('');
   const [price, setPrice] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [itemDate, setItemDate] = useState(new Date().toISOString().split('T')[0]);
@@ -39,23 +39,28 @@ export default function QuickAddModal({ isOpen, onClose }) {
     }
   }, [clientId, selectedClient]);
 
+  // Live margin calculation
+  const numPrice = parseFloat(price) || 0;
+  const numPurchase = parseFloat(purchasePrice) || 0;
+  const expectedProfit = numPurchase > 0 && numPrice > 0 ? numPrice - numPurchase : 0;
+  const expectedMarginPercent = numPurchase > 0 && numPrice > 0 ? (expectedProfit / numPurchase) * 100 : 0;
+
   const handleAddItem = (e) => {
     e.preventDefault();
     if (!clientId || !price) return;
     
-    let finalSupplier = supplierName;
-    if (newSupplierInput.trim()) {
-      finalSupplier = newSupplierInput.trim();
+    const finalSupplier = supplierName.trim();
+    if (finalSupplier && !data.suppliersList?.includes(finalSupplier)) {
       addSupplierToDirectory(finalSupplier);
     }
 
     addClientTransaction({
       clientId,
       type: 'item',
-      article,
-      description,
-      carName: carName || '',
-      supplierName: finalSupplier || '',
+      article: article.trim().toUpperCase(),
+      description: description.trim(),
+      carName: carName.trim(),
+      supplierName: finalSupplier,
       amount: parseFloat(price),
       purchasePrice: parseFloat(purchasePrice) || 0,
       date: itemDate,
@@ -66,7 +71,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
     setCarName('');
     setPrice('');
     setPurchasePrice('');
-    setNewSupplierInput('');
+    setSupplierName('');
     onClose();
   };
 
@@ -78,7 +83,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
       type: 'payment',
       amount: parseFloat(paymentAmount),
       date: paymentDate,
-      note: paymentNote,
+      note: paymentNote.trim(),
     });
     setPaymentAmount('');
     setPaymentNote('');
@@ -92,7 +97,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
     addOtherTransaction({
       counterpartyId: otherCounterpartyId,
       amount: finalAmt,
-      note: otherNote,
+      note: otherNote.trim(),
     });
     setOtherAmount('');
     setOtherNote('');
@@ -100,30 +105,48 @@ export default function QuickAddModal({ isOpen, onClose }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Быстрое добавление записи">
-      <div className="flex border-b border-slate-800 mb-5 space-x-2">
+    <Modal isOpen={isOpen} onClose={onClose} title="Быстрое создание записи">
+      
+      {/* Suppliers list for auto-complete */}
+      <datalist id="quick-add-suppliers-list">
+        {(data.suppliersList || []).map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
+
+      {/* Segmented Tabs Switcher */}
+      <div className="flex p-1 bg-slate-950/80 rounded-xl border border-slate-800/80 mb-5">
         <button
+          type="button"
           onClick={() => setTab('item')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-            tab === 'item' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+          className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+            tab === 'item' 
+              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' 
+              : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           <Package className="w-3.5 h-3.5" />
           <span>Деталь клиенту</span>
         </button>
         <button
+          type="button"
           onClick={() => setTab('payment')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-            tab === 'payment' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+          className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+            tab === 'payment' 
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' 
+              : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           <CreditCard className="w-3.5 h-3.5" />
           <span>Оплата от клиента</span>
         </button>
         <button
+          type="button"
           onClick={() => setTab('other')}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
-            tab === 'other' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+          className={`flex-1 flex items-center justify-center space-x-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+            tab === 'other' 
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' 
+              : 'text-slate-400 hover:text-slate-200'
           }`}
         >
           <UserPlus className="w-3.5 h-3.5" />
@@ -134,7 +157,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'item' && (
         <form onSubmit={handleAddItem} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Клиент *</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Клиент *</label>
             <select
               value={clientId}
               onChange={(e) => {
@@ -142,12 +165,12 @@ export default function QuickAddModal({ isOpen, onClose }) {
                 const cli = data.clients?.find(c => c.id === e.target.value);
                 if (cli && cli.car) setCarName(cli.car);
               }}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 transition-colors"
               required
             >
               {(data.clients || []).map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name} {c.car ? `(${c.car})` : ''}
+                  {c.name} {c.car ? `• (${c.car})` : ''}
                 </option>
               ))}
             </select>
@@ -155,49 +178,49 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Артикул / Код</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Артикул / Каталожный код</label>
               <input
                 type="text"
                 placeholder="напр. S TL C00117/8"
                 value={article}
                 onChange={(e) => setArticle(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 uppercase font-mono"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 uppercase font-mono transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Цена продажи клиенту (грн) *</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Цена продажи клиенту (грн) *</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono font-semibold text-amber-400"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono font-bold text-amber-400 transition-colors"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Наименование детали</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Наименование детали / Работы</label>
             <input
               type="text"
-              placeholder="Сцепление, масло, тяжки, колодки..."
+              placeholder="Сцепление, масло 5w30, колодки, фильтр..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 transition-colors"
             />
           </div>
 
-          {/* Optional Car Binding */}
-          <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-300">
-                Автомобиль (опционально, для истории)
-              </span>
+          {/* Optional Car */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-300">
+                Автомобиль (опционально)
+              </label>
               {selectedClient?.car && (
-                <span className="text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">
-                  авто клиента: {selectedClient.car}
+                <span className="text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                  по умолчанию: {selectedClient.car}
                 </span>
               )}
             </div>
@@ -206,32 +229,26 @@ export default function QuickAddModal({ isOpen, onClose }) {
               placeholder="напр. Чери, Ренж, Тойота, Пассат..."
               value={carName}
               onChange={(e) => setCarName(e.target.value)}
-              className="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 text-xs focus:outline-hidden focus:border-blue-500"
+              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:outline-hidden focus:border-blue-500 transition-colors"
             />
           </div>
 
           {/* Supplier and Purchase Price */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Поставщик (опционально)</label>
-              <select
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Поставщик / Склад</label>
+              <input
+                type="text"
+                list="quick-add-suppliers-list"
+                placeholder="Склад / Автомир..."
                 value={supplierName}
-                onChange={(e) => {
-                  setSupplierName(e.target.value);
-                  if (e.target.value !== '__new__') setNewSupplierInput('');
-                }}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500"
-              >
-                <option value="">(Не выбран)</option>
-                {(data.suppliersList || []).map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-                <option value="__new__">+ Новый поставщик...</option>
-              </select>
+                onChange={(e) => setSupplierName(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500 transition-colors"
+              />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">
-                Цена покупки у поставщика
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Закупочная цена (себестоимость)
               </label>
               <input
                 type="number"
@@ -239,39 +256,37 @@ export default function QuickAddModal({ isOpen, onClose }) {
                 placeholder="Если известно..."
                 value={purchasePrice}
                 onChange={(e) => setPurchasePrice(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500 font-mono"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500 font-mono transition-colors"
               />
-              <span className="text-[10px] text-slate-500 block mt-0.5">
-                Если оставить пустым — попадет в очередь
-              </span>
             </div>
           </div>
 
-          {supplierName === '__new__' && (
-            <div>
-              <input
-                type="text"
-                placeholder="Имя нового поставщика (напр. Склад Орел)"
-                value={newSupplierInput}
-                onChange={(e) => setNewSupplierInput(e.target.value)}
-                className="w-full px-3 py-1.5 bg-slate-800 border border-blue-500 rounded-xl text-slate-100 text-xs"
-              />
+          {/* Live Margin Calculation Preview */}
+          {numPrice > 0 && numPurchase > 0 && (
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs animate-in fade-in">
+              <div className="flex items-center space-x-2 text-emerald-300">
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <span className="font-semibold">Расчетная маржа:</span>
+              </div>
+              <div className="text-right font-mono font-bold text-emerald-400">
+                +{formatMoney(expectedProfit)} (+{expectedMarginPercent.toFixed(0)}%)
+              </div>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Дата</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Дата</label>
             <input
               type="date"
               value={itemDate}
               onChange={(e) => setItemDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500"
+              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-blue-500 transition-colors font-mono"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all"
+            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all mt-2"
           >
             Записать деталь клиенту
           </button>
@@ -281,11 +296,11 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'payment' && (
         <form onSubmit={handleAddPayment} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Клиент *</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Клиент *</label>
             <select
               value={paymentClientId}
               onChange={(e) => setPaymentClientId(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-emerald-500 transition-colors"
               required
             >
               {(data.clients || []).map((c) => (
@@ -296,42 +311,43 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Сумма оплаты (грн) *</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Сумма оплаты (грн) *</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono font-semibold text-emerald-400"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-emerald-500 font-mono font-bold text-emerald-400 transition-colors"
                 required
+                autoFocus
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Дата оплаты</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Дата оплаты</label>
               <input
                 type="date"
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-emerald-500 transition-colors font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Примечание</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Примечание</label>
             <input
               type="text"
-              placeholder="Перевод на карту, на руки и т.д."
+              placeholder="Перевод на карту, наличные на руки и т.д."
               value={paymentNote}
               onChange={(e) => setPaymentNote(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-xs placeholder-slate-500 focus:outline-hidden focus:border-emerald-500 transition-colors"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all"
+            className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-lg shadow-emerald-600/30 transition-all mt-2"
           >
             Внести оплату от клиента
           </button>
@@ -341,12 +357,12 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'other' && (
         <form onSubmit={handleAddOther} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Контрагент *</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Контрагент *</label>
             {(data.otherCounterparties || []).length > 0 ? (
               <select
                 value={otherCounterpartyId}
                 onChange={(e) => setOtherCounterpartyId(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-indigo-500 transition-colors"
                 required
               >
                 {(data.otherCounterparties || []).map((p) => (
@@ -354,53 +370,53 @@ export default function QuickAddModal({ isOpen, onClose }) {
                 ))}
               </select>
             ) : (
-              <p className="text-xs text-amber-400">
-                Сначала добавьте контрагента во вкладке «Контрагенты»!
+              <p className="text-xs text-amber-400 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                Сначала создайте контрагента во вкладке «Контрагенты»!
               </p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Тип операции</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Тип операции</label>
               <select
                 value={otherType}
                 onChange={(e) => setOtherType(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-xs focus:outline-hidden focus:border-indigo-500 transition-colors font-semibold"
               >
                 <option value="plus">+ Долг нам (начисление)</option>
                 <option value="minus">- Возврат / Оплата</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Сумма (грн) *</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Сумма (грн) *</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 value={otherAmount}
                 onChange={(e) => setOtherAmount(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 font-mono font-semibold text-slate-100"
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-indigo-500 font-mono font-semibold text-slate-100 transition-colors"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Примечание</label>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Примечание</label>
             <input
               type="text"
-              placeholder="За что, подробности"
+              placeholder="За что, подробности операции..."
               value={otherNote}
               onChange={(e) => setOtherNote(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-xs placeholder-slate-500 focus:outline-hidden focus:border-indigo-500 transition-colors"
             />
           </div>
 
           <button
             type="submit"
             disabled={(data.otherCounterparties || []).length === 0}
-            className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all"
+            className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all mt-2"
           >
             Записать операцию
           </button>
@@ -409,3 +425,4 @@ export default function QuickAddModal({ isOpen, onClose }) {
     </Modal>
   );
 }
+

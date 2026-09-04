@@ -21,14 +21,14 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenQuickAdd={() => setIsQuickAddOpen(true)}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-28 md:pb-10">
         {activeTab === 'dashboard' && (
           <Dashboard
             setActiveTab={setActiveTab}
@@ -66,7 +66,7 @@ export default function App() {
         onClose={() => setIsQuickAddOpen(false)}
       />
 
-      <footer className="border-t border-slate-900 py-4 text-center text-xs text-slate-500">
+      <footer className="border-t border-white/5 py-4 text-center text-xs text-slate-500 mb-14 md:mb-0">
         Debet.auto — Учет взаиморасчетов, запчастей и доходов • Защита AES-256
       </footer>
     </div>
