@@ -117,14 +117,14 @@ export default function IncomeAndQueue() {
       {/* Top Status & Action Bar */}
       <div className="surface-card p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-            <DollarSign className="w-4 h-4" />
+          <div className="w-8 h-8 2xl:w-9 2xl:h-9 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+            <DollarSign className="w-4 h-4 2xl:w-4.5 2xl:h-4.5" />
           </div>
           <div>
-            <h1 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
+            <h1 className="text-xs sm:text-sm 2xl:text-base font-bold uppercase tracking-wider text-slate-200">
               Очередь закупок и маржинальность
             </h1>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-xs 2xl:text-sm text-slate-400">
               Ввод себестоимости от поставщиков и расчет маржи по каждой позиции
             </p>
           </div>
@@ -248,19 +248,19 @@ export default function IncomeAndQueue() {
       </div>
 
       {/* Queue Table Card */}
-      <div className="surface-card rounded-lg overflow-hidden">
+      <div className="surface-card rounded-xl overflow-hidden shadow-lg border border-white/[0.08]">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+          <table className="w-full text-left border-collapse text-xs sm:text-sm">
             <thead>
-              <tr className="border-b border-white/10 bg-[#090d16] text-slate-400 uppercase font-semibold text-[10px] tracking-wider">
-                <th className="py-2.5 px-3">Дата / Клиент</th>
-                <th className="py-2.5 px-3">Артикул / Деталь</th>
-                <th className="py-2.5 px-3">Автомобиль</th>
-                <th className="py-2.5 px-3">Поставщик</th>
-                <th className="py-2.5 px-3 text-right">Продажа</th>
-                <th className="py-2.5 px-3 text-center">Себестоимость</th>
-                <th className="py-2.5 px-3 text-right">Чистый доход</th>
-                <th className="py-2.5 px-3 text-center">Действие</th>
+              <tr className="border-b border-white/10 bg-[#090d16] text-slate-400 uppercase font-semibold text-xs 2xl:text-sm tracking-wider">
+                <th className="py-3 px-3.5">Дата / Клиент</th>
+                <th className="py-3 px-3.5">Артикул / Деталь</th>
+                <th className="py-3 px-3.5">Автомобиль</th>
+                <th className="py-3 px-3.5">Поставщик</th>
+                <th className="py-3 px-3.5 text-right">Продажа</th>
+                <th className="py-3 px-3.5 text-center">Себестоимость</th>
+                <th className="py-3 px-3.5 text-right">Чистый доход</th>
+                <th className="py-3 px-3.5 text-center">Действие</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -289,20 +289,20 @@ export default function IncomeAndQueue() {
                   >
                     
                     {/* Date & Client */}
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <div className="font-semibold text-slate-200">
+                    <td className="py-3 px-3.5 whitespace-nowrap">
+                      <div className="font-semibold text-slate-200 text-xs sm:text-sm 2xl:text-base">
                         {cli?.name || 'Клиент'}
                       </div>
-                      <div className="text-[10px] font-mono text-slate-500">
+                      <div className="text-xs font-mono text-slate-500">
                         {tx.date || new Date(tx.createdAt).toLocaleDateString('ru-RU')}
                       </div>
                     </td>
 
                     {/* Article & Description */}
-                    <td className="py-2.5 px-3">
+                    <td className="py-3 px-3.5">
                       {tx.article ? (
                         <div className="flex items-center space-x-1.5">
-                          <span className="font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 text-[11px]">
+                          <span className="font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 text-xs">
                             {tx.article}
                           </span>
                           <button
@@ -312,26 +312,26 @@ export default function IncomeAndQueue() {
                             title="Скопировать артикул"
                           >
                             {copiedArticle === tx.article ? (
-                              <Check className="w-3 h-3 text-emerald-400" />
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
                             ) : (
-                              <Copy className="w-3 h-3" />
+                              <Copy className="w-3.5 h-3.5" />
                             )}
                           </button>
                         </div>
                       ) : (
                         <span className="text-slate-600 font-mono">—</span>
                       )}
-                      <div className="text-slate-300 text-xs mt-0.5 max-w-xs truncate font-medium">
+                      <div className="text-slate-300 text-xs sm:text-sm mt-0.5 max-w-sm truncate font-medium">
                         {tx.description || '—'}
                       </div>
                     </td>
 
                     {/* Car */}
-                    <td className="py-2.5 px-3 whitespace-nowrap">
+                    <td className="py-3 px-3.5 whitespace-nowrap">
                       {(tx.carName || cli?.car) ? (
-                        <span className="inline-flex items-center space-x-1 text-xs text-slate-300">
-                          <Car className="w-3 h-3 text-blue-400 shrink-0" />
-                          <span className="truncate max-w-[130px]">{tx.carName || cli?.car}</span>
+                        <span className="inline-flex items-center space-x-1 text-xs sm:text-sm text-slate-300">
+                          <Car className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                          <span className="truncate max-w-[150px]">{tx.carName || cli?.car}</span>
                         </span>
                       ) : (
                         <span className="text-slate-600">—</span>
@@ -339,24 +339,24 @@ export default function IncomeAndQueue() {
                     </td>
 
                     {/* Supplier Input with Autocomplete */}
-                    <td className="py-2.5 px-3 whitespace-nowrap">
+                    <td className="py-3 px-3.5 whitespace-nowrap">
                       <input
                         type="text"
                         list="suppliers-autocomplete-list"
                         placeholder="Склад / Поставщик"
                         value={currentSupplierVal}
                         onChange={(e) => handleSupplierChange(tx.id, e.target.value)}
-                        className="input-sm h-8 w-32 sm:w-36 text-xs px-2 rounded-md"
+                        className="input-sm h-8 2xl:h-9 w-32 sm:w-40 text-xs 2xl:text-sm px-2.5 rounded-md"
                       />
                     </td>
 
                     {/* Client Sale Price */}
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-400 text-xs sm:text-sm whitespace-nowrap">
+                    <td className="py-3 px-3.5 text-right font-mono font-bold text-amber-400 text-xs sm:text-sm 2xl:text-base whitespace-nowrap">
                       {formatMoney(tx.amount)}
                     </td>
 
                     {/* Purchase Price Input */}
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                    <td className="py-3 px-3.5 text-center whitespace-nowrap">
                       <div className="inline-flex items-center space-x-1">
                         <input
                           type="number"
@@ -367,54 +367,54 @@ export default function IncomeAndQueue() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSaveItem(tx);
                           }}
-                          className={`h-8 w-24 px-2 rounded-md text-xs font-mono font-bold text-right focus:outline-none transition-colors ${
+                          className={`h-8 2xl:h-9 w-24 2xl:w-28 px-2 rounded-md text-xs 2xl:text-sm font-mono font-bold text-right focus:outline-none transition-colors ${
                             numPurchase > 0
                               ? 'bg-[#0b0f19] text-white border border-white/10 focus:border-emerald-500'
                               : 'bg-amber-950/30 text-amber-200 border border-amber-500/50 focus:border-amber-400'
                           }`}
                         />
-                        <span className="text-slate-500 text-[10px] font-mono">грн</span>
+                        <span className="text-slate-500 text-xs font-mono">грн</span>
                       </div>
                     </td>
 
                     {/* Profit / Margin Result */}
-                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                    <td className="py-3 px-3.5 text-right whitespace-nowrap">
                       {numPurchase > 0 ? (
                         <div>
-                          <div className={`font-mono font-bold text-xs sm:text-sm ${
+                          <div className={`font-mono font-bold text-xs sm:text-sm 2xl:text-base ${
                             profit > 0 ? 'text-emerald-400' : profit === 0 ? 'text-slate-400' : 'text-rose-400'
                           }`}>
                             {profit > 0 ? `+${formatMoney(profit)}` : formatMoney(profit)}
                           </div>
-                          <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                          <div className="text-xs font-mono text-slate-400 mt-0.5">
                             +{marginPercent.toFixed(0)}%
                           </div>
                         </div>
                       ) : (
-                        <span className="text-amber-400/80 text-[11px] font-mono">
+                        <span className="text-amber-400/80 text-xs font-mono">
                           Ожидает цену
                         </span>
                       )}
                     </td>
 
                     {/* Save Button */}
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                    <td className="py-3 px-3.5 text-center whitespace-nowrap">
                       <button
                         onClick={() => handleSaveItem(tx)}
-                        className={`btn-sm h-8 px-2.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
+                        className={`btn-sm 2xl:btn-md h-8 2xl:h-9 px-3 rounded-md text-xs 2xl:text-sm font-semibold cursor-pointer transition-colors ${
                           isSaved
                             ? 'bg-emerald-500 text-slate-950 font-bold'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white'
+                            : 'btn-primary'
                         }`}
                       >
                         {isSaved ? (
                           <>
-                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <CheckCircle2 className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
                             <span>Готово</span>
                           </>
                         ) : (
                           <>
-                            <Save className="w-3.5 h-3.5" />
+                            <Save className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
                             <span>Записать</span>
                           </>
                         )}

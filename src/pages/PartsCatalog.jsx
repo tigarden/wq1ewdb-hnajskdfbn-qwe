@@ -78,28 +78,28 @@ export default function PartsCatalog() {
     <div className="space-y-6 animate-in fade-in duration-300">
       
       {/* Top Status & Action Bar */}
-      <div className="surface-card p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-            <Package className="w-4 h-4" />
+      <div className="surface-card p-3.5 sm:p-4 2xl:p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-white/[0.08]">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 2xl:w-9 2xl:h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+            <Package className="w-4 h-4 2xl:w-5 2xl:h-5" />
           </div>
           <div>
-            <h1 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
+            <h1 className="text-xs sm:text-sm 2xl:text-base font-bold uppercase tracking-wider text-slate-200">
               Каталог и история артикулов
             </h1>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-xs 2xl:text-sm text-slate-400 mt-0.5">
               Поиск по каталожным номерам, история замен и разброс цен по клиентам
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <div className="h-8 px-3 rounded-md bg-[#090d16] border border-white/10 text-xs font-mono flex items-center space-x-1.5">
-            <Layers className="w-3.5 h-3.5 text-blue-400" />
+        <div className="flex items-center space-x-2.5">
+          <div className="h-8 2xl:h-9 px-3 2xl:px-4 rounded-lg bg-[#090d16] border border-white/10 text-xs 2xl:text-sm font-mono flex items-center space-x-2">
+            <Layers className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-blue-400" />
             <span className="text-slate-400">Кодов:</span>
             <strong className="text-blue-300 font-bold">{catalog.length}</strong>
           </div>
-          <div className="h-8 px-3 rounded-md bg-[#090d16] border border-white/10 text-xs font-mono flex items-center space-x-1.5">
+          <div className="h-8 2xl:h-9 px-3 2xl:px-4 rounded-lg bg-[#090d16] border border-white/10 text-xs 2xl:text-sm font-mono flex items-center space-x-2">
             <span className="text-slate-400">Установок:</span>
             <strong className="text-emerald-400 font-bold">{totalEntriesCount}</strong>
           </div>
@@ -107,15 +107,15 @@ export default function PartsCatalog() {
       </div>
 
       {/* Search Input Bar */}
-      <div className="surface-card p-2 rounded-lg">
+      <div className="surface-card p-2.5 2xl:p-3 rounded-xl border border-white/[0.08]">
         <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-500 absolute left-3 pointer-events-none" />
           <input
             type="text"
             placeholder="Поиск по артикулу (напр. S SF OF1053), названию или модели авто..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="input-md w-full pl-9 pr-9 font-mono"
+            className="input-md 2xl:h-10 w-full pl-9 pr-9 font-mono text-xs 2xl:text-sm"
           />
           {query && (
             <button
@@ -129,17 +129,17 @@ export default function PartsCatalog() {
       </div>
 
       {/* Catalog Cards Grid */}
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         {filtered.map((item) => (
           <div
             key={item.article}
-            className="surface-card p-3.5 sm:p-4 rounded-lg space-y-3 transition-colors hover:border-white/20 group"
+            className="surface-card p-4 2xl:p-5 rounded-xl space-y-3.5 transition-colors hover:border-white/20 group shadow-lg border border-white/[0.08]"
           >
             {/* Top Bar: Code, Count & Price Range */}
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs sm:text-sm font-bold font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20 tracking-wider">
+                  <span className="text-xs sm:text-sm 2xl:text-base font-bold font-mono text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded border border-blue-500/20 tracking-wider">
                     {item.article}
                   </span>
                   <button
@@ -154,13 +154,13 @@ export default function PartsCatalog() {
                       <Copy className="w-3.5 h-3.5" />
                     )}
                   </button>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-slate-400 font-mono border border-white/10">
+                  <span className="text-xs px-2.5 py-0.5 rounded bg-white/5 text-slate-400 font-mono border border-white/10">
                     {pluralize(item.entries.length, ['запись', 'записи', 'записей'])}
                   </span>
                 </div>
 
                 {item.descriptions.length > 0 && (
-                  <p className="text-xs text-slate-200 mt-1.5 font-medium">
+                  <p className="text-xs sm:text-sm text-slate-200 mt-1.5 font-medium">
                     {item.descriptions.join(' • ')}
                   </p>
                 )}
@@ -168,9 +168,9 @@ export default function PartsCatalog() {
                 {/* Cars chips */}
                 {item.cars.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                    <Car className="w-3 h-3 text-slate-500 mr-0.5" />
+                    <Car className="w-3.5 h-3.5 text-slate-500 mr-0.5" />
                     {item.cars.map((car) => (
-                      <span key={car} className="text-[10px] px-1.5 py-0.2 rounded bg-white/5 text-slate-400 border border-white/10 font-mono">
+                      <span key={car} className="text-xs px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-white/10 font-mono">
                         {car}
                       </span>
                     ))}
@@ -180,8 +180,8 @@ export default function PartsCatalog() {
 
               {/* Price Range */}
               <div className="text-right">
-                <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider block">Диапазон цен</span>
-                <div className="text-sm sm:text-base font-bold font-mono text-amber-400 mt-0.5">
+                <span className="text-xs text-slate-500 uppercase font-semibold tracking-wider block">Диапазон цен</span>
+                <div className="text-sm sm:text-base 2xl:text-lg font-bold font-mono text-amber-400 mt-0.5">
                   {item.minPrice === item.maxPrice
                     ? formatMoney(item.minPrice)
                     : `${formatMoney(item.minPrice)} – ${formatMoney(item.maxPrice)}`}
@@ -190,29 +190,29 @@ export default function PartsCatalog() {
             </div>
 
             {/* Clients Installation History */}
-            <div className="pt-2.5 border-t border-white/5">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+            <div className="pt-3 border-t border-white/5">
+              <span className="text-xs 2xl:text-sm font-semibold text-slate-400 uppercase tracking-wider block mb-2.5">
                 История установок по клиентам:
               </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2.5 text-xs sm:text-sm">
                 {item.entries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="p-2.5 rounded-md surface-elevated border border-white/5 flex items-center justify-between hover:border-white/10 transition-colors"
+                    className="p-3 rounded-lg surface-elevated border border-white/5 flex items-center justify-between hover:border-white/10 transition-colors"
                   >
                     <div>
-                      <div className="font-semibold text-slate-200 flex items-center space-x-1.5">
-                        <User className="w-3 h-3 text-blue-400" />
+                      <div className="font-semibold text-slate-200 text-xs sm:text-sm flex items-center space-x-1.5">
+                        <User className="w-3.5 h-3.5 text-blue-400" />
                         <span>{entry.clientName}</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 font-mono">
+                      <div className="text-xs text-slate-400 mt-1 flex flex-wrap gap-x-2 gap-y-0.5 font-mono">
                         <span className="text-slate-500">{entry.date || '—'}</span>
                         {entry.carName && <span className="text-slate-400">🚗 {entry.carName}</span>}
                         {entry.supplierName && <span className="text-slate-500">🏢 {entry.supplierName}</span>}
                       </div>
                     </div>
                     <div className="text-right pl-2">
-                      <span className="font-bold font-mono text-amber-400 text-xs">
+                      <span className="font-bold font-mono text-amber-400 text-xs sm:text-sm 2xl:text-base">
                         {formatMoney(entry.amount)}
                       </span>
                     </div>

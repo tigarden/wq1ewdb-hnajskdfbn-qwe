@@ -35,14 +35,14 @@ export default function ClientList({
   return (
     <div className="flex flex-col h-full surface-card rounded-xl border border-white/[0.08] overflow-hidden shadow-lg">
       {/* Top Search & Actions */}
-      <div className="p-3.5 border-b border-white/[0.06] space-y-2.5">
+      <div className="p-3.5 2xl:p-4 border-b border-white/[0.06] space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1.5">
-            <User className="w-3.5 h-3.5 text-blue-400" />
-            <h2 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+          <div className="flex items-center space-x-2">
+            <User className="w-4 h-4 text-blue-400" />
+            <h2 className="text-xs 2xl:text-sm font-bold text-slate-200 uppercase tracking-wider">
               Клиенты
             </h2>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 border border-white/5 font-bold">
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-white/5 font-bold">
               {filteredClients.length}
             </span>
           </div>
@@ -50,31 +50,31 @@ export default function ClientList({
           <button
             type="button"
             onClick={onOpenAddModal}
-            className="btn-sm btn-primary px-2.5 font-bold shadow-xs shadow-blue-500/20"
+            className="btn-sm 2xl:btn-md btn-primary px-3 font-bold shadow-xs shadow-blue-500/20"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <Plus className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 stroke-[2.5]" />
             <span>Клиент</span>
           </button>
         </div>
 
         <div className="relative">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-400 absolute left-3 top-2.5 2xl:top-3" />
           <input
             type="text"
             placeholder="Поиск по имени, авто, тел..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full input-sm pl-8 font-mono text-xs"
+            className="w-full input-sm 2xl:h-9 pl-9 font-mono text-xs 2xl:text-sm"
           />
         </div>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+        <div className="flex items-center justify-between text-xs text-slate-400 pt-0.5">
           <button
             type="button"
             onClick={() => setSortByDebt(!sortByDebt)}
             className="flex items-center space-x-1 hover:text-slate-200 transition-colors cursor-pointer group"
           >
-            <ArrowUpDown className="w-3 h-3 text-blue-400 group-hover:rotate-180 transition-transform" />
+            <ArrowUpDown className="w-3.5 h-3.5 text-blue-400 group-hover:rotate-180 transition-transform" />
             <span>{sortByDebt ? 'Сортировка: по долгу' : 'Сортировка: по алфавиту'}</span>
           </button>
         </div>
@@ -83,7 +83,7 @@ export default function ClientList({
       {/* Clients Scrollable List */}
       <div className="flex-1 overflow-y-auto divide-y divide-white/[0.05] custom-scrollbar">
         {filteredClients.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500">
+          <div className="p-8 text-center text-xs 2xl:text-sm text-slate-500">
             Никого не найдено по запросу
           </div>
         ) : (
@@ -97,33 +97,33 @@ export default function ClientList({
                 key={client.id}
                 type="button"
                 onClick={() => onSelectClient(client.id)}
-                className={`w-full text-left p-3 transition-all flex flex-col space-y-1.5 cursor-pointer relative ${
+                className={`w-full text-left p-3 2xl:p-3.5 transition-all flex flex-col space-y-1.5 cursor-pointer relative ${
                   isSelected
                     ? 'bg-blue-600/15 border-l-2 border-blue-500 shadow-inner'
                     : 'hover:bg-white/[0.03] border-l-2 border-transparent'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-100 truncate pr-2">
+                  <span className="text-xs sm:text-sm 2xl:text-base font-bold text-slate-100 truncate pr-2">
                     {client.name}
                   </span>
-                  <span className={`text-xs font-bold font-mono tracking-tight ${
+                  <span className={`text-xs sm:text-sm 2xl:text-base font-bold font-mono tracking-tight ${
                     currentDebt > 0 ? 'text-amber-400' : currentDebt < 0 ? 'text-emerald-400' : 'text-slate-400'
                   }`}>
                     {formatMoney(currentDebt)}
                   </span>
                 </div>
 
-                <div className="flex items-center space-x-2 text-[11px] text-slate-400">
+                <div className="flex items-center space-x-2 text-xs text-slate-400">
                   {client.car && (
-                    <span className="flex items-center space-x-1 truncate max-w-[140px] px-1.5 py-0.5 rounded bg-slate-900 border border-white/5 text-[10px]">
-                      <Car className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                    <span className="flex items-center space-x-1 truncate max-w-[150px] px-2 py-0.5 rounded bg-slate-900 border border-white/5 text-xs font-mono">
+                      <Car className="w-3 h-3 text-slate-400 shrink-0" />
                       <span className="truncate">{client.car}</span>
                     </span>
                   )}
                   {client.phone && (
-                    <span className="flex items-center space-x-1 shrink-0 text-[10px] text-slate-400 font-mono">
-                      <Phone className="w-2.5 h-2.5 text-slate-500 shrink-0" />
+                    <span className="flex items-center space-x-1 shrink-0 text-xs text-slate-400 font-mono">
+                      <Phone className="w-3 h-3 text-slate-500 shrink-0" />
                       <span>{client.phone}</span>
                     </span>
                   )}

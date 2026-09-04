@@ -74,10 +74,10 @@ export default function Clients({ selectedClientId, onSelectClient }) {
       </div>
 
       {/* Main Responsive Layout: 2 Columns on Desktop, Toggle on Mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 2xl:grid-cols-12 gap-5">
         {/* Left Column: Clients List */}
         <div
-          className={`md:col-span-4 lg:col-span-4 h-[calc(100vh-140px)] ${
+          className={`md:col-span-4 lg:col-span-4 2xl:col-span-3 h-[calc(100vh-140px)] ${
             mobileShowDetail ? 'hidden md:block' : 'block'
           }`}
         >
@@ -96,7 +96,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
 
         {/* Right Column: Active Client Details & Ledger */}
         <div
-          className={`md:col-span-8 lg:col-span-8 space-y-4 ${
+          className={`md:col-span-8 lg:col-span-8 2xl:col-span-9 space-y-4 ${
             !mobileShowDetail ? 'hidden md:block' : 'block'
           }`}
         >

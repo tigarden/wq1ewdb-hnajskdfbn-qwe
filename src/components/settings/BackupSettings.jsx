@@ -76,10 +76,10 @@ export default function BackupSettings({
             <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs font-semibold text-slate-200">
+            <div className="text-xs sm:text-sm font-semibold text-slate-200">
               {isExportingExcel ? 'Генерация...' : 'Выгрузка в Excel (.xlsx)'}
             </div>
-            <div className="text-[11px] text-slate-500 mt-0.5">Клиенты, детали, долги</div>
+            <div className="text-xs text-slate-400 mt-0.5">Клиенты, детали, долги</div>
           </div>
         </button>
 
@@ -93,8 +93,8 @@ export default function BackupSettings({
             <Download className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs font-semibold text-slate-200">Резервная копия JSON</div>
-            <div className="text-[11px] text-slate-500 mt-0.5">Полный бэкап всех таблиц</div>
+            <div className="text-xs sm:text-sm font-semibold text-slate-200">Резервная копия JSON</div>
+            <div className="text-xs text-slate-400 mt-0.5">Полный бэкап всех таблиц</div>
           </div>
         </button>
 
@@ -108,8 +108,8 @@ export default function BackupSettings({
             <Upload className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xs font-semibold text-slate-200">Восстановить из JSON</div>
-            <div className="text-[11px] text-slate-500 mt-0.5">Импорт структуры данных</div>
+            <div className="text-xs sm:text-sm font-semibold text-slate-200">Восстановить из JSON</div>
+            <div className="text-xs text-slate-400 mt-0.5">Импорт структуры данных</div>
           </div>
         </button>
 

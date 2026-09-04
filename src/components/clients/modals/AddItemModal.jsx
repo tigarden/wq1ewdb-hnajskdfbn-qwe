@@ -155,7 +155,7 @@ export default function AddItemModal({
                 className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 font-mono focus:outline-hidden focus:border-blue-500"
               />
             </div>
-            <p className="text-[11px] text-slate-500 mt-1">Оставьте пустым для очереди закупок</p>
+            <p className="text-xs text-slate-400 mt-1">Оставьте пустым для очереди закупок</p>
           </div>
 
           <div>

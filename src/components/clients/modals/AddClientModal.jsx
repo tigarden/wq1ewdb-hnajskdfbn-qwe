@@ -98,7 +98,7 @@ export default function AddClientModal({ isOpen, onClose, onAddClient, onSelectC
               className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 focus:outline-hidden focus:border-blue-500 font-mono"
             />
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Положительное число — клиент нам должен. Отрицательное — наш долг клиенту.
           </p>
         </div>

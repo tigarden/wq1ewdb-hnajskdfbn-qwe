@@ -157,7 +157,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'item' && (
         <form onSubmit={handleAddItem} className="space-y-3.5">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Клиент *</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Клиент *</label>
             <select
               value={clientId}
               onChange={(e) => {
@@ -178,7 +178,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Артикул / Код</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Артикул / Код</label>
               <input
                 type="text"
                 placeholder="напр. S TL C00117/8"
@@ -188,7 +188,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-amber-400 uppercase tracking-wider mb-1">Продажа клиенту (грн) *</label>
+              <label className="block text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">Продажа клиенту (грн) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -202,7 +202,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Наименование детали / Работы</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Наименование детали / Работы</label>
             <input
               type="text"
               placeholder="Сцепление, масло 5w30, колодки..."
@@ -215,11 +215,11 @@ export default function QuickAddModal({ isOpen, onClose }) {
           {/* Optional Car */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                 Автомобиль (опционально)
               </label>
               {selectedClient?.car && (
-                <span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded font-mono">
+                <span className="text-xs text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded font-mono">
                   по умолчанию: {selectedClient.car}
                 </span>
               )}
@@ -236,7 +236,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           {/* Supplier and Purchase Price */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Поставщик / Склад</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Поставщик / Склад</label>
               <input
                 type="text"
                 list="quick-add-suppliers-list"
@@ -247,7 +247,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
                 Себестоимость (закупка)
               </label>
               <input
@@ -275,7 +275,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           )}
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Дата</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Дата</label>
             <input
               type="date"
               value={itemDate}
@@ -286,7 +286,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <button
             type="submit"
-            className="w-full h-10 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-colors mt-2 cursor-pointer"
+            className="w-full h-10 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer"
           >
             Записать деталь клиенту
           </button>
@@ -296,7 +296,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'payment' && (
         <form onSubmit={handleAddPayment} className="space-y-3.5">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Клиент *</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Клиент *</label>
             <select
               value={paymentClientId}
               onChange={(e) => setPaymentClientId(e.target.value)}
@@ -313,7 +313,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-1">Сумма оплаты (грн) *</label>
+              <label className="block text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">Сумма оплаты (грн) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -326,7 +326,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Дата оплаты</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Дата оплаты</label>
               <input
                 type="date"
                 value={paymentDate}
@@ -337,7 +337,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Примечание</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Примечание</label>
             <input
               type="text"
               placeholder="Перевод на карту, наличные и т.д."
@@ -349,7 +349,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <button
             type="submit"
-            className="w-full h-10 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-colors mt-2 cursor-pointer"
+            className="w-full h-10 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer"
           >
             Внести оплату от клиента
           </button>
@@ -359,7 +359,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'other' && (
         <form onSubmit={handleAddOther} className="space-y-3.5">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Контрагент *</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Контрагент *</label>
             {(data.otherCounterparties || []).length > 0 ? (
               <select
                 value={otherCounterpartyId}
@@ -380,7 +380,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Тип операции</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Тип операции</label>
               <select
                 value={otherType}
                 onChange={(e) => setOtherType(e.target.value)}
@@ -391,7 +391,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Сумма (грн) *</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Сумма (грн) *</label>
               <input
                 type="number"
                 step="0.01"
@@ -405,7 +405,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Примечание</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Примечание</label>
             <input
               type="text"
               placeholder="За что, подробности..."
@@ -418,7 +418,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           <button
             type="submit"
             disabled={(data.otherCounterparties || []).length === 0}
-            className="w-full h-10 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider transition-colors mt-2 cursor-pointer"
+            className="w-full h-10 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer"
           >
             Записать операцию
           </button>

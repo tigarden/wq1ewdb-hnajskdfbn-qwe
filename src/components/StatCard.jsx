@@ -69,7 +69,7 @@ export default function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden surface-card p-3.5 sm:p-4 rounded-xl border border-white/[0.08] transition-all duration-200 group ${
+      className={`relative overflow-hidden surface-card p-3.5 sm:p-4 2xl:p-5 rounded-xl border border-white/[0.08] transition-all duration-200 group ${
         isClickable ? `cursor-pointer hover:-translate-y-0.5 hover:shadow-xl ${v.borderHover}` : ''
       } ${className}`}
     >
@@ -80,37 +80,37 @@ export default function StatCard({
 
       <div className="relative z-10 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${v.indicator}`} />
-          <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${v.indicator}`} />
+          <span className="text-xs 2xl:text-sm font-semibold tracking-wider uppercase text-slate-400">
             {displayTitle}
           </span>
         </div>
         {Icon && (
-          <div className="w-6 h-6 rounded-md bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-slate-400 group-hover:text-slate-200 transition-colors">
-            <Icon className="w-3.5 h-3.5" />
+          <div className="w-6 h-6 2xl:w-7 2xl:h-7 rounded-md bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-slate-400 group-hover:text-slate-200 transition-colors">
+            <Icon className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
           </div>
         )}
       </div>
 
-      <div className="relative z-10 mt-2.5">
+      <div className="relative z-10 mt-2.5 2xl:mt-3">
         <div className="flex items-baseline space-x-2">
-          <div className={`text-xl sm:text-2xl font-bold font-mono tracking-tight ${valueColor || v.text}`}>
+          <div className={`text-xl sm:text-2xl 2xl:text-3xl font-bold font-mono tracking-tight ${valueColor || v.text}`}>
             {value}
           </div>
           {badgeText && (
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border font-mono ${v.badge}`}>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded border font-mono ${v.badge}`}>
               {badgeText}
             </span>
           )}
         </div>
 
         {(displaySubtitle || actionText) && (
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1.5">
+          <div className="flex items-center justify-between text-xs 2xl:text-sm text-slate-400 mt-1.5 2xl:mt-2">
             {displaySubtitle && <span className="truncate pr-2">{displaySubtitle}</span>}
             {actionText && (
               <span className="inline-flex items-center space-x-0.5 font-semibold text-blue-400 group-hover:text-blue-300 ml-auto shrink-0 transition-colors">
                 <span>{actionText}</span>
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </span>
             )}
           </div>

@@ -192,19 +192,19 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
 
                 <button
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex flex-col items-center justify-center flex-1 py-1 text-[10px] font-medium transition-colors ${
+                  className={`flex flex-col items-center justify-center flex-1 py-1 text-xs font-medium transition-colors ${
                     isActive ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   <div className="relative">
                     <Icon className="w-4 h-4 mb-0.5" />
                     {item.badge > 0 && (
-                      <span className="absolute -top-1 -right-2 px-1 rounded-full text-[9px] font-bold bg-amber-500 text-slate-950 font-mono">
+                      <span className="absolute -top-1 -right-2 px-1 rounded-full text-[10px] font-bold bg-amber-500 text-slate-950 font-mono">
                         {item.badge}
                       </span>
                     )}
                   </div>
-                  <span className="truncate max-w-[50px]">{item.label}</span>
+                  <span className="truncate max-w-[64px]">{item.label}</span>
                 </button>
               </React.Fragment>
             );

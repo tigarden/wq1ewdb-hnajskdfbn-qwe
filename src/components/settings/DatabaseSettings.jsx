@@ -140,7 +140,7 @@ export default function DatabaseSettings({
       {/* Instructions */}
       <div className="p-3 rounded-lg bg-slate-900/50 border border-white/5 text-xs text-slate-400 space-y-1">
         <div className="font-semibold text-slate-300">Локальный запуск сервера API:</div>
-        <div className="font-mono text-[11px] text-blue-300">
+        <div className="font-mono text-xs text-blue-300 bg-slate-950/60 px-2 py-1 rounded border border-white/5 select-all">
           uvicorn backend.main:app --reload --port 8000
         </div>
       </div>

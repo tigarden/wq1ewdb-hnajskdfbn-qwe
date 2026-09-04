@@ -44,9 +44,9 @@ const VARIANTS = {
 };
 
 const SIZES = {
-  xs: 'px-1.5 py-0.5 text-[10px] leading-none rounded-[5px]',
-  sm: 'px-2 py-0.5 text-[11px] leading-tight rounded-md',
-  md: 'px-2.5 py-1 text-xs leading-tight rounded-md',
+  xs: 'px-2 py-0.5 text-xs font-mono font-medium rounded-md',
+  sm: 'px-2.5 py-0.5 text-xs 2xl:text-sm font-medium rounded-md',
+  md: 'px-3 py-1 text-xs 2xl:text-sm font-medium rounded-lg',
 };
 
 export default function Badge({
