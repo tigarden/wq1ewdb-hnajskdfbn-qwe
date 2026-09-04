@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
 import { formatMoney, pluralize } from '../utils/format';
+import { copyToClipboard } from '../utils/clipboard';
 import { 
   Search, 
   Package, 
@@ -15,16 +16,24 @@ import {
   Layers
 } from 'lucide-react';
 
-export default function PartsCatalog() {
+export default function PartsCatalog({ initialQuery = '' }) {
   const { data } = useData();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [copiedArticle, setCopiedArticle] = useState(null);
 
-  const handleCopy = (text) => {
+  useEffect(() => {
+    if (initialQuery) {
+      setQuery(initialQuery);
+    }
+  }, [initialQuery]);
+
+  const handleCopy = async (text) => {
     if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopiedArticle(text);
-    setTimeout(() => setCopiedArticle(null), 1800);
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopiedArticle(text);
+      setTimeout(() => setCopiedArticle(null), 1800);
+    }
   };
 
   const catalog = useMemo(() => {
@@ -52,14 +61,17 @@ export default function PartsCatalog() {
       });
     });
 
-    return Object.values(map).map((item) => ({
-      ...item,
-      descriptions: Array.from(item.descriptions),
-      cars: Array.from(item.cars),
-      suppliers: Array.from(item.suppliers),
-      minPrice: Math.min(...item.entries.map((e) => e.amount)),
-      maxPrice: Math.max(...item.entries.map((e) => e.amount)),
-    }));
+    return Object.values(map).map((item) => {
+      const amounts = item.entries.map((e) => Number(e.amount) || 0);
+      return {
+        ...item,
+        descriptions: Array.from(item.descriptions),
+        cars: Array.from(item.cars),
+        suppliers: Array.from(item.suppliers),
+        minPrice: amounts.length > 0 ? Math.min(...amounts) : 0,
+        maxPrice: amounts.length > 0 ? Math.max(...amounts) : 0,
+      };
+    });
   }, [data.clientTransactions, data.clients]);
 
   const filtered = catalog.filter((item) => {

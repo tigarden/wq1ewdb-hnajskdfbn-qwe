@@ -31,12 +31,37 @@ export const INITIAL_DATA = {
 
 const LOCAL_STORAGE_KEY = 'debet_auto_data_v2';
 const SETTINGS_STORAGE_KEY = 'debet_auto_settings_v1';
+const TOKEN_PREFIX = 'enc_tk:';
+
+function maskToken(str) {
+  if (!str) return '';
+  try {
+    return TOKEN_PREFIX + btoa(encodeURIComponent(str).split('').reverse().join(''));
+  } catch {
+    return str;
+  }
+}
+
+function unmaskToken(str) {
+  if (!str) return '';
+  if (!str.startsWith(TOKEN_PREFIX)) return str;
+  try {
+    return decodeURIComponent(atob(str.slice(TOKEN_PREFIX.length)).split('').reverse().join(''));
+  } catch {
+    return '';
+  }
+}
 
 export function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      token: unmaskToken(parsed.token || ''),
+    };
   } catch (e) {
     console.error('Failed to load settings:', e);
     return DEFAULT_SETTINGS;
@@ -45,7 +70,11 @@ export function loadSettings() {
 
 export function saveSettings(settings) {
   try {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    const safe = {
+      ...settings,
+      token: maskToken(settings.token || ''),
+    };
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(safe));
   } catch (e) {
     console.error('Failed to save settings:', e);
   }

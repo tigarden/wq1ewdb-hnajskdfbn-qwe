@@ -4,6 +4,7 @@ import StatCard from '../components/StatCard';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
 import { formatMoney, pluralize } from '../utils/format';
+import { copyToClipboard } from '../utils/clipboard';
 import { 
   TrendingUp, 
   Users, 
@@ -22,7 +23,7 @@ import {
   Save
 } from 'lucide-react';
 
-export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient }) {
+export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient, onSearchParts }) {
   const { 
     data, 
     globalSummary, 
@@ -82,18 +83,20 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
       .slice(0, 3);
   }, [data.clientTransactions]);
 
-  const handleCopyArticle = (article, e) => {
+  const handleCopyArticle = async (article, e) => {
     e.stopPropagation();
-    navigator.clipboard?.writeText(article);
-    setCopiedArticle(article);
-    setTimeout(() => setCopiedArticle(null), 1500);
+    const ok = await copyToClipboard(article);
+    if (ok) {
+      setCopiedArticle(article);
+      setTimeout(() => setCopiedArticle(null), 1500);
+    }
   };
 
   const handleSaveInlinePrice = (txId) => {
     const priceVal = inlinePriceDrafts[txId];
     if (priceVal === undefined || priceVal === '') return;
     const num = parseFloat(priceVal);
-    if (isNaN(num) || num < 0) return;
+    if (isNaN(num) || num <= 0) return;
 
     updateItemPurchasePrice(txId, num);
     setSavedPriceId(txId);
@@ -530,6 +533,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && searchQuery.trim()) {
+                    if (onSearchParts) onSearchParts(searchQuery.trim());
                     setActiveTab('parts');
                   }
                 }}
@@ -545,7 +549,10 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                   return (
                     <div 
                       key={t.id} 
-                      onClick={() => setActiveTab('parts')}
+                      onClick={() => {
+                        if (onSearchParts) onSearchParts(t.article);
+                        setActiveTab('parts');
+                      }}
                       className="cursor-pointer p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-white/[0.06] flex items-center justify-between text-xs sm:text-sm transition-colors"
                     >
                       <div>
