@@ -3,12 +3,19 @@ import * as XLSX from 'xlsx';
 import { loadLocalData, saveLocalData, loadSettings, saveSettings } from '../services/storage';
 import { fetchRepoFile, saveRepoFile } from '../services/githubApi';
 import { encryptData, decryptData } from '../services/crypto';
+import { generateTotpSecret, verifyTotpCode, getOtpAuthUrl } from '../services/totp';
+import { api, getApiUrl, setApiUrl } from '../services/api';
 
 const DataContext = createContext(null);
 
 const DEFAULT_MASTER_PASSWORD = '010700GkO';
 const AUTH_STORAGE_KEY = 'debet_auth_session_v1';
+const AUTH_EXPIRY_KEY = 'debet_auth_expiry_v1';
 const PASS_HASH_KEY = 'debet_custom_pass_v1';
+const TOTP_SECRET_KEY = 'debet_totp_secret_v1';
+const TOTP_ENABLED_KEY = 'debet_totp_enabled_v1';
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function DataProvider({ children }) {
   const [data, setData] = useState(() => loadLocalData());
@@ -19,23 +26,50 @@ export function DataProvider({ children }) {
   const [currentSha, setCurrentSha] = useState(() => settings.lastSha);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Auth State
+  // PostgreSQL Backend status
+  const [backendUrl, setBackendUrl] = useState(() => getApiUrl());
+  const [backendHealth, setBackendHealth] = useState(null);
+  const [backendLoading, setBackendLoading] = useState(false);
+
+  // 2FA / TOTP State
+  const [isTotpEnabled, setIsTotpEnabled] = useState(() => {
+    return localStorage.getItem(TOTP_ENABLED_KEY) === 'true';
+  });
+
+  // Auth State with 7-day expiration check
   const [isUnlocked, setIsUnlocked] = useState(() => {
     const saved = localStorage.getItem(AUTH_STORAGE_KEY) || sessionStorage.getItem(AUTH_STORAGE_KEY);
-    return saved === 'unlocked';
+    if (saved !== 'unlocked') return false;
+
+    // Check 7-day expiration
+    const expiry = localStorage.getItem(AUTH_EXPIRY_KEY);
+    if (expiry) {
+      const expTime = parseInt(expiry, 10);
+      if (Date.now() > expTime) {
+        // Expired! Lock the app
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem(AUTH_EXPIRY_KEY);
+        return false;
+      }
+    }
+    return true;
   });
+
   const [currentPassword, setCurrentPassword] = useState(() => {
     return localStorage.getItem('debet_enc_pwd') || sessionStorage.getItem('debet_enc_pwd') || DEFAULT_MASTER_PASSWORD;
   });
 
+  // Unlock with Master Password (PIN)
   const unlockApp = useCallback((enteredPassword, rememberMe = true) => {
     const savedCustomPass = localStorage.getItem(PASS_HASH_KEY) || DEFAULT_MASTER_PASSWORD;
     if (enteredPassword === savedCustomPass) {
       setIsUnlocked(true);
       setCurrentPassword(enteredPassword);
+
       if (rememberMe) {
         localStorage.setItem(AUTH_STORAGE_KEY, 'unlocked');
         localStorage.setItem('debet_enc_pwd', enteredPassword);
+        localStorage.setItem(AUTH_EXPIRY_KEY, (Date.now() + SEVEN_DAYS_MS).toString());
       } else {
         sessionStorage.setItem(AUTH_STORAGE_KEY, 'unlocked');
         sessionStorage.setItem('debet_enc_pwd', enteredPassword);
@@ -45,9 +79,55 @@ export function DataProvider({ children }) {
     return false;
   }, []);
 
+  // Unlock with Google Authenticator (TOTP)
+  const verifyTotp = useCallback(async (code, rememberMe = true) => {
+    const secret = localStorage.getItem(TOTP_SECRET_KEY);
+    if (!secret) return false;
+
+    const valid = await verifyTotpCode(secret, code);
+    if (valid) {
+      setIsUnlocked(true);
+      if (rememberMe) {
+        localStorage.setItem(AUTH_STORAGE_KEY, 'unlocked');
+        localStorage.setItem(AUTH_EXPIRY_KEY, (Date.now() + SEVEN_DAYS_MS).toString());
+      } else {
+        sessionStorage.setItem(AUTH_STORAGE_KEY, 'unlocked');
+      }
+      return true;
+    }
+    return false;
+  }, []);
+
+  // Setup / Enable 2FA Google Authenticator
+  const getTotpSetupData = useCallback(() => {
+    const existingSecret = localStorage.getItem(TOTP_SECRET_KEY);
+    const secret = existingSecret || generateTotpSecret(32);
+    const otpauthUrl = getOtpAuthUrl(secret, 'master@debet.auto', 'Debet.auto');
+    return { secret, otpauthUrl };
+  }, []);
+
+  const enableTotp = useCallback(async (secret, code) => {
+    const valid = await verifyTotpCode(secret, code);
+    if (!valid) {
+      return { success: false, error: 'Неверный 6-значный проверочный код из приложения' };
+    }
+    localStorage.setItem(TOTP_SECRET_KEY, secret);
+    localStorage.setItem(TOTP_ENABLED_KEY, 'true');
+    setIsTotpEnabled(true);
+    return { success: true };
+  }, []);
+
+  const disableTotp = useCallback(() => {
+    localStorage.removeItem(TOTP_SECRET_KEY);
+    localStorage.removeItem(TOTP_ENABLED_KEY);
+    setIsTotpEnabled(false);
+    return { success: true };
+  }, []);
+
   const lockApp = useCallback(() => {
     setIsUnlocked(false);
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(AUTH_EXPIRY_KEY);
     localStorage.removeItem('debet_enc_pwd');
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
     sessionStorage.removeItem('debet_enc_pwd');
@@ -58,6 +138,63 @@ export function DataProvider({ children }) {
     setCurrentPassword(newPassword);
   }, []);
 
+  // --- Backend Health Check & Sync ---
+  const checkBackend = useCallback(async () => {
+    setBackendLoading(true);
+    const res = await api.checkHealth();
+    setBackendLoading(false);
+    if (res.success) {
+      setBackendHealth(res.data);
+      return res.data;
+    } else {
+      setBackendHealth({ status: 'offline', error: res.error });
+      return null;
+    }
+  }, []);
+
+  const updateBackendUrl = useCallback((newUrl) => {
+    const clean = setApiUrl(newUrl);
+    setBackendUrl(clean);
+    checkBackend();
+  }, [checkBackend]);
+
+  const syncToPostgres = useCallback(async () => {
+    setBackendLoading(true);
+    try {
+      const res = await api.importBackup(data);
+      setBackendLoading(false);
+      await checkBackend();
+      return { success: true, message: res.message || 'Данные успешно сохранены в базу' };
+    } catch (err) {
+      setBackendLoading(false);
+      return { success: false, error: err.message };
+    }
+  }, [data, checkBackend]);
+
+  const pullFromPostgres = useCallback(async () => {
+    setBackendLoading(true);
+    try {
+      const remoteData = await api.exportBackup();
+      if (remoteData && (remoteData.clients || remoteData.suppliersList)) {
+        setData(remoteData);
+        saveLocalData(remoteData);
+        setBackendLoading(false);
+        await checkBackend();
+        return { success: true };
+      }
+      setBackendLoading(false);
+      return { success: false, error: 'В базе пока нет записей' };
+    } catch (err) {
+      setBackendLoading(false);
+      return { success: false, error: err.message };
+    }
+  }, [checkBackend]);
+
+  useEffect(() => {
+    checkBackend();
+  }, [checkBackend]);
+
+  // --- Data State Management ---
   const updateData = useCallback((updater) => {
     setData((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -181,7 +318,7 @@ export function DataProvider({ children }) {
     }
   }, [isUnlocked]);
 
-  // --- CRUD: Clients with Phone and Car ---
+  // --- CRUD: Clients ---
   const addClient = useCallback((name, initialBalance = 0, phone = '', car = '', notes = '') => {
     const newCli = {
       id: 'cli-' + Date.now(),
@@ -219,13 +356,13 @@ export function DataProvider({ children }) {
     const newTx = {
       id: 'ctx-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
       clientId,
-      type, // 'item' or 'payment'
+      type,
       article: article.trim(),
       description: description.trim(),
       carName: carName.trim(),
       supplierName: supplierName.trim(),
-      amount: parseFloat(amount) || 0, // client sale price
-      purchasePrice: parseFloat(purchasePrice) || 0, // supplier cost
+      amount: parseFloat(amount) || 0,
+      purchasePrice: parseFloat(purchasePrice) || 0,
       date: date || new Date().toISOString().split('T')[0],
       note: note.trim(),
       createdAt: new Date().toISOString(),
@@ -259,7 +396,6 @@ export function DataProvider({ children }) {
     }));
   }, [updateData]);
 
-  // Update item purchase price (from queue)
   const updateItemPurchasePrice = useCallback((txId, purchasePrice, supplierName) => {
     updateData((prev) => ({
       ...prev,
@@ -301,7 +437,6 @@ export function DataProvider({ children }) {
     const totalPayments = txs.filter((t) => t.type === 'payment').reduce((sum, t) => sum + t.amount, 0);
     const currentDebt = (client.initialBalance || 0) + totalItems - totalPayments;
 
-    // Profit stats for this client
     const itemsWithPurchase = items.filter((t) => (t.purchasePrice || 0) > 0);
     const clientSalesWithCost = itemsWithPurchase.reduce((sum, t) => sum + t.amount, 0);
     const clientPurchaseTotal = itemsWithPurchase.reduce((sum, t) => sum + t.purchasePrice, 0);
@@ -391,7 +526,7 @@ export function DataProvider({ children }) {
     };
   }, [data.otherCounterparties, data.otherTransactions]);
 
-  // --- Income & Profit Statistics across all clients ---
+  // Income & Profit Statistics
   const incomeStats = useMemo(() => {
     const items = (data.clientTransactions || []).filter((t) => t.type === 'item');
     const itemsWithCost = items.filter((t) => (t.purchasePrice || 0) > 0);
@@ -401,7 +536,6 @@ export function DataProvider({ children }) {
     const totalPurchaseCost = itemsWithCost.reduce((sum, t) => sum + (t.purchasePrice || 0), 0);
     const totalProfit = totalRevenueWithCost - totalPurchaseCost;
     const marginPercent = totalPurchaseCost > 0 ? (totalProfit / totalPurchaseCost) * 100 : 0;
-
     const totalAllRevenue = items.reduce((sum, t) => sum + (t.amount || 0), 0);
 
     return {
@@ -502,7 +636,6 @@ export function DataProvider({ children }) {
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
 
-    // Sheet: Profit & Purchases Queue
     const profitRows = [
       ['Дата', 'Клиент', 'Артикул', 'Наименование', 'Авто', 'Поставщик', 'Цена закупки (грн)', 'Продано клиенту (грн)', 'Чистый доход (грн)'],
     ];
@@ -570,11 +703,24 @@ export function DataProvider({ children }) {
     hasUnsavedChanges,
     pushToGitHub,
     pullFromGitHub,
-    // Security
+    // Security & 2FA
     isUnlocked,
     unlockApp,
     lockApp,
     changeMasterPassword,
+    isTotpEnabled,
+    verifyTotp,
+    getTotpSetupData,
+    enableTotp,
+    disableTotp,
+    // PostgreSQL Backend
+    backendUrl,
+    updateBackendUrl,
+    backendHealth,
+    backendLoading,
+    checkBackend,
+    syncToPostgres,
+    pullFromPostgres,
     // Clients
     addClient,
     updateClient,
