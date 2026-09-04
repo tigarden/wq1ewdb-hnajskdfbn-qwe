@@ -3,7 +3,7 @@ import {
   LayoutDashboard, 
   Users, 
   DollarSign, 
-  UserCheck, 
+  Truck, 
   Search, 
   Settings, 
   Plus, 
@@ -26,10 +26,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
 
   const navItems = [
-    { id: 'dashboard', label: 'Дашборд', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Главная', icon: LayoutDashboard },
     { id: 'clients', label: 'Клиенты', icon: Users },
-    { id: 'income', label: 'Очередь', icon: DollarSign, badge: incomeStats?.pendingCount },
-    { id: 'other', label: 'Контрагенты', icon: UserCheck },
+    { id: 'income', label: 'Очередь цен', icon: DollarSign, badge: incomeStats?.pendingCount },
+    { id: 'other', label: 'Поставщики', icon: Truck },
     { id: 'parts', label: 'Каталог', icon: Search },
     { id: 'settings', label: 'Настройки', icon: Settings },
   ];
@@ -198,7 +198,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
               <LayoutDashboard className={`w-5.5 h-5.5 mb-1 ${activeTab === 'dashboard' ? 'stroke-[2.5]' : ''}`} />
             </div>
             <span className={`text-[12px] leading-tight tracking-tight ${activeTab === 'dashboard' ? 'font-bold' : 'font-medium'}`}>
-              Дашборд
+              Главная
             </span>
           </button>
 
@@ -299,7 +299,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
             {/* List of Navigation Actions */}
             <div className="grid grid-cols-1 gap-2.5">
               
-              {/* Counterparties */}
+              {/* Suppliers */}
               <button
                 onClick={() => handleSelectTab('other')}
                 className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left ${
@@ -310,11 +310,11 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
-                    <UserCheck className="w-5 h-5" />
+                    <Truck className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-white">Контрагенты</div>
-                    <div className="text-xs text-slate-400">Поставщики, автосервисы, мастера</div>
+                    <div className="font-bold text-sm text-white">Поставщики</div>
+                    <div className="text-xs text-slate-400">Поставщики запчастей, склады, балансы</div>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-slate-500" />

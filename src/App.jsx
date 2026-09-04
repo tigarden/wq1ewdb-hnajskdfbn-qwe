@@ -92,7 +92,7 @@ export default function App() {
       />
 
       <footer className="border-t border-white/5 py-4 text-center text-xs text-slate-500 mb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:mb-0">
-        Debet.auto — Учет взаиморасчетов, запчастей и доходов • Защита AES-256 + 2FA
+        Debet.auto — Учет клиентов, автозапчастей и оплат
       </footer>
     </div>
   );

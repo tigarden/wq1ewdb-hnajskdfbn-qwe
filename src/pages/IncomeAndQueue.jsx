@@ -133,10 +133,10 @@ export default function IncomeAndQueue() {
           </div>
           <div>
             <h1 className="text-xs sm:text-sm 2xl:text-base font-bold uppercase tracking-wider text-slate-200">
-              Очередь закупок и маржинальность
+              Себестоимость и доходы
             </h1>
             <p className="text-xs 2xl:text-sm text-slate-400">
-              Ввод себестоимости от поставщиков и расчет маржи по каждой позиции
+              Ввод себестоимости от поставщиков и расчет чистой прибыли по позициям
             </p>
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function IncomeAndQueue() {
           <div className="flex items-center space-x-2 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-amber-400" />
             <Clock className="w-3.5 h-3.5 text-amber-400" />
-            <span>Требуют ввода: <strong>{incomeStats.pendingCount} дет.</strong></span>
+            <span>Ожидают цену: <strong>{incomeStats.pendingCount} дет.</strong></span>
           </div>
         ) : (
           <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono">
@@ -182,9 +182,9 @@ export default function IncomeAndQueue() {
         />
 
         <StatCard
-          title="В очереди цен"
+          title="Ожидают закупку"
           value={`${incomeStats.pendingCount} дет.`}
-          subtitle={incomeStats.pendingCount > 0 ? 'Ожидают ввода себестоимости' : 'Очередь полностью закрыта'}
+          subtitle={incomeStats.pendingCount > 0 ? 'Нужно указать себестоимость' : 'Все цены закупки заполнены'}
           icon={Clock}
           variant={incomeStats.pendingCount > 0 ? 'amber' : 'slate'}
         />
@@ -204,7 +204,7 @@ export default function IncomeAndQueue() {
             }`}
           >
             <Clock className="w-3 h-3" />
-            <span>Очередь ({incomeStats.pendingCount})</span>
+            <span>Ожидают цену ({incomeStats.pendingCount})</span>
           </button>
 
           <button
@@ -372,7 +372,7 @@ export default function IncomeAndQueue() {
                     </div>
                   ) : (
                     <span className="text-[11px] text-amber-400 font-mono">
-                      Ожидает цену входа
+                      Ожидает себестоимость
                     </span>
                   )}
                 </div>

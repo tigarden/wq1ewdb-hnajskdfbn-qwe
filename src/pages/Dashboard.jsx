@@ -17,10 +17,10 @@ import {
   Check, 
   Clock, 
   DollarSign, 
-  UserCheck, 
-  ArrowUpRight,
-  Sparkles,
-  Save
+  Truck, 
+  Save,
+  ArrowDownLeft,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient, onSearchParts }) {
@@ -49,7 +49,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
       .slice(0, 10);
   }, [data.clientTransactions, txFilter]);
 
-  // Top Debtors list with stats
+  // Clients with debt
   const topDebtors = useMemo(() => {
     return (data.clients || [])
       .map((cli) => {
@@ -65,7 +65,13 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
       .slice(0, 5);
   }, [data.clients, getClientStats]);
 
-  const maxDebt = topDebtors[0]?.currentDebt || 1;
+  // Debtors count
+  const debtorsCount = useMemo(() => {
+    return (data.clients || []).filter((cli) => {
+      const stats = getClientStats(cli.id);
+      return (stats?.currentDebt || 0) > 0;
+    }).length;
+  }, [data.clients, getClientStats]);
 
   // Search results for parts
   const searchResults = useMemo(() => {
@@ -117,13 +123,13 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-white/[0.06]">
         <div>
           <h1 className="text-xl 2xl:text-2xl font-bold text-white tracking-tight flex items-center space-x-2.5">
-            <span>Финансовый центр</span>
+            <span>Главная</span>
             <span className="text-xs 2xl:text-sm font-mono text-slate-400 font-normal px-2.5 py-0.5 rounded-md bg-white/[0.04] border border-white/5">
-              {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
+              {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
             </span>
           </h1>
           <p className="text-xs 2xl:text-sm text-slate-400 mt-1">
-            Контроль дебета, маржинальности запчастей и балансов поставщиков
+            Сводка по балансам, продажам запчастей и последним операциям
           </p>
         </div>
 
@@ -148,28 +154,32 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         </div>
       </div>
 
-      {/* 4 Precision Metric Tiles (Concept A) */}
+      {/* 4 Precision Metric Tiles */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <StatCard
           title="Сводный баланс"
           value={formatMoney(globalSummary.grandBalance)}
           subtitle={
             globalSummary.grandBalance > 0
-              ? 'Остаток долга клиентов'
+              ? 'В вашу пользу'
               : globalSummary.grandBalance < 0
-              ? 'Долг перед контрагентами'
+              ? 'Долг перед поставщиками'
               : 'Все счета закрыты'
           }
           icon={TrendingUp}
           variant={globalSummary.grandBalance > 0 ? 'amber' : globalSummary.grandBalance < 0 ? 'rose' : 'slate'}
-          badgeText="₴ UAH"
+          badgeText={globalSummary.grandBalance > 0 ? 'Актив' : globalSummary.grandBalance < 0 ? 'Долг' : 'Баланс'}
         />
 
         <StatCard
           title="Чистая прибыль"
           value={`+${formatMoney(incomeStats.totalProfit)}`}
-          subtitle={`+${incomeStats.marginPercent.toFixed(1)}% средняя маржа`}
-          actionText="В очередь"
+          subtitle={
+            incomeStats.filledCount > 0
+              ? `Маржа ${incomeStats.marginPercent.toFixed(1)}% (${incomeStats.filledCount} дет.)`
+              : 'Себестоимость не указана'
+          }
+          actionText="Очередь цен"
           icon={DollarSign}
           variant="emerald"
           badgeText={`+${incomeStats.marginPercent.toFixed(0)}%`}
@@ -177,24 +187,24 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         />
 
         <StatCard
-          title="Дебет клиентов"
+          title="Долги клиентов"
           value={formatMoney(globalSummary.totalClientDebt)}
-          subtitle={`${globalSummary.clientsCount} ${pluralize(globalSummary.clientsCount, ['клиент', 'клиента', 'клиентов'])}`}
+          subtitle={`${debtorsCount} ${pluralize(debtorsCount, ['клиент с долгом', 'клиента с долгом', 'клиентов с долгом'])}`}
           actionText="Клиенты"
           icon={Users}
           variant="amber"
-          badgeText={`${globalSummary.clientsCount} чел.`}
+          badgeText={`${debtorsCount} из ${data.clients?.length || 0}`}
           onClick={() => setActiveTab('clients')}
         />
 
         <StatCard
-          title="Контрагенты"
+          title="Поставщики"
           value={formatMoney(globalSummary.totalOtherBalance)}
-          subtitle={`${data.otherCounterparties?.length || 0} поставщиков`}
-          actionText="Взаиморасчеты"
-          icon={UserCheck}
-          variant="blue"
-          badgeText="Тотус / др."
+          subtitle={`${data.otherCounterparties?.length || 0} ${pluralize(data.otherCounterparties?.length || 0, ['поставщик и склад', 'поставщика и склада', 'поставщиков и складов'])}`}
+          actionText="Открыть"
+          icon={Truck}
+          variant={globalSummary.totalOtherBalance < 0 ? 'rose' : 'blue'}
+          badgeText={globalSummary.totalOtherBalance < 0 ? 'К оплате' : 'Баланс'}
           onClick={() => setActiveTab('other')}
         />
       </div>
@@ -257,8 +267,8 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
             {filteredTxs.length === 0 ? (
               <EmptyState
                 icon={Package}
-                title="Нет операций в этом фильтре"
-                description="Зарегистрируйте запчасть или оплату через кнопку «Новая запись»."
+                title="Нет операций в этом списке"
+                description="Добавьте запчасть или зафиксируйте оплату кнопкой «Новая запись»."
                 actionLabel="Новая запись"
                 onAction={onOpenQuickAdd}
               />
@@ -271,7 +281,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                   return (
                     <div 
                       key={tx.id} 
-                      className="py-3 px-3 flex items-center justify-between hover:bg-white/[0.03] rounded-lg transition-colors cursor-pointer group"
+                      className="py-3 px-2 sm:px-3 flex items-center justify-between hover:bg-white/[0.03] rounded-lg transition-colors cursor-pointer group"
                       onClick={() => {
                         if (cli?.id) {
                           onSelectClient(cli.id);
@@ -280,15 +290,23 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                       }}
                     >
                       <div className="flex items-center space-x-3 min-w-0 pr-3">
-                        {/* Status Vertical Bar */}
-                        <span className={`w-1 h-9 2xl:h-10 rounded-full shrink-0 ${
-                          isItem ? 'bg-amber-500' : 'bg-emerald-500 shadow-xs shadow-emerald-500/30'
-                        }`} />
+                        {/* Status Icon Indicator */}
+                        <div className={`w-9 h-9 2xl:w-10 2xl:h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                          isItem 
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        }`}>
+                          {isItem ? (
+                            <Package className="w-4 h-4 2xl:w-5 2xl:h-5" />
+                          ) : (
+                            <ArrowDownLeft className="w-4 h-4 2xl:w-5 2xl:h-5" />
+                          )}
+                        </div>
 
                         {/* Details */}
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-1.5 2xl:gap-2">
-                            <span className="text-xs sm:text-sm 2xl:text-base font-bold text-slate-100 group-hover:text-blue-400 transition-colors">
+                            <span className="text-xs sm:text-sm 2xl:text-base font-bold text-slate-100 group-hover:text-blue-400 transition-colors truncate">
                               {cli?.name || 'Клиент'}
                             </span>
                             
@@ -319,8 +337,8 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                             )}
                           </div>
 
-                          <p className="text-xs 2xl:text-sm text-slate-400 truncate mt-1">
-                            {tx.description || tx.note || (isItem ? 'Автозапчасть' : 'Оплата')}
+                          <p className="text-xs 2xl:text-sm text-slate-400 truncate mt-0.5">
+                            {tx.description || tx.note || (isItem ? 'Автозапчасть' : 'Оплата от клиента')}
                           </p>
                         </div>
                       </div>
@@ -332,7 +350,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                         }`}>
                           {isItem ? `+${formatMoney(tx.amount)}` : `-${formatMoney(tx.amount)}`}
                         </div>
-                        <span className="text-xs font-mono text-slate-500 block mt-1">
+                        <span className="text-xs font-mono text-slate-500 block mt-0.5">
                           {tx.date || new Date(tx.createdAt).toLocaleDateString('ru-RU')}
                         </span>
                       </div>
@@ -341,19 +359,30 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                 })}
               </div>
             )}
+
+            {/* Bottom Link to Full Clients list */}
+            <div className="pt-2 border-t border-white/[0.06] text-center sm:text-right">
+              <button
+                onClick={() => setActiveTab('clients')}
+                className="text-xs 2xl:text-sm text-slate-400 hover:text-blue-400 inline-flex items-center space-x-1 font-medium cursor-pointer transition-colors"
+              >
+                <span>Все операции в карточках клиентов</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Right Column (5 cols): Operational Power Column */}
-        <div className="lg:col-span-5 space-y-4">
+        {/* Right Column: Operational Cards */}
+        <div className="lg:col-span-5 2xl:col-span-4 space-y-4">
           
-          {/* 1. Interactive Fast Price Queue Widget */}
+          {/* 1. Purchase Cost Price Queue Card */}
           <div className="surface-card rounded-xl p-4 2xl:p-5 space-y-3.5">
             <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
               <div className="flex items-center space-x-2">
                 <Clock className="w-4 h-4 text-amber-400" />
                 <span className="text-xs 2xl:text-sm font-bold uppercase tracking-wider text-slate-200">
-                  Очередь цен на закупку
+                  Очередь себестоимости
                 </span>
                 {incomeStats.pendingCount > 0 && (
                   <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-bold">
@@ -363,7 +392,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
               </div>
               <button
                 onClick={() => setActiveTab('income')}
-                className="text-xs 2xl:text-sm text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1"
+                className="text-xs 2xl:text-sm text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1 cursor-pointer"
               >
                 <span>Все</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -371,15 +400,15 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
             </div>
 
             {pendingItems.length === 0 ? (
-              <div className="py-4 text-center">
-                <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 mb-1.5">
-                  <Check className="w-4 h-4" />
+              <div className="py-5 text-center">
+                <div className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-400 mb-2">
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
-                <p className="text-xs 2xl:text-sm font-medium text-slate-200">Все входящие цены указаны</p>
-                <p className="text-xs text-slate-500 mt-1">Маржа и прибыль рассчитываются в 100% объеме</p>
+                <p className="text-xs 2xl:text-sm font-semibold text-slate-200">Все цены закупки указаны</p>
+                <p className="text-xs text-slate-400 mt-0.5">Себестоимость позиций заполнена, маржа рассчитана</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {pendingItems.map((item) => {
                   const cli = (data.clients || []).find((c) => c.id === item.clientId);
                   const isSaved = savedPriceId === item.id;
@@ -388,7 +417,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                   return (
                     <div 
                       key={item.id}
-                      className="p-3 rounded-lg bg-slate-950/70 border border-white/[0.06] space-y-2"
+                      className="p-3 rounded-lg bg-slate-950/70 border border-white/[0.06] space-y-2 hover:border-white/10 transition-colors"
                     >
                       <div className="flex items-center justify-between text-xs sm:text-sm">
                         <div className="min-w-0 pr-2">
@@ -399,8 +428,8 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                             {cli?.name} {item.carName && `• ${item.carName}`}
                           </span>
                         </div>
-                        <span className="font-mono text-xs sm:text-sm font-bold text-slate-200 shrink-0">
-                          Прод: {formatMoney(item.amount)}
+                        <span className="font-mono text-xs sm:text-sm font-bold text-slate-300 shrink-0">
+                          Продажа: {formatMoney(item.amount)}
                         </span>
                       </div>
 
@@ -408,7 +437,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                       <div className="flex items-center space-x-2 pt-0.5">
                         <input
                           type="number"
-                          placeholder="Цена входа (₴)..."
+                          placeholder="Закупка (₴)..."
                           value={draftVal}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -422,35 +451,44 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                         <button
                           onClick={() => handleSaveInlinePrice(item.id)}
                           disabled={!draftVal}
-                          className={`btn-md sm:btn-sm px-4 sm:px-3 ${
+                          className={`btn-md sm:btn-sm px-3.5 ${
                             isSaved 
                               ? 'bg-emerald-600 text-white' 
                               : 'btn-primary'
                           } disabled:opacity-40 disabled:pointer-events-none cursor-pointer`}
                         >
                           {isSaved ? <Check className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> : <Save className="w-4 h-4 sm:w-3.5 sm:h-3.5" />}
-                          <span>{isSaved ? 'Сохранено' : 'Внести'}</span>
+                          <span>{isSaved ? 'Сохранено' : 'Сохранить'}</span>
                         </button>
                       </div>
                     </div>
                   );
                 })}
+
+                {incomeStats.pendingCount > 3 && (
+                  <button
+                    onClick={() => setActiveTab('income')}
+                    className="w-full py-2 text-center text-xs text-amber-400 hover:text-amber-300 font-medium cursor-pointer"
+                  >
+                    Ещё {incomeStats.pendingCount - 3} {pluralize(incomeStats.pendingCount - 3, ['деталь', 'детали', 'деталей'])} в очереди →
+                  </button>
+                )}
               </div>
             )}
           </div>
 
-          {/* 2. Top Debtors Leaderboard */}
+          {/* 2. Clients with Debt Card (Clean & Balanced) */}
           <div className="surface-card rounded-xl p-4 2xl:p-5">
             <div className="flex items-center justify-between border-b border-white/[0.06] pb-3 mb-3">
               <div className="flex items-center space-x-2">
                 <Users className="w-4 h-4 text-amber-400" />
                 <span className="text-xs 2xl:text-sm font-bold uppercase tracking-wider text-slate-200">
-                  Топ должников
+                  Клиенты с задолженностью
                 </span>
               </div>
               <button
                 onClick={() => setActiveTab('clients')}
-                className="text-xs 2xl:text-sm text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1"
+                className="text-xs 2xl:text-sm text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1 cursor-pointer"
               >
                 <span>Все клиенты</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -458,66 +496,59 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
             </div>
 
             {topDebtors.length === 0 ? (
-              <div className="text-center py-6 text-xs 2xl:text-sm text-slate-500">
-                Задолженностей по клиентам нет
+              <div className="text-center py-6 text-xs 2xl:text-sm text-slate-400">
+                Задолженностей нет — все счета клиентов оплачены
               </div>
             ) : (
-              <div className="space-y-2.5">
-                {topDebtors.map((debtor, idx) => {
-                  const percent = Math.min(100, Math.round((debtor.currentDebt / maxDebt) * 100));
-                  return (
-                    <div
-                      key={debtor.id}
-                      onClick={() => {
-                        onSelectClient(debtor.id);
-                        setActiveTab('clients');
-                      }}
-                      className="cursor-pointer p-3 rounded-lg bg-slate-950/70 hover:bg-slate-900/80 border border-white/[0.06] hover:border-white/15 transition-all group"
-                    >
-                      <div className="flex items-center justify-between text-xs sm:text-sm mb-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="w-5 h-5 rounded bg-slate-800 text-slate-300 font-mono font-bold flex items-center justify-center text-xs">
-                            {idx + 1}
-                          </span>
-                          <span className="font-bold text-slate-100 group-hover:text-blue-400 transition-colors text-xs sm:text-sm 2xl:text-base">
-                            {debtor.name}
-                          </span>
+              <div className="space-y-2">
+                {topDebtors.map((debtor, idx) => (
+                  <div
+                    key={debtor.id}
+                    onClick={() => {
+                      onSelectClient(debtor.id);
+                      setActiveTab('clients');
+                    }}
+                    className="cursor-pointer p-2.5 sm:p-3 rounded-lg bg-slate-950/70 hover:bg-slate-900/80 border border-white/[0.06] hover:border-white/15 transition-all group flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-2.5 min-w-0 pr-2">
+                      <span className="w-6 h-6 rounded-md bg-slate-800 text-slate-300 font-mono font-bold flex items-center justify-center text-xs shrink-0">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="font-bold text-slate-100 group-hover:text-blue-400 transition-colors text-xs sm:text-sm block truncate">
+                          {debtor.name}
+                        </span>
+                        <div className="flex items-center space-x-1.5 text-xs text-slate-400 font-mono mt-0.5">
                           {debtor.car && (
-                            <span className="text-xs text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-white/5 truncate max-w-[120px] font-mono">
-                              {debtor.car}
-                            </span>
+                            <span className="truncate max-w-[130px]">{debtor.car}</span>
+                          )}
+                          {debtor.car && debtor.itemsCount > 0 && <span>•</span>}
+                          {debtor.itemsCount > 0 && (
+                            <span>{debtor.itemsCount} {pluralize(debtor.itemsCount, ['дет.', 'дет.', 'дет.'])}</span>
                           )}
                         </div>
-
-                        <div className="font-mono font-bold text-amber-400 text-xs sm:text-sm 2xl:text-base">
-                          {formatMoney(debtor.currentDebt)}
-                        </div>
-                      </div>
-
-                      {/* Visual Gradient Progress Bar */}
-                      <div className="w-full bg-slate-900 rounded-full h-1.5 2xl:h-2 overflow-hidden">
-                        <div 
-                          className="bg-gradient-to-r from-amber-600 to-amber-400 h-1.5 2xl:h-2 rounded-full transition-all duration-300" 
-                          style={{ width: `${percent}%` }}
-                        />
                       </div>
                     </div>
-                  );
-                })}
+
+                    <div className="font-mono font-bold text-amber-400 text-xs sm:text-sm 2xl:text-base shrink-0">
+                      {formatMoney(debtor.currentDebt)}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* 3. Fast Part Code Finder */}
+          {/* 3. Fast Part Search Card */}
           <div className="surface-card rounded-xl p-4 2xl:p-5 space-y-3">
             <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
               <span className="text-xs 2xl:text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center space-x-1.5">
                 <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-blue-400" />
-                <span>Быстрый поиск артикула</span>
+                <span>Поиск по каталогу</span>
               </span>
               <button
                 onClick={() => setActiveTab('parts')}
-                className="text-xs 2xl:text-sm text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1"
+                className="text-xs 2xl:text-sm text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1 cursor-pointer"
               >
                 <span>Каталог</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -528,7 +559,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
               <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
               <input
                 type="text"
-                placeholder="Поиск по коду (напр. S TL C00117/8)..."
+                placeholder="Номер детали или артикул..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -555,16 +586,16 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                       }}
                       className="cursor-pointer p-2.5 rounded-lg bg-slate-950 hover:bg-slate-900 border border-white/[0.06] flex items-center justify-between text-xs sm:text-sm transition-colors"
                     >
-                      <div>
+                      <div className="min-w-0 pr-2">
                         <div className="flex items-center space-x-2">
                           <span className="font-mono font-bold text-blue-400 text-xs sm:text-sm">{t.article}</span>
-                          {t.carName && <span className="text-xs text-slate-400 font-mono">({t.carName})</span>}
+                          {t.carName && <span className="text-xs text-slate-400 font-mono truncate">({t.carName})</span>}
                         </div>
-                        <span className="text-xs text-slate-400 truncate block max-w-[200px] mt-0.5">
+                        <span className="text-xs text-slate-400 truncate block mt-0.5">
                           {t.description || cli?.name}
                         </span>
                       </div>
-                      <span className="font-mono font-bold text-amber-400 text-xs sm:text-sm">
+                      <span className="font-mono font-bold text-amber-400 text-xs sm:text-sm shrink-0">
                         {formatMoney(t.amount)}
                       </span>
                     </div>

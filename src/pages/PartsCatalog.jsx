@@ -112,7 +112,7 @@ export default function PartsCatalog({ initialQuery = '' }) {
             <strong className="text-blue-300 font-bold">{catalog.length}</strong>
           </div>
           <div className="h-8 2xl:h-9 px-3 2xl:px-4 rounded-lg bg-[#090d16] border border-white/10 text-xs 2xl:text-sm font-mono flex items-center space-x-2">
-            <span className="text-slate-400">Установок:</span>
+            <span className="text-slate-400">Продаж:</span>
             <strong className="text-emerald-400 font-bold">{totalEntriesCount}</strong>
           </div>
         </div>

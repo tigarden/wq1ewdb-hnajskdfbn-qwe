@@ -6,15 +6,15 @@ import EmptyState from '../components/EmptyState';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatMoney } from '../utils/format';
 import { 
-  Users, 
+  Truck, 
   Plus, 
   Trash2, 
   ArrowUpRight, 
   ArrowDownLeft, 
   Search, 
   Phone, 
-  Calendar,
-  FileText
+  Calendar, 
+  FileText 
 } from 'lucide-react';
 
 export default function OtherSettlements() {
@@ -93,14 +93,14 @@ export default function OtherSettlements() {
       <div className="surface-card p-3.5 sm:p-4 2xl:p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-white/[0.08]">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 2xl:w-9 2xl:h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-            <Users className="w-4 h-4 2xl:w-5 2xl:h-5" />
+            <Truck className="w-4 h-4 2xl:w-5 2xl:h-5" />
           </div>
           <div>
             <h1 className="text-xs sm:text-sm 2xl:text-base font-bold uppercase tracking-wider text-slate-200">
-              Взаиморасчеты с контрагентами
+              Взаиморасчеты с поставщиками
             </h1>
             <p className="text-xs 2xl:text-sm text-slate-400 mt-0.5">
-              Мастера, автосервисы, токари, подрядчики и партнеры
+              Поставщики запчастей, склады и партнеры
             </p>
           </div>
         </div>
@@ -132,7 +132,7 @@ export default function OtherSettlements() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
             <input
               type="text"
-              placeholder="Поиск контрагента..."
+              placeholder="Поиск поставщика..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full input-md sm:input-sm input-search"
@@ -142,10 +142,10 @@ export default function OtherSettlements() {
           {filteredCounterparties.length === 0 ? (
             <div className="surface-card rounded-xl p-6">
               <EmptyState
-                icon={Users}
-                title="Контрагенты не найдены"
-                description={searchQuery ? 'Попробуйте изменить поисковый запрос.' : 'Добавьте первого человека или партнера.'}
-                actionLabel={searchQuery ? undefined : 'Добавить контрагента'}
+                icon={Truck}
+                title="Поставщики не найдены"
+                description={searchQuery ? 'Попробуйте изменить поисковый запрос.' : 'Добавьте первого поставщика или склад.'}
+                actionLabel={searchQuery ? undefined : 'Добавить поставщика'}
                 onAction={searchQuery ? undefined : () => setIsAddPersonModalOpen(true)}
               />
             </div>
@@ -174,7 +174,7 @@ export default function OtherSettlements() {
                           <span>{p.phone}</span>
                         </p>
                       ) : (
-                        <span className="text-xs text-slate-500">Контрагент</span>
+                        <span className="text-xs text-slate-500">Поставщик</span>
                       )}
                     </div>
                     <div className="text-right">
@@ -200,7 +200,7 @@ export default function OtherSettlements() {
             onClick={() => setMobileShowDetail(false)}
             className="lg:hidden w-full flex items-center justify-center space-x-2 rounded-xl bg-slate-900/90 border border-white/10 py-2.5 text-sm text-slate-300 mb-3 active:scale-[0.98]"
           >
-            <span>← Все контрагенты</span>
+            <span>← Все поставщики</span>
           </button>
 
           {currentPerson && currentStats ? (
@@ -237,7 +237,7 @@ export default function OtherSettlements() {
                   <button
                     onClick={() => setIsDeletePersonModalOpen(true)}
                     className="h-12 w-12 sm:h-9 sm:w-9 rounded-xl sm:rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
-                    title="Удалить контрагента"
+                    title="Удалить поставщика"
                   >
                     <Trash2 className="w-4.5 h-4.5 sm:w-4 sm:h-4" />
                   </button>
@@ -296,8 +296,8 @@ export default function OtherSettlements() {
                 {currentStats.transactions.length === 0 && (
                   <div className="surface-card p-8 rounded-2xl border border-white/10">
                     <EmptyState
-                      icon={Users}
-                      title="Нет операций по контрагенту"
+                      icon={Truck}
+                      title="Нет операций по поставщику"
                       description="Запишите первую операцию: начисление долга или возврат/оплату."
                       actionLabel="Записать сумму"
                       onAction={() => setIsAddTxModalOpen(true)}
@@ -360,8 +360,8 @@ export default function OtherSettlements() {
                       <tr>
                         <td colSpan="5" className="py-10">
                           <EmptyState
-                            icon={Users}
-                            title="Нет операций по контрагенту"
+                            icon={Truck}
+                            title="Нет операций по поставщику"
                             description="Запишите первую операцию: начисление долга или возврат/оплату."
                             actionLabel="Записать сумму"
                             onAction={() => setIsAddTxModalOpen(true)}
@@ -377,9 +377,9 @@ export default function OtherSettlements() {
           ) : (
             <div className="surface-card p-10 rounded-lg flex flex-col items-center justify-center">
               <EmptyState
-                icon={Users}
-                title="Контрагент не выбран"
-                description="Выберите контрагента из списка слева для просмотра карточки и истории операций."
+                icon={Truck}
+                title="Поставщик не выбран"
+                description="Выберите поставщика из списка слева для просмотра карточки и истории операций."
               />
             </div>
           )}
@@ -388,13 +388,13 @@ export default function OtherSettlements() {
       </div>
 
       {/* Modal: Add Person */}
-      <Modal isOpen={isAddPersonModalOpen} onClose={() => setIsAddPersonModalOpen(false)} title="Добавить контрагента">
+      <Modal isOpen={isAddPersonModalOpen} onClose={() => setIsAddPersonModalOpen(false)} title="Добавить поставщика">
         <form onSubmit={handleCreatePerson} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Имя / Описание / СТО *</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Название / Поставщик *</label>
             <input
               type="text"
-              placeholder="напр. Мастер Ваня, СТО Автомир, Токарь Андрей..."
+              placeholder="напр. Элит, Тотус, Партс-Трейд, Автодок..."
               value={personName}
               onChange={(e) => setPersonName(e.target.value)}
               className="w-full input-md"
@@ -417,7 +417,7 @@ export default function OtherSettlements() {
               type="submit"
               className="w-full h-12 sm:h-10 rounded-xl sm:rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer active:scale-[0.98]"
             >
-              Создать контрагента
+              Создать поставщика
             </button>
           </div>
         </form>
@@ -435,7 +435,7 @@ export default function OtherSettlements() {
                 className="w-full input-md font-semibold"
               >
                 <option value="plus" className="bg-[#0b0f19] text-white">+ Долг нам (начисление)</option>
-                <option value="minus" className="bg-[#0b0f19] text-white">- Возврат / Оплата</option>
+                <option value="minus" className="bg-[#0b0f19] text-white">- Оплата поставщику / Возврат</option>
               </select>
             </div>
             <div>
@@ -465,7 +465,7 @@ export default function OtherSettlements() {
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Примечание / Назначение</label>
             <input
               type="text"
-              placeholder="Ремонт суппорта, токарные работы, займ..."
+              placeholder="Ремонт суппорта, токарные работы, закупка..."
               value={txNote}
               onChange={(e) => setTxNote(e.target.value)}
               className="w-full input-md"
@@ -493,9 +493,9 @@ export default function OtherSettlements() {
             setIsDeletePersonModalOpen(false);
           }
         }}
-        title="Удалить контрагента"
-        message={`Вы действительно хотите удалить контрагента «${currentPerson?.name}» и всю историю связанных финансовых операций? Это действие необратимо.`}
-        confirmText="Удалить контрагента"
+        title="Удалить поставщика"
+        message={`Вы действительно хотите удалить поставщика «${currentPerson?.name}» и всю историю связанных финансовых операций? Это действие необратимо.`}
+        confirmText="Удалить поставщика"
       />
 
       {/* Confirm Modal: Delete Transaction */}
