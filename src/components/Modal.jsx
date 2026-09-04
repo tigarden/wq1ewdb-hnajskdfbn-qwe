@@ -25,7 +25,7 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
         onClick={onClose} 
         aria-hidden="true" 
       />
-      <div className={`relative w-full ${maxWidth} surface-card rounded-t-3xl sm:rounded-2xl border-t sm:border border-white/10 shadow-2xl overflow-hidden z-10 max-h-[88dvh] flex flex-col pb-[max(env(safe-area-inset-bottom,0px),12px)] sm:pb-0 animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200`}>
+      <div className={`relative w-full ${maxWidth} surface-card rounded-t-3xl sm:rounded-2xl border-t sm:border border-white/10 shadow-2xl overflow-hidden z-10 max-h-[88dvh] flex flex-col pb-[max(env(safe-area-inset-bottom,0px),12px)] sm:pb-0 animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-0 sm:animate-modal-pop duration-200`}>
         
         {/* iOS Pull/Grab indicator bar on mobile */}
         <div className="sm:hidden pt-2.5 pb-1 flex justify-center bg-[#090d16] shrink-0">

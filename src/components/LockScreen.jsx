@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import Logo from './Logo';
 
 export default function LockScreen({ onUnlock }) {
   const {
@@ -90,22 +91,14 @@ export default function LockScreen({ onUnlock }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#090d16]/95 backdrop-blur-md animate-in fade-in duration-200 pt-[env(safe-area-inset-top,16px)] pb-[env(safe-area-inset-bottom,16px)]">
-      <div className="relative w-full max-w-sm surface-card rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 border border-white/10 z-10">
+      <div className="relative w-full max-w-sm surface-card rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 border border-white/10 z-10 animate-modal-pop">
         
         {/* Header Branding */}
-        <div className="text-center space-y-2.5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600/20 to-indigo-500/20 border border-blue-500/30 text-blue-400 mx-auto flex items-center justify-center shadow-inner">
-            {canUsePasskey ? (
-              <Fingerprint className="w-6 h-6 text-blue-400 animate-pulse" />
-            ) : isTotpEnabled ? (
-              <ShieldCheck className="w-6 h-6 text-emerald-400" />
-            ) : (
-              <Lock className="w-6 h-6 text-blue-400" />
-            )}
-          </div>
+        <div className="text-center space-y-2.5 flex flex-col items-center">
+          <Logo size="lg" animated={true} />
           <div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-100 tracking-tight">
-              Debet<span className="text-blue-400">.auto</span>
+            <h1 className="text-lg sm:text-xl font-black text-slate-100 tracking-tight font-mono">
+              Debet<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">.auto</span>
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">
               {isTotpEnabled

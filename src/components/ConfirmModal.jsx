@@ -39,7 +39,7 @@ export default function ConfirmModal({
         onClick={() => !loading && onClose()} 
         aria-hidden="true" 
       />
-      <div className="relative w-full max-w-md surface-card rounded-2xl border border-white/10 shadow-2xl p-5 sm:p-6 z-10 animate-in zoom-in-95 duration-150 space-y-4">
+      <div className="relative w-full max-w-md surface-card rounded-2xl border border-white/10 shadow-2xl p-5 sm:p-6 z-10 animate-modal-pop space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start space-x-3.5 min-w-0">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${

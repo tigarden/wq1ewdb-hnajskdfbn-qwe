@@ -116,7 +116,7 @@ export default function IncomeAndQueue() {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-slide-up">
       
       {/* Suppliers Datalist for fast auto-complete */}
       <datalist id="suppliers-autocomplete-list">

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { usePWA } from '../hooks/usePWA';
+import Logo from './Logo';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpenInstallModal }) {
   const { syncStatus, lastSyncTime, pushToGitHub, exportToExcel, lockApp, incomeStats, settings } = useData();
@@ -48,23 +49,14 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
         <div className="max-w-[1680px] 2xl:max-w-[1880px] mx-auto px-3 sm:px-6 lg:px-8 2xl:px-10">
           <div className="flex items-center justify-between h-14 2xl:h-16">
             
-            {/* Brand */}
-            <div 
-              className="flex items-center space-x-2.5 cursor-pointer select-none group" 
+            {/* Brand Logo & Name */}
+            <Logo
+              size="sm"
+              showText={true}
+              animated={true}
+              isSyncing={syncStatus === 'syncing'}
               onClick={() => setActiveTab('dashboard')}
-            >
-              <div className="w-8 h-8 2xl:w-8 2xl:h-8 rounded-xl bg-gradient-to-tr from-blue-700 to-blue-500 flex items-center justify-center text-white font-black text-xs 2xl:text-sm shadow-md shadow-blue-500/25 border border-white/20 group-hover:scale-105 transition-transform">
-                D
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-base 2xl:text-base font-bold tracking-tight text-white uppercase font-mono">
-                  Debet<span className="text-blue-400">.auto</span>
-                </span>
-                <span className="hidden sm:inline-block text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-slate-300 font-mono border border-white/10 shadow-inner">
-                  ₴ UAH
-                </span>
-              </div>
-            </div>
+            />
 
             {/* Desktop Navigation Tabs (Segmented Glass Pills) */}
             <nav className="hidden md:flex items-center space-x-1 p-1 rounded-xl bg-slate-950/70 border border-white/[0.08] backdrop-blur-md shadow-inner">
@@ -99,8 +91,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
               {/* Cloud Sync Status Pill */}
               <div className="flex items-center">
                 {syncStatus === 'syncing' ? (
-                  <div className="h-9 px-2.5 sm:px-3 rounded-xl bg-blue-500/10 text-blue-300 border border-blue-500/25 text-xs font-medium inline-flex items-center space-x-1.5">
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                  <div className="h-9 px-2.5 sm:px-3 rounded-xl bg-blue-500/10 text-blue-300 border border-blue-500/25 text-xs font-medium inline-flex items-center space-x-1.5 shadow-sm shadow-blue-500/20">
+                    <RefreshCw className="w-3.5 h-3.5 animate-radar-spin text-cyan-400" />
                     <span className="hidden sm:inline font-mono">Сохранение...</span>
                   </div>
                 ) : syncStatus === 'synced' ? (

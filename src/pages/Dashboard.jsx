@@ -154,9 +154,10 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         </div>
       </div>
 
-      {/* 4 Precision Metric Tiles */}
+      {/* 4 Precision Metric Tiles with Staggered Motion */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <StatCard
+          className="animate-slide-up stagger-1"
           title="Сводный баланс"
           value={formatMoney(globalSummary.grandBalance)}
           subtitle={
@@ -172,6 +173,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         />
 
         <StatCard
+          className="animate-slide-up stagger-2"
           title="Чистая прибыль"
           value={`+${formatMoney(incomeStats.totalProfit)}`}
           subtitle={
@@ -187,6 +189,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         />
 
         <StatCard
+          className="animate-slide-up stagger-3"
           title="Долги клиентов"
           value={formatMoney(globalSummary.totalClientDebt)}
           subtitle={`${debtorsCount} ${pluralize(debtorsCount, ['клиент с долгом', 'клиента с долгом', 'клиентов с долгом'])}`}
@@ -198,6 +201,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         />
 
         <StatCard
+          className="animate-slide-up stagger-4"
           title="Поставщики"
           value={formatMoney(globalSummary.totalOtherBalance)}
           subtitle={`${data.otherCounterparties?.length || 0} ${pluralize(data.otherCounterparties?.length || 0, ['поставщик и склад', 'поставщика и склада', 'поставщиков и складов'])}`}
@@ -210,7 +214,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
       </div>
 
       {/* Main Responsive Grid (12 Columns on Desktop) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 2xl:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 2xl:grid-cols-12 gap-5 animate-slide-up stagger-5">
         
         {/* Left Column: High-Density Operations Journal */}
         <div className="lg:col-span-7 2xl:col-span-8 space-y-3">

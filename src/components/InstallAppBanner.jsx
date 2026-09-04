@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, X, Smartphone, Sparkles } from 'lucide-react';
 import { usePWA } from '../hooks/usePWA';
+import Logo from './Logo';
 
 export default function InstallAppBanner({ onOpenModal }) {
   const { isStandalone, isDismissed, dismissBanner, canInstall, promptInstall, isIOS } = usePWA();
@@ -23,14 +24,12 @@ export default function InstallAppBanner({ onOpenModal }) {
   return (
     <aside
       aria-label="Установка приложения"
-      className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.25rem)] md:bottom-5 left-3 right-3 md:left-auto md:right-5 z-40 md:max-w-md animate-in slide-in-from-bottom-3 duration-300 pointer-events-auto"
+      className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.25rem)] md:bottom-5 left-3 right-3 md:left-auto md:right-5 z-40 md:max-w-md animate-slide-up pointer-events-auto"
     >
-      <div className="p-3 bg-[#0d1322]/95 backdrop-blur-md border border-blue-500/30 rounded-xl shadow-2xl shadow-black/60 flex items-center justify-between gap-2.5">
+      <div className="p-3 bg-[#0d1322]/95 backdrop-blur-xl border border-blue-500/30 rounded-2xl shadow-2xl shadow-black/80 flex items-center justify-between gap-2.5">
         
         {/* App Icon */}
-        <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-mono font-black text-xs shrink-0 shadow-xs">
-          D
-        </div>
+        <Logo size="sm" animated={true} />
 
         {/* Text */}
         <div className="flex-1 min-w-0 pr-1">

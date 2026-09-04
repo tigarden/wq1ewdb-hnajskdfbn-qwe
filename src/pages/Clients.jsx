@@ -58,7 +58,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-slide-up">
       {/* Mobile Back Button when client detail is open */}
       <div className="md:hidden">
         {mobileShowDetail && (

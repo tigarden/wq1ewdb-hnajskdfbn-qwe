@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { 
   X, 
   Share, 
@@ -9,9 +8,11 @@ import {
   CheckCircle2, 
   Sparkles,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Monitor
 } from 'lucide-react';
 import { usePWA } from '../hooks/usePWA';
+import Logo from './Logo';
 
 export default function InstallAppModal({ isOpen, onClose }) {
   const { isIOS, isAndroid, isSafari, canInstall, promptInstall, isStandalone } = usePWA();
@@ -43,19 +44,15 @@ export default function InstallAppModal({ isOpen, onClose }) {
       />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-lg bg-[#0e1320] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-10 my-auto text-slate-100 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg bg-[#0e1320] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-10 my-auto text-slate-100 animate-modal-pop">
         
         {/* Header Banner */}
         <div className="relative px-5 py-4 border-b border-white/10 bg-gradient-to-r from-blue-950/40 via-[#0e1320] to-indigo-950/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 p-0.5 shadow-lg shadow-blue-500/20 flex items-center justify-center">
-                <div className="w-full h-full rounded-[10px] bg-[#090d16] flex items-center justify-center">
-                  <span className="text-blue-400 font-mono font-black text-lg">D</span>
-                </div>
-              </div>
+              <Logo size="md" animated={true} />
               <div>
-                <h3 className="font-bold text-base text-white tracking-tight flex items-center gap-1.5">
+                <h3 className="font-bold text-base text-white tracking-tight flex items-center gap-1.5 font-mono">
                   Debet<span className="text-blue-400">.auto</span>
                   <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
                     PWA
@@ -118,6 +115,29 @@ export default function InstallAppModal({ isOpen, onClose }) {
               </button>
             </div>
           )}
+
+          {/* Desktop & Home Screen Icon Preview Showcase */}
+          <div className="p-3.5 rounded-xl bg-gradient-to-b from-slate-900/90 to-[#070b14] border border-blue-500/20 flex items-center space-x-3.5 shadow-inner">
+            <div className="relative group shrink-0">
+              <div className="absolute -inset-1.5 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-400 opacity-60 blur-md animate-pulse-glow" />
+              <img
+                src="apple-touch-icon.png"
+                alt="Debet.auto Desktop Icon"
+                className="relative w-14 h-14 rounded-2xl shadow-2xl border border-white/20 object-cover transition-transform group-hover:scale-105"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2">
+                <span className="font-bold text-white text-xs sm:text-sm">Иконка приложения</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                  HD 512px
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                Ярлык премиум-качества для рабочего стола Windows, macOS, iPhone и Android.
+              </p>
+            </div>
+          </div>
 
           {/* Platform Tab Switcher */}
           <div>

@@ -69,7 +69,7 @@ export default function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden surface-card p-3.5 sm:p-4 2xl:p-5 rounded-xl border border-white/[0.08] transition-all duration-200 group ${
+      className={`relative overflow-hidden surface-card surface-card-interactive p-3.5 sm:p-4 2xl:p-5 rounded-xl border border-white/[0.08] transition-all duration-200 group ${
         isClickable ? `cursor-pointer hover:-translate-y-0.5 hover:shadow-xl ${v.borderHover}` : ''
       } ${className}`}
     >

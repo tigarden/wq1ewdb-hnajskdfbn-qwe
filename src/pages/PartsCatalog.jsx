@@ -87,7 +87,7 @@ export default function PartsCatalog({ initialQuery = '' }) {
   const totalEntriesCount = catalog.reduce((acc, c) => acc + c.entries.length, 0);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-slide-up">
       
       {/* Top Status & Action Bar */}
       <div className="surface-card p-3.5 sm:p-4 2xl:p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg border border-white/[0.08]">
