@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { loadSettings, saveSettings } from '../services/storage';
 import { fetchRepoFile, saveRepoFile } from '../services/githubApi';
-import { api, getApiUrl, setApiUrl } from '../services/api';
 import {
   getSupabaseConfig,
   saveSupabaseConfig,
@@ -21,88 +20,10 @@ export function SyncProvider({ children, data, onDataUpdated }) {
   const [lastSyncTime, setLastSyncTime] = useState(() => settings.lastSyncTime);
   const [currentSha, setCurrentSha] = useState(() => settings.lastSha);
 
-  // Backend API state
-  const [backendUrl, setBackendUrl] = useState(() => getApiUrl());
-  const [backendHealth, setBackendHealth] = useState(() => {
-    return getApiUrl() ? null : { status: 'not_configured' };
-  });
-  const [backendLoading, setBackendLoading] = useState(false);
-
   // Supabase Cloud state
   const [supabaseConfig, setSupabaseConfig] = useState(() => getSupabaseConfig());
   const [supabaseStatus, setSupabaseStatus] = useState('idle');
   const isPullingRef = useRef(false);
-
-  // Check backend health
-  const checkBackend = useCallback(async () => {
-    const url = getApiUrl();
-    if (!url) {
-      setBackendHealth({ status: 'not_configured' });
-      return null;
-    }
-    setBackendLoading(true);
-    const res = await api.checkHealth();
-    setBackendLoading(false);
-    if (res.success) {
-      setBackendHealth(res.data);
-      return res.data;
-    } else {
-      setBackendHealth({ status: 'offline', error: res.error });
-      return null;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (getApiUrl()) {
-      checkBackend();
-    }
-  }, [checkBackend]);
-
-  const updateBackendUrl = useCallback(
-    (newUrl) => {
-      const clean = setApiUrl(newUrl);
-      setBackendUrl(clean);
-      if (clean) {
-        checkBackend();
-      } else {
-        setBackendHealth({ status: 'not_configured' });
-      }
-    },
-    [checkBackend]
-  );
-
-  // Sync with FastAPI / PostgreSQL
-  const syncToPostgres = useCallback(async () => {
-    setBackendLoading(true);
-    try {
-      const res = await api.importBackup(data);
-      setBackendLoading(false);
-      await checkBackend();
-      return { success: true, message: res.message || 'Данные успешно сохранены в базу' };
-    } catch (err) {
-      setBackendLoading(false);
-      return { success: false, error: err.message };
-    }
-  }, [data, checkBackend]);
-
-  const pullFromPostgres = useCallback(async () => {
-    setBackendLoading(true);
-    try {
-      const remoteData = await api.exportBackup();
-      if (remoteData && (remoteData.clients || remoteData.suppliersList)) {
-        isPullingRef.current = true;
-        onDataUpdated(remoteData);
-        setBackendLoading(false);
-        await checkBackend();
-        return { success: true };
-      }
-      setBackendLoading(false);
-      return { success: false, error: 'В базе пока нет записей' };
-    } catch (err) {
-      setBackendLoading(false);
-      return { success: false, error: err.message };
-    }
-  }, [onDataUpdated, checkBackend]);
 
   // Supabase Cloud sync
   const updateSupabase = useCallback((url, key) => {
@@ -154,11 +75,25 @@ export function SyncProvider({ children, data, onDataUpdated }) {
     });
   }, []);
 
+  const dataRef = useRef(data);
+  dataRef.current = data;
+
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  const currentShaRef = useRef(currentSha);
+  currentShaRef.current = currentSha;
+
+  const supabaseConfigRef = useRef(supabaseConfig);
+  supabaseConfigRef.current = supabaseConfig;
+
   const lastSyncedDataRef = useRef('');
 
   const pushToGitHub = useCallback(
     async (commitMsg = 'Автоматическое сохранение [skip ci]') => {
-      if (!settings.token) {
+      const currentSettings = settingsRef.current;
+      const currentData = dataRef.current;
+      if (!currentSettings?.token) {
         return { success: false, error: 'Токен GitHub не указан' };
       }
       setSyncStatus('syncing');
@@ -169,18 +104,18 @@ export function SyncProvider({ children, data, onDataUpdated }) {
           : `${commitMsg} [skip ci]`;
 
         const res = await saveRepoFile(
-          settings.token,
-          settings.owner,
-          settings.repo,
-          settings.path,
-          data,
-          currentSha,
+          currentSettings.token,
+          currentSettings.owner,
+          currentSettings.repo,
+          currentSettings.path,
+          currentData,
+          currentShaRef.current,
           msgWithSkipCi
         );
         const now = new Date().toISOString();
         setCurrentSha(res.sha);
         setLastSyncTime(now);
-        lastSyncedDataRef.current = JSON.stringify(data);
+        lastSyncedDataRef.current = JSON.stringify(currentData);
         updateSettings({ lastSyncTime: now, lastSha: res.sha });
         setSyncStatus('synced');
         return { success: true };
@@ -190,55 +125,66 @@ export function SyncProvider({ children, data, onDataUpdated }) {
         return { success: false, error: err.message };
       }
     },
-    [settings, data, currentSha, updateSettings]
+    [updateSettings]
   );
 
-  const pullFromGitHub = useCallback(async () => {
-    if (!settings.token) {
-      return { success: false, error: 'Токен GitHub не указан' };
-    }
-    setSyncStatus('syncing');
-    setSyncError(null);
-    try {
-      const res = await fetchRepoFile(
-        settings.token,
-        settings.owner,
-        settings.repo,
-        settings.path
-      );
-      if (res.exists && res.data) {
-        isPullingRef.current = true;
-        lastSyncedDataRef.current = JSON.stringify(res.data);
-        onDataUpdated(res.data);
-        const now = new Date().toISOString();
-        setCurrentSha(res.sha);
-        setLastSyncTime(now);
-        updateSettings({ lastSyncTime: now, lastSha: res.sha });
-        setSyncStatus('synced');
-        return { success: true };
+  const pullFromGitHub = useCallback(
+    async (silent = false) => {
+      const currentSettings = settingsRef.current;
+      if (!currentSettings?.token) {
+        return { success: false, error: 'Токен GitHub не указан' };
       }
-      setSyncStatus('synced');
-      return { success: false, error: 'Файл в репозитории пока не создан' };
-    } catch (err) {
-      setSyncStatus('error');
-      setSyncError(err.message);
-      return { success: false, error: err.message };
-    }
-  }, [settings, onDataUpdated, updateSettings]);
+      if (!silent) {
+        setSyncStatus('syncing');
+      }
+      setSyncError(null);
+      try {
+        const res = await fetchRepoFile(
+          currentSettings.token,
+          currentSettings.owner,
+          currentSettings.repo,
+          currentSettings.path
+        );
+        if (res.exists && res.data) {
+          isPullingRef.current = true;
+          lastSyncedDataRef.current = JSON.stringify(res.data);
+          onDataUpdated(res.data);
+          const now = new Date().toISOString();
+          setCurrentSha(res.sha);
+          setLastSyncTime(now);
+          updateSettings({ lastSyncTime: now, lastSha: res.sha });
+          setSyncStatus('synced');
+          return { success: true };
+        }
+        setSyncStatus('synced');
+        return { success: false, error: 'Файл в репозитории пока не создан' };
+      } catch (err) {
+        if (!silent) {
+          setSyncStatus('error');
+          setSyncError(err.message);
+        }
+        return { success: false, error: err.message };
+      }
+    },
+    [onDataUpdated, updateSettings]
+  );
 
-  // Оптимизированная фоновая автосинхронизация с защитой от лишних коммитов и расхода токенов
+  // Initial quiet load from cloud on mount
+  useEffect(() => {
+    lastSyncedDataRef.current = JSON.stringify(dataRef.current);
+    if (settingsRef.current?.token) {
+      pullFromGitHub(true).catch(() => {});
+    }
+    if (supabaseConfigRef.current?.url && supabaseConfigRef.current?.key) {
+      pullFromSupabase().catch(() => {});
+    }
+  }, [pullFromGitHub, pullFromSupabase]);
+
+  // Event-driven auto-save: triggers ONLY on genuine data changes
   const isInitialMount = useRef(true);
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      lastSyncedDataRef.current = JSON.stringify(data);
-      // Авто-проверка и тихое обновление при открытии приложения
-      if (settings?.token) {
-        pullFromGitHub().catch(() => {});
-      }
-      if (supabaseConfig?.url && supabaseConfig?.key) {
-        pullFromSupabase().catch(() => {});
-      }
       return;
     }
 
@@ -248,6 +194,11 @@ export function SyncProvider({ children, data, onDataUpdated }) {
     }
 
     const currentDataStr = JSON.stringify(data);
+    if (!lastSyncedDataRef.current) {
+      lastSyncedDataRef.current = currentDataStr;
+      return;
+    }
+
     if (currentDataStr === lastSyncedDataRef.current) {
       return;
     }
@@ -259,38 +210,26 @@ export function SyncProvider({ children, data, onDataUpdated }) {
       return;
     }
 
+    // Set unsaved indicator calmly
     setSyncStatus('unsaved');
 
-    // Supabase синхронизируется через 3 секунды
-    let sbTimer;
-    if (canSyncSupabase) {
-      sbTimer = setTimeout(async () => {
-        try {
+    // Debounce save by 2.5 seconds
+    const timer = setTimeout(async () => {
+      try {
+        if (canSyncSupabase) {
           await syncToSupabase();
-        } catch (e) {
-          console.warn('Supabase auto-sync error:', e);
         }
-      }, 3000);
-    }
-
-    // GitHub коммитится через 30 секунд (чтобы группировать изменения и не сжигать лимиты API и токены Actions)
-    let ghTimer;
-    if (canSyncGitHub) {
-      ghTimer = setTimeout(async () => {
-        try {
+        if (canSyncGitHub) {
           await pushToGitHub('Автоматическое сохранение [skip ci]');
-          lastSyncedDataRef.current = currentDataStr;
-        } catch (e) {
-          console.warn('GitHub auto-sync error:', e);
         }
-      }, 30000);
-    }
+        lastSyncedDataRef.current = JSON.stringify(dataRef.current);
+      } catch (e) {
+        console.warn('Auto-sync error:', e);
+      }
+    }, 2500);
 
-    return () => {
-      if (sbTimer) clearTimeout(sbTimer);
-      if (ghTimer) clearTimeout(ghTimer);
-    };
-  }, [data, settings?.token, settings?.autoSync, supabaseConfig?.url, supabaseConfig?.key, pushToGitHub, pullFromGitHub, syncToSupabase, pullFromSupabase]);
+    return () => clearTimeout(timer);
+  }, [data, settings?.token, settings?.autoSync, supabaseConfig?.url, supabaseConfig?.key, pushToGitHub, syncToSupabase]);
 
   const value = {
     settings,
@@ -300,13 +239,6 @@ export function SyncProvider({ children, data, onDataUpdated }) {
     lastSyncTime,
     pushToGitHub,
     pullFromGitHub,
-    backendUrl,
-    updateBackendUrl,
-    backendHealth,
-    backendLoading,
-    checkBackend,
-    syncToPostgres,
-    pullFromPostgres,
     supabaseConfig,
     updateSupabase,
     syncToSupabase,

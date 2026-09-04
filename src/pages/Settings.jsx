@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import SecuritySettings from '../components/settings/SecuritySettings';
-import DatabaseSettings from '../components/settings/DatabaseSettings';
 import CloudSyncSettings from '../components/settings/CloudSyncSettings';
 import BackupSettings from '../components/settings/BackupSettings';
 import AppSettings from '../components/settings/AppSettings';
-import { Shield, Database, Cloud, FileSpreadsheet, Smartphone } from 'lucide-react';
+import { Shield, Cloud, FileSpreadsheet, Smartphone } from 'lucide-react';
 
 export default function Settings() {
-  const [activeSection, setActiveSection] = useState('security'); // 'security' | 'database' | 'cloud' | 'backup' | 'app'
+  const [activeSection, setActiveSection] = useState('security'); // 'security' | 'cloud' | 'backup' | 'app'
 
   const {
     // 2FA & Auth
@@ -18,14 +17,6 @@ export default function Settings() {
     disableTotp,
     changeMasterPassword,
     lockApp,
-    // Database API
-    backendUrl,
-    updateBackendUrl,
-    backendHealth,
-    backendLoading,
-    checkBackend,
-    syncToPostgres,
-    pullFromPostgres,
     // Cloud & GitHub
     supabaseConfig,
     updateSupabase,
@@ -45,7 +36,6 @@ export default function Settings() {
 
   const sections = [
     { id: 'security', label: 'Безопасность и 2FA', icon: Shield },
-    { id: 'database', label: 'Сервер API (PostgreSQL)', icon: Database },
     { id: 'cloud', label: 'Облако и GitHub', icon: Cloud },
     { id: 'backup', label: 'Экспорт и Бэкап', icon: FileSpreadsheet },
     { id: 'app', label: 'Приложение на экран', icon: Smartphone },
@@ -86,18 +76,6 @@ export default function Settings() {
             disableTotp={disableTotp}
             changeMasterPassword={changeMasterPassword}
             lockApp={lockApp}
-          />
-        )}
-
-        {activeSection === 'database' && (
-          <DatabaseSettings
-            backendUrl={backendUrl}
-            updateBackendUrl={updateBackendUrl}
-            backendHealth={backendHealth}
-            backendLoading={backendLoading}
-            checkBackend={checkBackend}
-            syncToPostgres={syncToPostgres}
-            pullFromPostgres={pullFromPostgres}
           />
         )}
 

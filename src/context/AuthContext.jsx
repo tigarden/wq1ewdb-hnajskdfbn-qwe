@@ -10,7 +10,6 @@ import {
   isStoredTotpEnabled,
 } from '../services/secureStorage';
 import { generateTotpSecret, verifyTotpCode, getOtpAuthUrl } from '../services/totp';
-import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -49,13 +48,6 @@ export function AuthProvider({ children }) {
       if (valid) {
         await createSecureSession(rememberMe);
         setIsUnlocked(true);
-
-        // Also authenticate with backend if configured
-        try {
-          await api.login(enteredPassword, null, rememberMe ? 7 : 1);
-        } catch (e) {
-          // Backend offline or not configured is fine, local auth succeeds
-        }
         return true;
       }
       setAuthError('Неверный пароль доступа');
@@ -80,13 +72,6 @@ export function AuthProvider({ children }) {
       if (valid) {
         await createSecureSession(rememberMe);
         setIsUnlocked(true);
-
-        // Also attempt backend auth
-        try {
-          await api.login(null, code, rememberMe ? 7 : 1);
-        } catch (e) {
-          // Offline fallback
-        }
         return true;
       }
       setAuthError('Неверный или устаревший 6-значный код');
@@ -112,27 +97,12 @@ export function AuthProvider({ children }) {
     }
     setStoredTotpSecret(secret);
     setIsTotpEnabled(true);
-
-    // Sync to backend if connected
-    try {
-      await api.enableTotp(secret, code);
-    } catch (e) {
-      // Offline fallback
-    }
-
     return { success: true };
   }, []);
 
   const disableTotp = useCallback(async () => {
     setStoredTotpSecret(null);
     setIsTotpEnabled(false);
-
-    try {
-      await api.disableTotp();
-    } catch (e) {
-      // Offline fallback
-    }
-
     return { success: true };
   }, []);
 
@@ -153,14 +123,6 @@ export function AuthProvider({ children }) {
     }
 
     await updateMasterPassword(newPassword);
-
-    // Sync to backend if connected
-    try {
-      await api.changePassword(oldPassword, newPassword);
-    } catch (e) {
-      // Offline fallback
-    }
-
     return { success: true };
   }, []);
 

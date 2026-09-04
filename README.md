@@ -5,8 +5,7 @@
 - 📱 **Работает на любом устройстве**: телефон, планшет, компьютер 24/7.
 - 🌐 **Бесплатный хостинг**: развернуто через **GitHub Pages**.
 - 🛡️ **Двухфакторная защита Google Authenticator (2FA)**: подтверждение входа 1 раз в неделю (сессия 7 дней) по 6-значному одноразовому коду.
-- 🐘 **База данных PostgreSQL**: поддержка Docker Compose, облачных СУБД (Supabase, Neon, Render) и локального fallback SQLite.
-- ⚡ **Оффлайн-режим и гибридная синхронизация**: локальный кэш + синхронизация с PostgreSQL и GitHub.
+- ⚡ **Оффлайн-режим и умная синхронизация**: мгновенный локальный кэш + сохранение изменений в личный репозиторий GitHub или Supabase только по факту правок.
 - 📊 **Экспорт и бэкапы**: выгрузка в Excel (.xlsx) и JSON в один клик.
 
 ---
@@ -32,60 +31,26 @@
 
 ---
 
-## 🐘 База данных PostgreSQL
+## 💻 Быстрый локальный запуск
 
-Проект поддерживает гибкую архитектуру базы данных через асинхронный ORM **SQLAlchemy 2.0 + asyncpg + Alembic**:
-
-### Вариант 1: Запуск через Docker Compose (Рекомендуется локально)
-В корне проекта уже подготовлен файл `docker-compose.yml` (PostgreSQL 16 Alpine + веб-панель pgAdmin):
+Для запуска приложения достаточно запустить файл **`start.bat`** (или выполнить команды вручную):
 
 ```bash
-# Запуск контейнеров PostgreSQL и pgAdmin
-docker compose up -d
+# Установка зависимостей (только при первом запуске)
+npm install
 
-# Просмотр статуса
-docker compose ps
+# Запуск локального сервера
+npm run dev
 ```
-- **PostgreSQL**: порт `5432` (пользователь: `postgres`, пароль: `postgres`, база: `debet`)
-- **pgAdmin**: доступен в браузере по адресу `http://localhost:5050` (логин: `admin@debet.auto`, пароль: `admin123`)
 
-### Вариант 2: Облачный PostgreSQL (Supabase / Neon / Render / Timeweb)
-1. Создайте бесплатную базу PostgreSQL на [Supabase](https://supabase.com/) или [Neon](https://neon.tech/).
-2. В файле `.env` укажите полученную строку подключения:
-   ```env
-   DATABASE_URL=postgresql+asyncpg://postgres.yourproject:yourpassword@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?ssl=require
-   ```
-
-### Вариант 3: Автоматический Fallback (SQLite)
-Если PostgreSQL временно не запущен, бэкенд автоматически использует локальную защищенную базу SQLite (`debet.db`), поэтому всё работает сразу без предварительной настройки.
+Приложение автоматически откроется в браузере по адресу `http://localhost:5173`.
 
 ---
 
-## 💻 Локальный запуск (Разработка)
+## ☁️ Облачная синхронизация
 
-### 1. Запуск бэкенда (FastAPI + PostgreSQL):
-```bash
-# Активация виртуального окружения (PowerShell)
-.\.venv\Scripts\Activate.ps1
-
-# Применение миграций базы данных
-alembic upgrade head
-
-# Миграция начальных данных из JSON в базу (при первом запуске)
-python scripts/migrate_json_to_postgres.py
-
-# Запуск сервера API
-uvicorn backend.main:app --reload --port 8000
-```
-- Документация Swagger UI: `http://localhost:8000/docs`
-- Проверка статуса базы: `http://localhost:8000/api/health`
-
-### 2. Запуск фронтенда (React + Vite):
-```bash
-npm install
-npm run dev
-```
-Приложение откроется по адресу `http://localhost:5173`.
+В разделе **«Настройки» &rarr; «Облако и GitHub»** можно указать ваш GitHub Personal Access Token. 
+Приложение будет автоматически и бесшумно сохранять все изменения в репозиторий при добавлении или редактировании данных, без холостых циклов опроса и лишних коммитов.
 
 ---
 
@@ -93,11 +58,10 @@ npm run dev
 
 Репозиторий: `https://github.com/tigarden/wq1ewdb-hnajskdfbn-qwe`.
 
-1. **Отправка изменений**:
+1. **Сборка и развертывание**:
    ```bash
-   git add .
-   git commit -m "Add PostgreSQL database, 2FA Google Authenticator, and 7-day session security"
-   git push origin main
+   npm run deploy
    ```
 2. Сайт доступен по адресу:
    👉 **`https://tigarden.github.io/wq1ewdb-hnajskdfbn-qwe/`**
+
