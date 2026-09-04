@@ -84,14 +84,9 @@
   box-shadow: 0 -4px 28px 0 rgba(0, 0, 0, 0.55);
 }
 
-/* Dynamic Island & Notch Protection for Top Sticky Header */
+/* Safe Area clearance for Top Sticky Header */
 .dynamic-island-header {
-  padding-top: max(env(safe-area-inset-top, 0px), 48px);
-}
-@media (min-width: 768px) {
-  .dynamic-island-header {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Strict Precision Control System with Mobile Ergonomics (Apple HIG ≥ 44-48px touch targets) */

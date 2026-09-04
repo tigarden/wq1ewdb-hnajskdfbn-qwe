@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, CreditCard, Settings2, Trash2, Car, Phone, FileText } from 'lucide-react';
 import StatCard from '../StatCard';
+import ConfirmModal from '../ConfirmModal';
 import { formatMoney } from '../../utils/format';
 
 export default function ClientHeader({
@@ -11,14 +12,14 @@ export default function ClientHeader({
   onOpenEdit,
   onDeleteClient,
 }) {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   if (!client) return null;
 
   const currentDebt = stats?.currentDebt || 0;
 
   const handleDelete = () => {
-    if (window.confirm(`Вы действительно хотите удалить карточку клиента "${client.name}" и все связанные транзакции?`)) {
-      onDeleteClient(client.id);
-    }
+    setIsDeleteModalOpen(true);
   };
 
   return (
@@ -153,6 +154,18 @@ export default function ClientHeader({
           badgeText={currentDebt > 0 ? 'К оплате' : 'Закрыто'}
         />
       </div>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => {
+          setIsDeleteModalOpen(false);
+          onDeleteClient(client.id);
+        }}
+        title="Удалить клиента"
+        message={`Вы уверены, что хотите удалить карточку клиента «${client.name}» со всеми связанными запчастями и платежами? Это действие необратимо.`}
+        confirmText="Удалить карточку"
+      />
     </div>
   );
 }

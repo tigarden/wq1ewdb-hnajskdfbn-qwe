@@ -19,7 +19,7 @@ const VARIANTS = {
   },
   pending: {
     badge: 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-xs shadow-amber-500/5',
-    dot: 'bg-amber-400 animate-pulse',
+    dot: 'bg-amber-400',
   },
   blue: {
     badge: 'bg-blue-500/10 text-blue-300 border-blue-500/25 shadow-xs shadow-blue-500/5',

@@ -3,6 +3,7 @@ import { useData } from '../context/DataContext';
 import Modal from '../components/Modal';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
+import ConfirmModal from '../components/ConfirmModal';
 import { formatMoney } from '../utils/format';
 import { 
   Users, 
@@ -36,6 +37,8 @@ export default function OtherSettlements() {
   // Modals
   const [isAddPersonModalOpen, setIsAddPersonModalOpen] = useState(false);
   const [isAddTxModalOpen, setIsAddTxModalOpen] = useState(false);
+  const [isDeletePersonModalOpen, setIsDeletePersonModalOpen] = useState(false);
+  const [deletingTxId, setDeletingTxId] = useState(null);
 
   // Form states
   const [personName, setPersonName] = useState('');
@@ -232,12 +235,7 @@ export default function OtherSettlements() {
                     <span>Записать сумму</span>
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Удалить контрагента "${currentPerson.name}" со всей историей?`)) {
-                        deleteOtherCounterparty(currentPerson.id);
-                        setSelectedPersonId(null);
-                      }
-                    }}
+                    onClick={() => setIsDeletePersonModalOpen(true)}
                     className="h-12 w-12 sm:h-9 sm:w-9 rounded-xl sm:rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
                     title="Удалить контрагента"
                   >
@@ -283,11 +281,7 @@ export default function OtherSettlements() {
                           {isPositive ? `+${formatMoney(tx.amount)}` : formatMoney(tx.amount)}
                         </div>
                         <button
-                          onClick={() => {
-                            if (window.confirm('Удалить эту запись операции?')) {
-                              deleteOtherTransaction(tx.id);
-                            }
-                          }}
+                          onClick={() => setDeletingTxId(tx.id)}
                           className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:text-rose-400 active:bg-rose-500/20 rounded-xl transition-colors cursor-pointer"
                           title="Удалить запись"
                           aria-label="Удалить запись"
@@ -352,11 +346,7 @@ export default function OtherSettlements() {
                           </td>
                           <td className="py-3 px-3.5 text-center whitespace-nowrap">
                             <button
-                              onClick={() => {
-                                if (window.confirm('Удалить эту запись операции?')) {
-                                  deleteOtherTransaction(tx.id);
-                                }
-                              }}
+                              onClick={() => setDeletingTxId(tx.id)}
                               className="w-7 h-7 2xl:w-8 2xl:h-8 flex items-center justify-center text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors rounded cursor-pointer"
                               title="Удалить запись"
                             >
@@ -491,6 +481,37 @@ export default function OtherSettlements() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirm Modal: Delete Counterparty */}
+      <ConfirmModal
+        isOpen={isDeletePersonModalOpen}
+        onClose={() => setIsDeletePersonModalOpen(false)}
+        onConfirm={() => {
+          if (currentPerson) {
+            deleteOtherCounterparty(currentPerson.id);
+            setSelectedPersonId(null);
+            setIsDeletePersonModalOpen(false);
+          }
+        }}
+        title="Удалить контрагента"
+        message={`Вы действительно хотите удалить контрагента «${currentPerson?.name}» и всю историю связанных финансовых операций? Это действие необратимо.`}
+        confirmText="Удалить контрагента"
+      />
+
+      {/* Confirm Modal: Delete Transaction */}
+      <ConfirmModal
+        isOpen={Boolean(deletingTxId)}
+        onClose={() => setDeletingTxId(null)}
+        onConfirm={() => {
+          if (deletingTxId) {
+            deleteOtherTransaction(deletingTxId);
+            setDeletingTxId(null);
+          }
+        }}
+        title="Удалить операцию"
+        message="Вы уверены, что хотите удалить эту запись операции? Баланс взаиморасчетов пересчитается автоматически."
+        confirmText="Удалить"
+      />
 
     </div>
   );

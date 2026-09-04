@@ -32,9 +32,9 @@ export default function IncomeAndQueue() {
   const [selectedClientFilter, setSelectedClientFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Local draft state for inputs: { [txId]: { purchasePrice: '1200', supplierName: 'Склад' } }
   const [drafts, setDrafts] = useState({});
   const [savedSuccessId, setSavedSuccessId] = useState(null);
+  const [priceErrorId, setPriceErrorId] = useState(null);
   const [copiedArticle, setCopiedArticle] = useState(null);
 
   const handleCopy = async (text) => {
@@ -47,6 +47,7 @@ export default function IncomeAndQueue() {
   };
 
   const handlePriceChange = (txId, val) => {
+    if (priceErrorId === txId) setPriceErrorId(null);
     setDrafts((prev) => ({
       ...prev,
       [txId]: {
@@ -73,7 +74,8 @@ export default function IncomeAndQueue() {
 
     const parsedPrice = parseFloat(priceRaw);
     if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      alert('Пожалуйста, укажите цену закупки больше 0');
+      setPriceErrorId(tx.id);
+      setTimeout(() => setPriceErrorId(null), 2500);
       return;
     }
 
@@ -141,7 +143,7 @@ export default function IncomeAndQueue() {
 
         {incomeStats.pendingCount > 0 ? (
           <div className="flex items-center space-x-2 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
             <Clock className="w-3.5 h-3.5 text-amber-400" />
             <span>Требуют ввода: <strong>{incomeStats.pendingCount} дет.</strong></span>
           </div>
@@ -332,7 +334,9 @@ export default function IncomeAndQueue() {
                         if (e.key === 'Enter') handleSaveItem(tx);
                       }}
                       className={`w-full h-12 px-3 rounded-xl text-base font-mono font-bold focus:outline-hidden transition-colors ${
-                        numPurchase > 0
+                        priceErrorId === tx.id
+                          ? 'bg-rose-950/40 text-rose-300 border-2 border-rose-500 ring-2 ring-rose-500/20'
+                          : numPurchase > 0
                           ? 'bg-[#090d16] text-white border border-white/15 focus:border-emerald-500'
                           : 'bg-amber-950/20 text-amber-300 border border-amber-500/40 focus:border-amber-400'
                       }`}
@@ -529,8 +533,10 @@ export default function IncomeAndQueue() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSaveItem(tx);
                           }}
-                          className={`h-8 2xl:h-9 w-24 2xl:w-28 px-2 rounded-md text-xs 2xl:text-sm font-mono font-bold text-right focus:outline-none transition-colors ${
-                            numPurchase > 0
+                          className={`h-8 2xl:h-9 w-24 2xl:w-28 px-2 rounded-md text-xs 2xl:text-sm font-mono font-bold text-right focus:outline-hidden transition-colors ${
+                            priceErrorId === tx.id
+                              ? 'bg-rose-950/40 text-rose-300 border-2 border-rose-500 ring-2 ring-rose-500/20'
+                              : numPurchase > 0
                               ? 'bg-[#0b0f19] text-white border border-white/10 focus:border-emerald-500'
                               : 'bg-amber-950/30 text-amber-200 border border-amber-500/50 focus:border-amber-400'
                           }`}

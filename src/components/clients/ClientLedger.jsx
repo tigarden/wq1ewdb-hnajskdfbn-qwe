@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Package, CreditCard, Copy, Check, Trash2, Search, Calendar, Truck, Car, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import Badge from '../Badge';
 import EmptyState from '../EmptyState';
+import ConfirmModal from '../ConfirmModal';
 import { formatMoney } from '../../utils/format';
 import { copyToClipboard } from '../../utils/clipboard';
 
@@ -14,6 +15,7 @@ export default function ClientLedger({
   const [filterType, setFilterType] = useState('all'); // 'all' | 'item' | 'payment'
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState(null);
+  const [deletingTxId, setDeletingTxId] = useState(null);
 
   const handleCopy = async (text, id) => {
     if (!text) return;
@@ -209,11 +211,7 @@ export default function ClientLedger({
 
                   <button
                     type="button"
-                    onClick={() => {
-                      if (window.confirm('Удалить эту транзакцию?')) {
-                        onDeleteTransaction(tx.id);
-                      }
-                    }}
+                    onClick={() => setDeletingTxId(tx.id)}
                     title="Удалить запись"
                     aria-label="Удалить запись"
                     className="w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:text-rose-400 active:bg-rose-500/20 flex items-center justify-center transition-colors opacity-100 sm:opacity-60 sm:group-hover:opacity-100 cursor-pointer shrink-0"
@@ -226,6 +224,20 @@ export default function ClientLedger({
           })}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(deletingTxId)}
+        onClose={() => setDeletingTxId(null)}
+        onConfirm={() => {
+          if (deletingTxId) {
+            onDeleteTransaction(deletingTxId);
+            setDeletingTxId(null);
+          }
+        }}
+        title="Удалить запись"
+        message="Вы уверены, что хотите удалить эту операцию из истории клиента? Баланс взаиморасчетов пересчитается автоматически."
+        confirmText="Удалить"
+      />
     </div>
   );
 }

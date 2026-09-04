@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import QuickAddModal from './components/QuickAddModal';
 import InstallAppModal from './components/InstallAppModal';
@@ -6,21 +6,12 @@ import InstallAppBanner from './components/InstallAppBanner';
 import LockScreen from './components/LockScreen';
 import { useData } from './context/DataContext';
 
-// Code-split pages with React.lazy for instant initial bundle loading
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Clients = lazy(() => import('./pages/Clients'));
-const IncomeAndQueue = lazy(() => import('./pages/IncomeAndQueue'));
-const OtherSettlements = lazy(() => import('./pages/OtherSettlements'));
-const PartsCatalog = lazy(() => import('./pages/PartsCatalog'));
-const Settings = lazy(() => import('./pages/Settings'));
-
-function PageLoader() {
-  return (
-    <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-}
+import Dashboard from './pages/Dashboard';
+import Clients from './pages/Clients';
+import IncomeAndQueue from './pages/IncomeAndQueue';
+import OtherSettlements from './pages/OtherSettlements';
+import PartsCatalog from './pages/PartsCatalog';
+import Settings from './pages/Settings';
 
 export default function App() {
   const { isUnlocked, isCheckingSession, unlockApp } = useData();
@@ -53,31 +44,37 @@ export default function App() {
       />
 
       <main className="flex-1 max-w-[1680px] 2xl:max-w-[1880px] w-full mx-auto px-3.5 sm:px-6 lg:px-8 2xl:px-10 py-4 sm:py-5 pb-[calc(env(safe-area-inset-bottom,0px)+6.5rem)] md:pb-8">
-        <Suspense fallback={<PageLoader />}>
-          {activeTab === 'dashboard' && (
-            <Dashboard
-              setActiveTab={setActiveTab}
-              onOpenQuickAdd={() => setIsQuickAddOpen(true)}
-              onSelectClient={(id) => setSelectedClientId(id)}
-              onSearchParts={(q) => setPartsQuery(q)}
-            />
-          )}
+        <div className={activeTab === 'dashboard' ? 'block' : 'hidden'}>
+          <Dashboard
+            setActiveTab={setActiveTab}
+            onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+            onSelectClient={(id) => setSelectedClientId(id)}
+            onSearchParts={(q) => setPartsQuery(q)}
+          />
+        </div>
 
-          {activeTab === 'clients' && (
-            <Clients
-              selectedClientId={selectedClientId}
-              onSelectClient={(id) => setSelectedClientId(id)}
-            />
-          )}
+        <div className={activeTab === 'clients' ? 'block' : 'hidden'}>
+          <Clients
+            selectedClientId={selectedClientId}
+            onSelectClient={(id) => setSelectedClientId(id)}
+          />
+        </div>
 
-          {activeTab === 'income' && <IncomeAndQueue />}
+        <div className={activeTab === 'income' ? 'block' : 'hidden'}>
+          <IncomeAndQueue />
+        </div>
 
-          {activeTab === 'other' && <OtherSettlements />}
+        <div className={activeTab === 'other' ? 'block' : 'hidden'}>
+          <OtherSettlements />
+        </div>
 
-          {activeTab === 'parts' && <PartsCatalog initialQuery={partsQuery} />}
+        <div className={activeTab === 'parts' ? 'block' : 'hidden'}>
+          <PartsCatalog initialQuery={partsQuery} />
+        </div>
 
-          {activeTab === 'settings' && <Settings />}
-        </Suspense>
+        <div className={activeTab === 'settings' ? 'block' : 'hidden'}>
+          <Settings />
+        </div>
       </main>
 
       <QuickAddModal

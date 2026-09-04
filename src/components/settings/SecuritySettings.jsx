@@ -12,6 +12,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import Badge from '../Badge';
+import ConfirmModal from '../ConfirmModal';
 
 export default function SecuritySettings({
   isTotpEnabled,
@@ -23,6 +24,7 @@ export default function SecuritySettings({
 }) {
   // TOTP Setup state
   const [setupData, setSetupData] = useState(null);
+  const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
   const [totpVerifyCode, setTotpVerifyCode] = useState('');
   const [totpMsg, setTotpMsg] = useState(null);
   const [copiedKey, setCopiedKey] = useState(false);
@@ -67,12 +69,8 @@ export default function SecuritySettings({
   };
 
   // Disable TOTP
-  const handleDisableTotp = async () => {
-    if (window.confirm('Отключить двухфакторную защиту Google Authenticator?')) {
-      await disableTotp();
-      setSetupData(null);
-      setTotpMsg({ success: true, text: '2FA Google Authenticator отключена' });
-    }
+  const handleDisableTotp = () => {
+    setIsDisableModalOpen(true);
   };
 
   // Copy secret key
@@ -344,6 +342,21 @@ export default function SecuritySettings({
           <span>Заблокировать сейчас</span>
         </button>
       </div>
+
+      <ConfirmModal
+        isOpen={isDisableModalOpen}
+        onClose={() => setIsDisableModalOpen(false)}
+        onConfirm={async () => {
+          setIsDisableModalOpen(false);
+          await disableTotp();
+          setSetupData(null);
+          setTotpMsg({ success: true, text: '2FA Google Authenticator отключена' });
+        }}
+        title="Отключить 2FA защиту"
+        message="Вы уверены, что хотите отключить двухфакторную аутентификацию? Защита приложения будет снижена до обычного мастер-пароля."
+        confirmText="Отключить 2FA"
+        variant="warning"
+      />
     </div>
   );
 }

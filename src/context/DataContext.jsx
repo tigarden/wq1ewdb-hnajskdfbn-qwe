@@ -294,6 +294,7 @@ export function DataProviderInternal({ children }) {
 
   const incomeStats = useMemo(() => {
     let pendingPurchaseCount = 0;
+    let filledCount = 0;
     let totalFilledSales = 0;
     let totalFilledPurchase = 0;
     let totalMargin = 0;
@@ -305,6 +306,7 @@ export function DataProviderInternal({ children }) {
         if (pPrice <= 0) {
           pendingPurchaseCount += 1;
         } else {
+          filledCount += 1;
           totalFilledSales += salePrice;
           totalFilledPurchase += pPrice;
           totalMargin += salePrice - pPrice;
@@ -315,8 +317,11 @@ export function DataProviderInternal({ children }) {
     return {
       pendingCount: pendingPurchaseCount,
       pendingPurchaseCount,
+      filledCount,
       totalFilledSales: round2(totalFilledSales),
       totalFilledPurchase: round2(totalFilledPurchase),
+      totalPurchaseCost: round2(totalFilledPurchase),
+      totalRevenueWithCost: round2(totalFilledSales),
       totalProfit: round2(totalMargin),
       totalMargin: round2(totalMargin),
       marginPercent: totalFilledSales > 0 ? Math.round((totalMargin / totalFilledSales) * 100) : 0,

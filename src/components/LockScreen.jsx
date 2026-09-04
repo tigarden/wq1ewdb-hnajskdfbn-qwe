@@ -51,7 +51,7 @@ export default function LockScreen({ onUnlock }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#090d16]/95 backdrop-blur-md animate-in fade-in duration-200 pt-[max(env(safe-area-inset-top,0px),54px)] pb-[max(env(safe-area-inset-bottom,0px),24px)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#090d16]/95 backdrop-blur-md animate-in fade-in duration-200 pt-[env(safe-area-inset-top,16px)] pb-[env(safe-area-inset-bottom,16px)]">
       <div className="relative w-full max-w-sm surface-card rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 border border-white/10 z-10">
         
         {/* Header Branding */}

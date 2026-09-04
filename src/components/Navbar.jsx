@@ -84,7 +84,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
                     <Icon className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 shrink-0" />
                     <span>{item.label}</span>
                     {item.badge > 0 && (
-                      <span className="h-4.5 min-w-[18px] px-1.5 rounded-full text-xs font-bold font-mono inline-flex items-center justify-center bg-amber-500 text-slate-950 shadow-xs animate-pulse">
+                      <span className="h-4.5 min-w-[18px] px-1.5 rounded-full text-xs font-bold font-mono inline-flex items-center justify-center bg-amber-500 text-slate-950 shadow-xs">
                         {item.badge}
                       </span>
                     )}
@@ -241,7 +241,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpen
             <div className="relative">
               <DollarSign className={`w-5.5 h-5.5 mb-1 ${activeTab === 'income' ? 'stroke-[2.5]' : ''}`} />
               {incomeStats?.pendingCount > 0 && (
-                <span className="absolute -top-1 -right-2.5 px-1.5 min-w-[17px] h-4.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 font-mono flex items-center justify-center shadow-md animate-pulse">
+                <span className="absolute -top-1 -right-2.5 px-1.5 min-w-[17px] h-4.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 font-mono flex items-center justify-center shadow-md">
                   {incomeStats.pendingCount}
                 </span>
               )}

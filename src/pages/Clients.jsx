@@ -77,7 +77,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
       <div className="grid grid-cols-1 md:grid-cols-12 2xl:grid-cols-12 gap-5">
         {/* Left Column: Clients List */}
         <div
-          className={`md:col-span-4 lg:col-span-4 2xl:col-span-3 h-[calc(100dvh-180px)] ${
+          className={`md:col-span-4 lg:col-span-4 2xl:col-span-3 md:sticky md:top-20 md:h-[calc(100vh-6.5rem)] h-[calc(100dvh-12rem)] ${
             mobileShowDetail ? 'hidden md:block' : 'block'
           }`}
         >
