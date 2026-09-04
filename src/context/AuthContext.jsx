@@ -8,8 +8,16 @@ import {
   getStoredTotpSecret,
   setStoredTotpSecret,
   isStoredTotpEnabled,
+  getStoredPasskeys,
+  addStoredPasskey,
+  removeStoredPasskey,
 } from '../services/secureStorage';
 import { generateTotpSecret, verifyTotpCode, getOtpAuthUrl } from '../services/totp';
+import {
+  registerPasskeyCredential,
+  authenticateWithPasskey,
+  isPasskeySupported,
+} from '../services/passkey';
 
 const AuthContext = createContext(null);
 
@@ -17,7 +25,20 @@ export function AuthProvider({ children }) {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [isTotpEnabled, setIsTotpEnabled] = useState(() => isStoredTotpEnabled());
+  const [passkeys, setPasskeys] = useState(() => getStoredPasskeys());
+  const [isPasskeyAvailable, setIsPasskeyAvailable] = useState(false);
   const [authError, setAuthError] = useState(null);
+
+  // Check WebAuthn / Passkey platform support
+  useEffect(() => {
+    let mounted = true;
+    isPasskeySupported().then((supported) => {
+      if (mounted) setIsPasskeyAvailable(supported);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Check existing secure session on initial mount
   useEffect(() => {
@@ -40,46 +61,101 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Unlock with Master Password (PIN)
-  const unlockWithPassword = useCallback(async (enteredPassword, rememberMe = true) => {
+  // Unified Unlock: Enforces BOTH factors when 2FA is active
+  const unlockApp = useCallback(async ({ password, totpCode, rememberMe = true }) => {
     setAuthError(null);
     try {
-      const valid = await verifyMasterPassword(enteredPassword);
-      if (valid) {
+      // Factor 1: Master Password
+      if (!password || !password.trim()) {
+        const msg = 'Введите мастер-пароль';
+        setAuthError(msg);
+        return { success: false, error: msg };
+      }
+
+      const validPassword = await verifyMasterPassword(password.trim());
+      if (!validPassword) {
+        const msg = 'Неверный мастер-пароль';
+        setAuthError(msg);
+        return { success: false, error: msg };
+      }
+
+      // Factor 2: Google Authenticator (TOTP) if enabled
+      if (isTotpEnabled) {
+        const cleanCode = (totpCode || '').trim();
+        if (!cleanCode || cleanCode.length !== 6) {
+          const msg = 'Введите 6-значный проверочный код Google Authenticator';
+          setAuthError(msg);
+          return { success: false, error: msg };
+        }
+
+        const secret = getStoredTotpSecret();
+        if (!secret) {
+          const msg = 'Секрет 2FA не найден';
+          setAuthError(msg);
+          return { success: false, error: msg };
+        }
+
+        const validTotp = await verifyTotpCode(secret, cleanCode);
+        if (!validTotp) {
+          const msg = 'Неверный или устаревший 6-значный код Authenticator';
+          setAuthError(msg);
+          return { success: false, error: msg };
+        }
+      }
+
+      // Session creation
+      await createSecureSession(rememberMe);
+      setIsUnlocked(true);
+      return { success: true };
+    } catch (err) {
+      const msg = err.message || 'Ошибка авторизации';
+      setAuthError(msg);
+      return { success: false, error: msg };
+    }
+  }, [isTotpEnabled]);
+
+  // Backward-compatible unlock with password wrapper
+  const unlockWithPassword = useCallback(async (enteredPassword, rememberMe = true) => {
+    const res = await unlockApp({ password: enteredPassword, rememberMe });
+    return res.success;
+  }, [unlockApp]);
+
+  // Biometric / Apple Passkey unlock (Face ID, Touch ID, Windows Hello)
+  const unlockWithPasskey = useCallback(async (rememberMe = true) => {
+    setAuthError(null);
+    try {
+      const stored = getStoredPasskeys();
+      const res = await authenticateWithPasskey(stored);
+      if (res && res.success) {
         await createSecureSession(rememberMe);
         setIsUnlocked(true);
-        return true;
+        return { success: true };
       }
-      setAuthError('Неверный пароль доступа');
-      return false;
+      return { success: false, error: 'Не удалось подтвердить ключ доступа' };
     } catch (err) {
-      setAuthError(err.message || 'Ошибка проверки пароля');
-      return false;
+      const msg = err.message || 'Ошибка авторизации по ключу доступа';
+      setAuthError(msg);
+      return { success: false, error: msg };
     }
   }, []);
 
-  // Unlock with Google Authenticator (TOTP)
-  const unlockWithTotp = useCallback(async (code, rememberMe = true) => {
-    setAuthError(null);
+  // Passkey Registration
+  const registerPasskey = useCallback(async (accountName) => {
     try {
-      const secret = getStoredTotpSecret();
-      if (!secret) {
-        setAuthError('2FA не настроена');
-        return false;
-      }
-
-      const valid = await verifyTotpCode(secret, code);
-      if (valid) {
-        await createSecureSession(rememberMe);
-        setIsUnlocked(true);
-        return true;
-      }
-      setAuthError('Неверный или устаревший 6-значный код');
-      return false;
+      const cred = await registerPasskeyCredential(accountName);
+      const updated = addStoredPasskey(cred);
+      setPasskeys([...updated]);
+      return { success: true, credential: cred };
     } catch (err) {
-      setAuthError(err.message || 'Ошибка проверки кода');
-      return false;
+      return { success: false, error: err.message || 'Ошибка регистрации ключа доступа' };
     }
+  }, []);
+
+  // Delete Passkey
+  const deletePasskey = useCallback(async (id) => {
+    const updated = removeStoredPasskey(id);
+    setPasskeys([...updated]);
+    return { success: true };
   }, []);
 
   // Setup / Enable 2FA Google Authenticator
@@ -131,8 +207,13 @@ export function AuthProvider({ children }) {
     isCheckingSession,
     isTotpEnabled,
     authError,
+    unlockApp,
     unlockWithPassword,
-    unlockWithTotp,
+    unlockWithPasskey,
+    passkeys,
+    isPasskeyAvailable,
+    registerPasskey,
+    deletePasskey,
     lockApp,
     changeMasterPassword,
     getTotpSetupData,

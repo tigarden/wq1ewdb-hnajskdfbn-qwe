@@ -17,6 +17,10 @@ export default function Settings() {
     disableTotp,
     changeMasterPassword,
     lockApp,
+    passkeys,
+    isPasskeyAvailable,
+    registerPasskey,
+    deletePasskey,
     // Cloud & GitHub
     supabaseConfig,
     updateSupabase,
@@ -76,6 +80,10 @@ export default function Settings() {
             disableTotp={disableTotp}
             changeMasterPassword={changeMasterPassword}
             lockApp={lockApp}
+            passkeys={passkeys}
+            isPasskeyAvailable={isPasskeyAvailable}
+            registerPasskey={registerPasskey}
+            deletePasskey={deletePasskey}
           />
         )}
 

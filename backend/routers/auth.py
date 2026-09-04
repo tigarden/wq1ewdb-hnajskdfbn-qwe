@@ -28,7 +28,7 @@ async def auth_status(db: AsyncSession = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse, dependencies=[Depends(auth_rate_limiter)])
 async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     """
-    Authenticate with master password or Google Authenticator TOTP code.
+    Authenticate with master password, and require Google Authenticator TOTP code if 2FA is active.
     Protected by rate limiter against brute-force.
     """
     authenticated, auth = await AuthService.authenticate(
@@ -38,9 +38,10 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     )
 
     if not authenticated:
+        detail_msg = "Неверный мастер-пароль или 6-значный код 2FA" if auth.totp_enabled else "Неверный мастер-пароль"
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный пароль доступа или 6-значный код Google Authenticator",
+            detail=detail_msg,
             headers={"WWW-Authenticate": "Bearer"},
         )
 

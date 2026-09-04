@@ -47,21 +47,23 @@ class AuthService:
         Strictly enforces credentials and eliminates default password backdoors.
         """
         auth = await cls.get_or_create_admin_auth(db)
-        authenticated = False
+        # 1. Verify Password (Factor 1)
+        if not password or not auth.master_password_hash:
+            return False, auth
 
-        # 1. Verify TOTP if provided and enabled
-        if totp_code and auth.totp_enabled and auth.totp_secret:
-            if verify_totp_code(auth.totp_secret, totp_code):
-                authenticated = True
+        if not await async_verify_password(password, auth.master_password_hash):
+            return False, auth
 
-        # 2. Verify Password against stored bcrypt hash (no fallback backdoor)
-        if not authenticated and password:
-            if auth.master_password_hash and await async_verify_password(password, auth.master_password_hash):
-                authenticated = True
+        # 2. If 2FA is active, strictly require and verify Google Authenticator TOTP (Factor 2)
+        if auth.totp_enabled:
+            if not totp_code or not auth.totp_secret:
+                return False, auth
+            if not verify_totp_code(auth.totp_secret, totp_code):
+                return False, auth
 
-        if authenticated:
-            auth.last_login_at = datetime.now(timezone.utc)
-            await db.commit()
+        authenticated = True
+        auth.last_login_at = datetime.now(timezone.utc)
+        await db.commit()
 
         return authenticated, auth
 

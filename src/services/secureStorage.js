@@ -246,3 +246,46 @@ export function isStoredTotpEnabled() {
     localStorage.getItem('debet_totp_enabled_v1') === 'true'
   );
 }
+
+// Passkeys (WebAuthn) Storage
+const PASSKEYS_STORAGE_KEY = 'debet_sec_passkeys_v1';
+
+export function getStoredPasskeys() {
+  try {
+    const raw = localStorage.getItem(PASSKEYS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+export function saveStoredPasskeys(passkeys) {
+  try {
+    localStorage.setItem(PASSKEYS_STORAGE_KEY, JSON.stringify(passkeys || []));
+  } catch (e) {
+    console.error('Failed to save passkeys', e);
+  }
+}
+
+export function addStoredPasskey(passkey) {
+  const existing = getStoredPasskeys();
+  // Avoid duplicate ID
+  const filtered = existing.filter((p) => p.id !== passkey.id);
+  filtered.push(passkey);
+  saveStoredPasskeys(filtered);
+  return filtered;
+}
+
+export function removeStoredPasskey(id) {
+  const existing = getStoredPasskeys();
+  const updated = existing.filter((p) => p.id !== id);
+  saveStoredPasskeys(updated);
+  return updated;
+}
+
+export function hasStoredPasskeys() {
+  return getStoredPasskeys().length > 0;
+}
+

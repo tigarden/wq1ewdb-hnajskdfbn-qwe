@@ -10,6 +10,11 @@ import {
   Calendar,
   Eye,
   EyeOff,
+  Fingerprint,
+  Trash2,
+  Plus,
+  Sparkles,
+  Info,
 } from 'lucide-react';
 import Badge from '../Badge';
 import ConfirmModal from '../ConfirmModal';
@@ -21,7 +26,16 @@ export default function SecuritySettings({
   disableTotp,
   changeMasterPassword,
   lockApp,
+  passkeys = [],
+  isPasskeyAvailable,
+  registerPasskey,
+  deletePasskey,
 }) {
+  // Passkey state
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyMsg, setPasskeyMsg] = useState(null);
+  const [passkeyToDelete, setPasskeyToDelete] = useState(null);
+
   // TOTP Setup state
   const [setupData, setSetupData] = useState(null);
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
@@ -37,6 +51,27 @@ export default function SecuritySettings({
   const [showPass, setShowPass] = useState(false);
   const [passMsg, setPassMsg] = useState(null);
   const [passLoading, setPassLoading] = useState(false);
+
+  // Register Passkey
+  const handleCreatePasskey = async () => {
+    setPasskeyMsg(null);
+    setPasskeyLoading(true);
+    try {
+      const res = await registerPasskey('admin@debet.auto');
+      if (res.success) {
+        setPasskeyMsg({
+          success: true,
+          text: `Ключ доступа «${res.credential.label}» успешно привязан к устройству!`,
+        });
+      } else {
+        setPasskeyMsg({ success: false, text: res.error || 'Ошибка при создании ключа доступа' });
+      }
+    } catch (err) {
+      setPasskeyMsg({ success: false, text: err.message || 'Ошибка создания ключа' });
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
 
   // Start TOTP Setup
   const handleStartTotpSetup = () => {
@@ -61,7 +96,7 @@ export default function SecuritySettings({
     setTotpLoading(false);
 
     if (res.success) {
-      setTotpMsg({ success: true, text: 'Google Authenticator успешно активирован!' });
+      setTotpMsg({ success: true, text: 'Google Authenticator (2FA) успешно активирован!' });
       setSetupData(null);
     } else {
       setTotpMsg({ success: false, text: res.error || 'Неверный код подтверждения' });
@@ -95,7 +130,7 @@ export default function SecuritySettings({
       return;
     }
     if (newPass !== confirmPass) {
-      setPassMsg({ success: false, text: 'Новый пароль и подтверждение не совпадают' });
+      setPassMsg({ success: false, text: 'Новый пароль и повтор не совпадают' });
       return;
     }
 
@@ -115,11 +150,104 @@ export default function SecuritySettings({
 
   return (
     <div className="space-y-4">
-      {/* 2FA Google Authenticator Section */}
+      {/* 1. Passkey / Apple Face ID & Touch ID Section */}
       <div className="surface-card rounded-xl border border-white/5 p-4 sm:p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600/20 to-indigo-500/20 border border-blue-500/30 text-blue-400 flex items-center justify-center shrink-0">
+              <Fingerprint className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-100 flex items-center space-x-2">
+                <span>Ключи доступа Passkey (Apple Face ID / Touch ID)</span>
+                <Badge variant={passkeys.length > 0 ? 'emerald' : 'slate'} size="sm">
+                  {passkeys.length > 0 ? `${passkeys.length} привязано` : 'Не настроено'}
+                </Badge>
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Биометрический вход в один клик через Face ID, Touch ID на iPhone/Mac или Windows Hello
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={handleCreatePasskey}
+              disabled={passkeyLoading}
+              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-medium transition-all flex items-center space-x-1.5 shadow-sm shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{passkeyLoading ? 'Создание...' : 'Создать ключ доступа'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* List of registered Passkeys */}
+        {passkeys.length > 0 ? (
+          <div className="space-y-2 pt-1">
+            <p className="text-xs font-medium text-slate-300">Привязанные ключи на устройствах:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {passkeys.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-900/80 border border-white/10"
+                >
+                  <div className="flex items-center space-x-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                      <Fingerprint className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-200 truncate">{p.label}</p>
+                      <p className="text-[10px] text-slate-400">
+                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString('ru-RU') : 'Активен'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPasskeyToDelete(p)}
+                    className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition-colors cursor-pointer"
+                    title="Удалить ключ"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="p-3 rounded-xl bg-slate-900/50 border border-white/5 flex items-start space-x-2.5 text-xs text-slate-400">
+            <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <span>
+              Нажмите <b>«Создать ключ доступа»</b>, чтобы сохранить Passkey в связке ключей Apple iCloud Keychain или Windows Hello. Это позволит моментально разблокировать приложение по взгляду или отпечатку пальца без ввода пароля.
+            </span>
+          </div>
+        )}
+
+        {passkeyMsg && (
+          <div
+            className={`p-2.5 rounded-lg text-xs flex items-center space-x-2 ${
+              passkeyMsg.success
+                ? 'bg-emerald-950/40 border border-emerald-500/30 text-emerald-300'
+                : 'bg-rose-950/40 border border-rose-500/30 text-rose-300'
+            }`}
+          >
+            {passkeyMsg.success ? (
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+            )}
+            <span>{passkeyMsg.text}</span>
+          </div>
+        )}
+      </div>
+
+      {/* 2. 2FA Google Authenticator Section */}
+      <div className="surface-card rounded-xl border border-white/5 p-4 sm:p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
@@ -130,7 +258,7 @@ export default function SecuritySettings({
                 </Badge>
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Защита одноразовыми 6-значными кодами с подтверждением сессии 1 раз в 7 дней
+                При включении вход строго требует мастер-пароль <b>И</b> 6-значный код Authenticator
               </p>
             </div>
           </div>
@@ -140,7 +268,7 @@ export default function SecuritySettings({
               <button
                 type="button"
                 onClick={handleDisableTotp}
-                className="px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-950/30 text-xs font-medium transition-colors"
+                className="px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-950/30 text-xs font-medium transition-colors cursor-pointer"
               >
                 Отключить 2FA
               </button>
@@ -148,7 +276,7 @@ export default function SecuritySettings({
               <button
                 type="button"
                 onClick={handleStartTotpSetup}
-                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors cursor-pointer"
               >
                 Подключить приложение
               </button>
@@ -177,7 +305,7 @@ export default function SecuritySettings({
               <button
                 type="button"
                 onClick={handleCopyKey}
-                className="flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 shrink-0 transition-colors"
+                className="flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 shrink-0 transition-colors cursor-pointer"
               >
                 {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedKey ? 'Скопировано' : 'Копировать'}</span>
@@ -198,14 +326,14 @@ export default function SecuritySettings({
               <button
                 type="submit"
                 disabled={totpLoading}
-                className="w-full sm:w-auto h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-50"
+                className="w-full sm:w-auto h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {totpLoading ? 'Проверка...' : 'Активировать 2FA'}
               </button>
               <button
                 type="button"
                 onClick={() => setSetupData(null)}
-                className="w-full sm:w-auto h-9 px-3 text-xs text-slate-400 hover:text-slate-200"
+                className="w-full sm:w-auto h-9 px-3 text-xs text-slate-400 hover:text-slate-200 cursor-pointer"
               >
                 Отмена
               </button>
@@ -221,16 +349,20 @@ export default function SecuritySettings({
                 : 'bg-rose-950/40 border border-rose-500/30 text-rose-300'
             }`}
           >
-            {totpMsg.success ? <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" /> : <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />}
+            {totpMsg.success ? (
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+            )}
             <span>{totpMsg.text}</span>
           </div>
         )}
       </div>
 
-      {/* Change Master Password Section */}
+      {/* 3. Change Master Password Section */}
       <div className="surface-card rounded-xl border border-white/5 p-4 sm:p-5 space-y-4">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
             <Key className="w-5 h-5" />
           </div>
           <div>
@@ -258,7 +390,7 @@ export default function SecuritySettings({
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-200"
+                className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-200 cursor-pointer"
               >
                 {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -302,7 +434,11 @@ export default function SecuritySettings({
                   : 'bg-rose-950/40 border border-rose-500/30 text-rose-300'
               }`}
             >
-              {passMsg.success ? <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" /> : <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />}
+              {passMsg.success ? (
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              ) : (
+                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+              )}
               <span>{passMsg.text}</span>
             </div>
           )}
@@ -311,7 +447,7 @@ export default function SecuritySettings({
             <button
               type="submit"
               disabled={passLoading}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
             >
               {passLoading ? 'Сохранение...' : 'Обновить мастер-пароль'}
             </button>
@@ -319,10 +455,10 @@ export default function SecuritySettings({
         </form>
       </div>
 
-      {/* Session Management */}
+      {/* 4. Session Management */}
       <div className="surface-card rounded-xl border border-white/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
             <Calendar className="w-5 h-5 text-blue-400" />
           </div>
           <div>
@@ -336,13 +472,14 @@ export default function SecuritySettings({
         <button
           type="button"
           onClick={lockApp}
-          className="flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-white/5 text-xs font-medium transition-colors"
+          className="flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-white/5 text-xs font-medium transition-colors cursor-pointer"
         >
           <Lock className="w-3.5 h-3.5" />
           <span>Заблокировать сейчас</span>
         </button>
       </div>
 
+      {/* Modal: Confirm Disable 2FA */}
       <ConfirmModal
         isOpen={isDisableModalOpen}
         onClose={() => setIsDisableModalOpen(false)}
@@ -356,6 +493,23 @@ export default function SecuritySettings({
         message="Вы уверены, что хотите отключить двухфакторную аутентификацию? Защита приложения будет снижена до обычного мастер-пароля."
         confirmText="Отключить 2FA"
         variant="warning"
+      />
+
+      {/* Modal: Confirm Delete Passkey */}
+      <ConfirmModal
+        isOpen={Boolean(passkeyToDelete)}
+        onClose={() => setPasskeyToDelete(null)}
+        onConfirm={async () => {
+          if (passkeyToDelete) {
+            await deletePasskey(passkeyToDelete.id);
+            setPasskeyToDelete(null);
+            setPasskeyMsg({ success: true, text: 'Ключ доступа удален' });
+          }
+        }}
+        title="Удалить ключ доступа"
+        message={`Удалить ключ «${passkeyToDelete?.label}»? Вы больше не сможете использовать биометрию этого устройства для быстрого входа.`}
+        confirmText="Удалить ключ"
+        variant="danger"
       />
     </div>
   );
