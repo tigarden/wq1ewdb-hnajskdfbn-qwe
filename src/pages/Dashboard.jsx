@@ -524,8 +524,8 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
               </button>
             </div>
 
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="relative flex items-center">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
               <input
                 type="text"
                 placeholder="Поиск по коду (напр. S TL C00117/8)..."
@@ -537,7 +537,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                     setActiveTab('parts');
                   }
                 }}
-                className="w-full input-md pl-10 font-mono text-base sm:text-xs"
+                className="w-full input-md input-search font-mono text-base sm:text-xs"
               />
             </div>
 

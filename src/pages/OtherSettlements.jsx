@@ -128,14 +128,14 @@ export default function OtherSettlements() {
         {/* Left Column: Persons List — hidden on mobile when detail is shown */}
         <div className={`lg:col-span-4 2xl:col-span-3 space-y-3 ${mobileShowDetail ? 'hidden lg:block' : 'block'}`}>
           {/* Search bar */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative flex items-center">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
             <input
               type="text"
               placeholder="Поиск контрагента..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-md 2xl:h-10 w-full pl-9 pr-3 text-xs 2xl:text-sm"
+              className="w-full input-md sm:input-sm input-search"
             />
           </div>
 

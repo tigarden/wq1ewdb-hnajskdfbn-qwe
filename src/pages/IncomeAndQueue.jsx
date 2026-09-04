@@ -244,14 +244,14 @@ export default function IncomeAndQueue() {
             ))}
           </select>
 
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="relative flex items-center flex-1 sm:flex-initial">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
             <input
               type="text"
               placeholder="Поиск по коду, названию, авто..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-md sm:input-sm h-10 sm:h-8 w-full sm:w-60 pl-8 pr-2.5 rounded-xl sm:rounded-md"
+              className="w-full sm:w-64 input-md sm:input-sm input-search"
             />
           </div>
         </div>

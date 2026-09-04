@@ -83,14 +83,14 @@ export default function ClientLedger({
           </button>
         </div>
 
-        <div className="relative max-w-xs w-full">
-          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="relative flex items-center max-w-xs w-full">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
           <input
             type="text"
             placeholder="Поиск по артикулу, детали..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full input-md sm:input-sm 2xl:h-9 pl-9 font-mono"
+            className="w-full input-md sm:input-sm input-search font-mono"
           />
         </div>
       </div>
