@@ -11,12 +11,15 @@ import {
   CloudOff, 
   RefreshCw, 
   FileSpreadsheet, 
-  Lock
+  Lock,
+  Smartphone
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { usePWA } from '../hooks/usePWA';
 
-export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
+export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd, onOpenInstallModal }) {
   const { syncStatus, lastSyncTime, pushToGitHub, exportToExcel, lockApp, incomeStats } = useData();
+  const { isStandalone } = usePWA();
 
   const navItems = [
     { id: 'dashboard', label: 'Дашборд', icon: LayoutDashboard },
@@ -129,6 +132,18 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="hidden xl:inline">Excel</span>
               </button>
+
+              {/* Install PWA Button (only if not running in standalone mode) */}
+              {!isStandalone && onOpenInstallModal && (
+                <button
+                  onClick={onOpenInstallModal}
+                  title="Добавить приложение на рабочий стол"
+                  className="h-8 px-2 sm:px-2.5 rounded-md text-blue-400 hover:text-white bg-blue-500/10 hover:bg-blue-600 border border-blue-500/20 text-xs font-semibold inline-flex items-center space-x-1.5 transition-colors"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-[11px]">На экран</span>
+                </button>
+              )}
 
               {/* Lock Button */}
               <button

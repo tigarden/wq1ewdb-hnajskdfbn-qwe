@@ -4,10 +4,11 @@ import SecuritySettings from '../components/settings/SecuritySettings';
 import DatabaseSettings from '../components/settings/DatabaseSettings';
 import CloudSyncSettings from '../components/settings/CloudSyncSettings';
 import BackupSettings from '../components/settings/BackupSettings';
-import { Shield, Database, Cloud, FileSpreadsheet } from 'lucide-react';
+import AppSettings from '../components/settings/AppSettings';
+import { Shield, Database, Cloud, FileSpreadsheet, Smartphone } from 'lucide-react';
 
 export default function Settings() {
-  const [activeSection, setActiveSection] = useState('security'); // 'security' | 'database' | 'cloud' | 'backup'
+  const [activeSection, setActiveSection] = useState('security'); // 'security' | 'database' | 'cloud' | 'backup' | 'app'
 
   const {
     // 2FA & Auth
@@ -47,6 +48,7 @@ export default function Settings() {
     { id: 'database', label: 'Сервер API (PostgreSQL)', icon: Database },
     { id: 'cloud', label: 'Облако и GitHub', icon: Cloud },
     { id: 'backup', label: 'Экспорт и Бэкап', icon: FileSpreadsheet },
+    { id: 'app', label: 'Приложение на экран', icon: Smartphone },
   ];
 
   return (
@@ -120,6 +122,10 @@ export default function Settings() {
             exportJsonBackup={exportJsonBackup}
             importJsonBackup={importJsonBackup}
           />
+        )}
+
+        {activeSection === 'app' && (
+          <AppSettings />
         )}
       </div>
     </div>

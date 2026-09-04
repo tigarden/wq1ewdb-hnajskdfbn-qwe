@@ -1,6 +1,8 @@
 import React, { useState, Suspense, lazy } from 'react';
 import Navbar from './components/Navbar';
 import QuickAddModal from './components/QuickAddModal';
+import InstallAppModal from './components/InstallAppModal';
+import InstallAppBanner from './components/InstallAppBanner';
 import LockScreen from './components/LockScreen';
 import { useData } from './context/DataContext';
 
@@ -25,6 +27,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
   // Prevent lock screen flash while verifying crypto session token
   if (isCheckingSession) {
@@ -45,6 +48,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 pb-20 md:pb-8">
@@ -77,6 +81,15 @@ export default function App() {
       <QuickAddModal
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
+      />
+
+      <InstallAppBanner
+        onOpenModal={() => setIsInstallModalOpen(true)}
+      />
+
+      <InstallAppModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
       />
 
       <footer className="border-t border-white/5 py-4 text-center text-xs text-slate-500 mb-14 md:mb-0">
