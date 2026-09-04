@@ -217,10 +217,10 @@ export default function CloudSyncSettings({
             <h2 className="text-sm font-semibold text-slate-100 flex items-center space-x-2">
               <span>GitHub Репозиторий (GitHub Pages)</span>
               <Badge
-                variant={syncStatus === 'synced' ? 'emerald' : syncStatus === 'syncing' ? 'blue' : 'slate'}
+                variant={syncStatus === 'synced' ? 'emerald' : syncStatus === 'syncing' ? 'blue' : settings?.token ? 'emerald' : 'slate'}
                 size="sm"
               >
-                {syncStatus === 'synced' ? 'Синхронизировано' : syncStatus === 'syncing' ? 'Коммит...' : 'Оффлайн'}
+                {syncStatus === 'synced' ? 'Синхронизировано' : syncStatus === 'syncing' ? 'Коммит...' : settings?.token ? 'В сети (Авто)' : 'Оффлайн'}
               </Badge>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">

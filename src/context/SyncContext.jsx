@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { loadSettings, saveSettings } from '../services/storage';
 import { fetchRepoFile, saveRepoFile } from '../services/githubApi';
 import { api, getApiUrl, setApiUrl } from '../services/api';
@@ -13,7 +13,10 @@ const SyncContext = createContext(null);
 
 export function SyncProvider({ children, data, onDataUpdated }) {
   const [settings, setSettings] = useState(() => loadSettings());
-  const [syncStatus, setSyncStatus] = useState('idle');
+  const [syncStatus, setSyncStatus] = useState(() => {
+    const s = loadSettings();
+    return s?.token ? 'synced' : 'idle';
+  });
   const [syncError, setSyncError] = useState(null);
   const [lastSyncTime, setLastSyncTime] = useState(() => settings.lastSyncTime);
   const [currentSha, setCurrentSha] = useState(() => settings.lastSha);
@@ -149,7 +152,7 @@ export function SyncProvider({ children, data, onDataUpdated }) {
   }, []);
 
   const pushToGitHub = useCallback(
-    async (commitMsg) => {
+    async (commitMsg = 'Автоматическое сохранение') => {
       if (!settings.token) {
         return { success: false, error: 'Токен GitHub не указан' };
       }
@@ -210,6 +213,41 @@ export function SyncProvider({ children, data, onDataUpdated }) {
       return { success: false, error: err.message };
     }
   }, [settings, onDataUpdated, updateSettings]);
+
+  // Zero-Touch Auto-Sync: фоновая автосинхронизация при старте и любых изменениях
+  const isInitialMount = useRef(true);
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      // Авто-проверка и тихое обновление при открытии приложения
+      if (settings?.token) {
+        pullFromGitHub().catch(() => {});
+      }
+      if (supabaseConfig?.url && supabaseConfig?.key) {
+        pullFromSupabase().catch(() => {});
+      }
+      return;
+    }
+
+    if (!settings?.token && (!supabaseConfig?.url || !supabaseConfig?.key)) return;
+
+    setSyncStatus('unsaved');
+    const timer = setTimeout(async () => {
+      try {
+        if (settings?.token) {
+          await pushToGitHub('Автоматическое сохранение');
+        }
+        if (supabaseConfig?.url && supabaseConfig?.key) {
+          await syncToSupabase();
+        }
+        setSyncStatus('synced');
+      } catch (e) {
+        console.warn('Auto-sync error:', e);
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [data, settings?.token, supabaseConfig?.url, supabaseConfig?.key, pushToGitHub, pullFromGitHub, syncToSupabase, pullFromSupabase]);
 
   const value = {
     settings,
