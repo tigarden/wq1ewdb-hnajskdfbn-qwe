@@ -1,6 +1,43 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-03T20:53:04.600Z",
+  "updatedAt": "2026-09-04T18:44:22.798Z",
+  "clients": [
+    {
+      "id": "sup-1",
+      "name": "Тотус",
+      "initialBalance": 0,
+      "createdAt": "2026-09-03T20:53:04.600Z",
+      "phone": "",
+      "car": ""
+    },
+    {
+      "id": "sup-2",
+      "name": "Эрнест",
+      "initialBalance": 0,
+      "createdAt": "2026-09-03T20:53:04.600Z",
+      "phone": "",
+      "car": ""
+    },
+    {
+      "id": "sup-3",
+      "name": "Витя",
+      "initialBalance": 0,
+      "createdAt": "2026-09-03T20:53:04.600Z",
+      "phone": "",
+      "car": ""
+    }
+  ],
+  "clientTransactions": [],
+  "suppliersList": [
+    "Склад",
+    "Партс-Трейд",
+    "Автодок",
+    "Одесса"
+  ],
+  "otherCounterparties": [],
+  "otherTransactions": [],
+  "carItems": [],
+  "carOrders": [],
   "suppliers": [
     {
       "id": "sup-1",
@@ -21,10 +58,6 @@
       "createdAt": "2026-09-03T20:53:04.600Z"
     }
   ],
-  "supplierTransactions": [],
-  "carOrders": [],
-  "carItems": [],
   "carPayments": [],
-  "otherCounterparties": [],
-  "otherTransactions": []
+  "supplierTransactions": []
 }
