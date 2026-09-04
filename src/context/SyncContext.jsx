@@ -31,6 +31,7 @@ export function SyncProvider({ children, data, onDataUpdated }) {
   // Supabase Cloud state
   const [supabaseConfig, setSupabaseConfig] = useState(() => getSupabaseConfig());
   const [supabaseStatus, setSupabaseStatus] = useState('idle');
+  const isPullingRef = useRef(false);
 
   // Check backend health
   const checkBackend = useCallback(async () => {
@@ -89,6 +90,7 @@ export function SyncProvider({ children, data, onDataUpdated }) {
     try {
       const remoteData = await api.exportBackup();
       if (remoteData && (remoteData.clients || remoteData.suppliersList)) {
+        isPullingRef.current = true;
         onDataUpdated(remoteData);
         setBackendLoading(false);
         await checkBackend();
@@ -129,6 +131,7 @@ export function SyncProvider({ children, data, onDataUpdated }) {
     setSupabaseStatus('syncing');
     const res = await fetchSupabaseData(supabaseConfig.url, supabaseConfig.key);
     if (res.success && res.data) {
+      isPullingRef.current = true;
       onDataUpdated(res.data);
       setSupabaseStatus('synced');
       return { success: true, loaded: true };
@@ -197,6 +200,7 @@ export function SyncProvider({ children, data, onDataUpdated }) {
         settings.path
       );
       if (res.exists && res.data) {
+        isPullingRef.current = true;
         onDataUpdated(res.data);
         const now = new Date().toISOString();
         setCurrentSha(res.sha);
@@ -226,6 +230,11 @@ export function SyncProvider({ children, data, onDataUpdated }) {
       if (supabaseConfig?.url && supabaseConfig?.key) {
         pullFromSupabase().catch(() => {});
       }
+      return;
+    }
+
+    if (isPullingRef.current) {
+      isPullingRef.current = false;
       return;
     }
 

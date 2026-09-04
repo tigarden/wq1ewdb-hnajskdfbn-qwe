@@ -8,14 +8,38 @@ const PASS_SALT_KEY = 'debet_sec_psalt_v2';
 const TOTP_SECRET_KEY = 'debet_sec_totp_v2';
 const TOTP_ENABLED_KEY = 'debet_sec_totp_en_v2';
 
-// Default initial master password
-export const DEFAULT_MASTER_PASSWORD = '010700GkO';
+// Default initial master password (overrideable via VITE_DEFAULT_MASTER_PASSWORD)
+export const DEFAULT_MASTER_PASSWORD = import.meta.env?.VITE_DEFAULT_MASTER_PASSWORD || '010700GkO';
 
 // Helper to convert ArrayBuffer to hex string
 function bufToHex(buffer) {
   return Array.from(new Uint8Array(buffer))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
+}
+
+// Obfuscate/encrypt string with device salt so sensitive tokens aren't plaintext in localStorage
+function maskWithSalt(text, saltHex) {
+  if (!text) return '';
+  const enc = new TextEncoder();
+  const bytes = enc.encode(text);
+  const saltBytes = new Uint8Array(
+    saltHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+  );
+  const masked = bytes.map((b, i) => b ^ saltBytes[i % saltBytes.length]);
+  return bufToHex(masked.buffer);
+}
+
+function unmaskWithSalt(hex, saltHex) {
+  if (!hex) return '';
+  const saltBytes = new Uint8Array(
+    saltHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+  );
+  const bytes = new Uint8Array(
+    hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+  );
+  const unmasked = bytes.map((b, i) => b ^ saltBytes[i % saltBytes.length]);
+  return new TextDecoder().decode(unmasked);
 }
 
 // Generate random salt
@@ -187,12 +211,25 @@ export function clearSecureSession() {
 
 // TOTP Secret helpers
 export function getStoredTotpSecret() {
-  return localStorage.getItem(TOTP_SECRET_KEY) || localStorage.getItem('debet_totp_secret_v1') || '';
+  const raw = localStorage.getItem(TOTP_SECRET_KEY) || localStorage.getItem('debet_totp_secret_v1') || '';
+  if (!raw) return '';
+  if (raw.startsWith('enc:')) {
+    try {
+      const salt = getMasterSalt();
+      return unmaskWithSalt(raw.slice(4), salt);
+    } catch (e) {
+      console.warn('Failed to unmask TOTP secret:', e);
+      return '';
+    }
+  }
+  return raw;
 }
 
 export function setStoredTotpSecret(secret) {
   if (secret) {
-    localStorage.setItem(TOTP_SECRET_KEY, secret);
+    const salt = getMasterSalt();
+    const masked = 'enc:' + maskWithSalt(secret, salt);
+    localStorage.setItem(TOTP_SECRET_KEY, masked);
     localStorage.setItem(TOTP_ENABLED_KEY, 'true');
     // Clean legacy
     localStorage.removeItem('debet_totp_secret_v1');

@@ -280,12 +280,15 @@ export function DataProviderInternal({ children }) {
     });
 
     return {
+      grandBalance: round2(totalClientDebt + otherSettlementsSum),
       totalClientDebt: round2(totalClientDebt),
       totalItemsSum: round2(totalItemsSum),
       totalPaymentsSum: round2(totalPaymentsSum),
       debtorsCount,
       totalClients: (data.clients || []).length,
+      clientsCount: (data.clients || []).length,
       otherSettlementsSum: round2(otherSettlementsSum),
+      totalOtherBalance: round2(otherSettlementsSum),
     };
   }, [data.clients, data.otherTransactions, getClientStats]);
 
@@ -310,9 +313,11 @@ export function DataProviderInternal({ children }) {
     });
 
     return {
+      pendingCount: pendingPurchaseCount,
       pendingPurchaseCount,
       totalFilledSales: round2(totalFilledSales),
       totalFilledPurchase: round2(totalFilledPurchase),
+      totalProfit: round2(totalMargin),
       totalMargin: round2(totalMargin),
       marginPercent: totalFilledSales > 0 ? Math.round((totalMargin / totalFilledSales) * 100) : 0,
     };
@@ -328,6 +333,7 @@ export function DataProviderInternal({ children }) {
       return {
         balance: round2(balance),
         transactionsCount: txs.length,
+        transactions: txs,
       };
     },
     [data.otherTransactions]
@@ -350,11 +356,75 @@ export function DataProviderInternal({ children }) {
   }, [data]);
 
   const importJsonBackup = useCallback((jsonData) => {
-    if (!jsonData || typeof jsonData !== 'object') {
-      return { success: false, error: 'Неверный формат JSON файла' };
+    if (!jsonData || typeof jsonData !== 'object' || Array.isArray(jsonData)) {
+      return { success: false, error: 'Неверный формат: файл должен содержать объект данных' };
     }
-    setData(jsonData);
-    saveLocalData(jsonData);
+
+    // Schema validation and sanitization
+    const sanitized = {
+      version: typeof jsonData.version === 'number' ? jsonData.version : 3,
+      updatedAt: typeof jsonData.updatedAt === 'string' ? jsonData.updatedAt : new Date().toISOString(),
+      clients: Array.isArray(jsonData.clients)
+        ? jsonData.clients
+            .map((c) => ({
+              id: String(c.id || `cli-${Date.now().toString(36)}`),
+              name: String(c.name || '').trim(),
+              phone: String(c.phone || '').trim(),
+              car: String(c.car || '').trim(),
+              initialBalance: round2(c.initialBalance || 0),
+              notes: String(c.notes || '').trim(),
+              createdAt: c.createdAt || new Date().toISOString(),
+            }))
+            .filter((c) => c.name.length > 0)
+        : [],
+      clientTransactions: Array.isArray(jsonData.clientTransactions)
+        ? jsonData.clientTransactions
+            .map((t) => ({
+              id: String(t.id || `ctx-${Date.now().toString(36)}`),
+              clientId: String(t.clientId || ''),
+              type: t.type === 'payment' ? 'payment' : 'item',
+              article: String(t.article || '').trim().toUpperCase(),
+              description: String(t.description || '').trim(),
+              carName: String(t.carName || '').trim(),
+              supplierName: String(t.supplierName || '').trim(),
+              amount: round2(t.amount || 0),
+              purchasePrice: round2(t.purchasePrice || 0),
+              date: String(t.date || '').trim(),
+              note: String(t.note || '').trim(),
+              createdAt: t.createdAt || new Date().toISOString(),
+            }))
+            .filter((t) => t.clientId.length > 0)
+        : [],
+      suppliersList: Array.isArray(jsonData.suppliersList)
+        ? Array.from(new Set(jsonData.suppliersList.map((s) => String(s).trim()).filter(Boolean)))
+        : [],
+      otherCounterparties: Array.isArray(jsonData.otherCounterparties)
+        ? jsonData.otherCounterparties
+            .map((p) => ({
+              id: String(p.id || `oth-${Date.now().toString(36)}`),
+              name: String(p.name || '').trim(),
+              phone: String(p.phone || '').trim(),
+              notes: String(p.notes || '').trim(),
+              createdAt: p.createdAt || new Date().toISOString(),
+            }))
+            .filter((p) => p.name.length > 0)
+        : [],
+      otherTransactions: Array.isArray(jsonData.otherTransactions)
+        ? jsonData.otherTransactions
+            .map((ot) => ({
+              id: String(ot.id || `otx-${Date.now().toString(36)}`),
+              counterpartyId: String(ot.counterpartyId || ''),
+              amount: round2(ot.amount || 0),
+              note: String(ot.note || '').trim(),
+              date: String(ot.date || '').trim(),
+              createdAt: ot.createdAt || new Date().toISOString(),
+            }))
+            .filter((ot) => ot.counterpartyId.length > 0)
+        : [],
+    };
+
+    setData(sanitized);
+    saveLocalData(sanitized);
     return { success: true };
   }, []);
 

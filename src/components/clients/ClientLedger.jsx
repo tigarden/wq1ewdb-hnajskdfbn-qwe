@@ -3,6 +3,7 @@ import { Package, CreditCard, Copy, Check, Trash2, Search, Calendar, Truck, Car,
 import Badge from '../Badge';
 import EmptyState from '../EmptyState';
 import { formatMoney } from '../../utils/format';
+import { copyToClipboard } from '../../utils/clipboard';
 
 export default function ClientLedger({
   transactions = [],
@@ -14,11 +15,13 @@ export default function ClientLedger({
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState(null);
 
-  const handleCopy = (text, id) => {
+  const handleCopy = async (text, id) => {
     if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 1500);
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1500);
+    }
   };
 
   const filteredTransactions = useMemo(() => {

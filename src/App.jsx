@@ -26,6 +26,7 @@ export default function App() {
   const { isUnlocked, isCheckingSession, unlockApp } = useData();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedClientId, setSelectedClientId] = useState(null);
+  const [partsQuery, setPartsQuery] = useState('');
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
@@ -58,6 +59,7 @@ export default function App() {
               setActiveTab={setActiveTab}
               onOpenQuickAdd={() => setIsQuickAddOpen(true)}
               onSelectClient={(id) => setSelectedClientId(id)}
+              onSearchParts={(q) => setPartsQuery(q)}
             />
           )}
 
@@ -72,7 +74,7 @@ export default function App() {
 
           {activeTab === 'other' && <OtherSettlements />}
 
-          {activeTab === 'parts' && <PartsCatalog />}
+          {activeTab === 'parts' && <PartsCatalog initialQuery={partsQuery} />}
 
           {activeTab === 'settings' && <Settings />}
         </Suspense>

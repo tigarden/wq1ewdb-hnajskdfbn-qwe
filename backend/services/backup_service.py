@@ -147,7 +147,18 @@ class BackupService:
             if not tid or not client_id:
                 continue
             existing_tx = await db.get(ClientTransaction, tid)
-            if not existing_tx:
+            if existing_tx:
+                existing_tx.client_id = client_id
+                existing_tx.type = tx_dict.get("type", existing_tx.type)
+                existing_tx.article = (tx_dict.get("article") or "").strip().upper()
+                existing_tx.description = tx_dict.get("description", existing_tx.description)
+                existing_tx.car_name = tx_dict.get("carName", existing_tx.car_name)
+                existing_tx.supplier_name = tx_dict.get("supplierName", existing_tx.supplier_name)
+                existing_tx.amount = round(float(tx_dict.get("amount", existing_tx.amount) or 0.0), 2)
+                existing_tx.purchase_price = round(float(tx_dict.get("purchasePrice", existing_tx.purchase_price) or 0.0), 2)
+                existing_tx.date = tx_dict.get("date", existing_tx.date)
+                existing_tx.note = tx_dict.get("note", existing_tx.note)
+            else:
                 db.add(ClientTransaction(
                     id=tid,
                     client_id=client_id,
@@ -161,7 +172,7 @@ class BackupService:
                     date=tx_dict.get("date", ""),
                     note=tx_dict.get("note", ""),
                 ))
-                imported_records += 1
+            imported_records += 1
 
         # 5. Other Transactions
         for ot_dict in payload.otherTransactions:
@@ -170,7 +181,12 @@ class BackupService:
             if not otid or not cpid:
                 continue
             existing_ot = await db.get(OtherTransaction, otid)
-            if not existing_ot:
+            if existing_ot:
+                existing_ot.counterparty_id = cpid
+                existing_ot.amount = round(float(ot_dict.get("amount", existing_ot.amount) or 0.0), 2)
+                existing_ot.note = ot_dict.get("note", existing_ot.note)
+                existing_ot.date = ot_dict.get("date", existing_ot.date)
+            else:
                 db.add(OtherTransaction(
                     id=otid,
                     counterparty_id=cpid,
@@ -178,7 +194,7 @@ class BackupService:
                     note=ot_dict.get("note", ""),
                     date=ot_dict.get("date", ""),
                 ))
-                imported_records += 1
+            imported_records += 1
 
         await db.commit()
         return imported_records

@@ -78,6 +78,16 @@ def test_auth_and_protected_crud():
         assert res_tx.json()["article"] == "W712/75"
         print("[OK] Authenticated transaction creation passed")
 
+        # 4b. Invalid transaction type rejected by validation (422)
+        bad_tx = {
+            "client_id": "test-cli-auth-1",
+            "type": "fraudulent_type",
+            "amount": 100.0
+        }
+        res_bad_tx = client.post("/api/transactions", json=bad_tx, headers=headers)
+        assert res_bad_tx.status_code == 422
+        print("[OK] Schema validation strictly rejects invalid transaction types (422)")
+
         # 5. Export backup
         res_export = client.get("/api/backup/export", headers=headers)
         assert res_export.status_code == 200
@@ -85,6 +95,16 @@ def test_auth_and_protected_crud():
         assert "clients" in backup_data
         assert "clientTransactions" in backup_data
         print("[OK] Authenticated backup export passed")
+
+        # 5b. Upsert modified transaction via backup import
+        backup_data["clientTransactions"][0]["purchasePrice"] = 235.0
+        res_import = client.post("/api/backup/import", json=backup_data, headers=headers)
+        assert res_import.status_code == 200
+        # Verify updated price in database
+        res_get_tx = client.get(f"/api/transactions/{tx_id}", headers=headers)
+        assert res_get_tx.status_code == 200
+        assert res_get_tx.json()["purchase_price"] == 235.0
+        print("[OK] Database upsert successfully synchronizes updated transaction fields")
 
         # 6. Delete client and cascade
         res_del = client.delete("/api/clients/test-cli-auth-1", headers=headers)

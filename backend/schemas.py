@@ -35,7 +35,7 @@ class ClientTransactionBase(BaseModel):
     supplier_name: Optional[str] = ""
     amount: float = 0.0
     purchase_price: Optional[float] = 0.0
-    date: Optional[str] = ""
+    date: Optional[str] = Field("", pattern=r"^(\d{4}-\d{2}-\d{2})?$")
     note: Optional[str] = ""
 
 class ClientTransactionCreate(ClientTransactionBase):
@@ -43,14 +43,14 @@ class ClientTransactionCreate(ClientTransactionBase):
     client_id: str
 
 class ClientTransactionUpdate(BaseModel):
-    type: Optional[str] = None
+    type: Optional[str] = Field(None, pattern="^(item|payment)$")
     article: Optional[str] = None
     description: Optional[str] = None
     car_name: Optional[str] = None
     supplier_name: Optional[str] = None
     amount: Optional[float] = None
     purchase_price: Optional[float] = None
-    date: Optional[str] = None
+    date: Optional[str] = Field(None, pattern=r"^(\d{4}-\d{2}-\d{2})?$")
     note: Optional[str] = None
 
 class ClientTransactionOut(ClientTransactionBase):
@@ -95,7 +95,7 @@ class OtherCounterpartyOut(OtherCounterpartyBase):
 class OtherTransactionBase(BaseModel):
     amount: float = 0.0
     note: Optional[str] = ""
-    date: Optional[str] = ""
+    date: Optional[str] = Field("", pattern=r"^(\d{4}-\d{2}-\d{2})?$")
 
 class OtherTransactionCreate(OtherTransactionBase):
     id: Optional[str] = None

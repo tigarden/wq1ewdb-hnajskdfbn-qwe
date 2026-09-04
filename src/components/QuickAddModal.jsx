@@ -39,6 +39,22 @@ export default function QuickAddModal({ isOpen, onClose }) {
     }
   }, [clientId, selectedClient]);
 
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setArticle('');
+      setDescription('');
+      setCarName('');
+      setPrice('');
+      setPurchasePrice('');
+      setSupplierName('');
+      setPaymentAmount('');
+      setPaymentNote('');
+      setOtherAmount('');
+      setOtherNote('');
+    }
+  }, [isOpen]);
+
   // Live margin calculation
   const numPrice = parseFloat(price) || 0;
   const numPurchase = parseFloat(purchasePrice) || 0;

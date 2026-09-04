@@ -283,7 +283,11 @@ export default function OtherSettlements() {
                           {isPositive ? `+${formatMoney(tx.amount)}` : formatMoney(tx.amount)}
                         </div>
                         <button
-                          onClick={() => deleteOtherTransaction(tx.id)}
+                          onClick={() => {
+                            if (window.confirm('Удалить эту запись операции?')) {
+                              deleteOtherTransaction(tx.id);
+                            }
+                          }}
                           className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:text-rose-400 active:bg-rose-500/20 rounded-xl transition-colors cursor-pointer"
                           title="Удалить запись"
                           aria-label="Удалить запись"
@@ -348,7 +352,11 @@ export default function OtherSettlements() {
                           </td>
                           <td className="py-3 px-3.5 text-center whitespace-nowrap">
                             <button
-                              onClick={() => deleteOtherTransaction(tx.id)}
+                              onClick={() => {
+                                if (window.confirm('Удалить эту запись операции?')) {
+                                  deleteOtherTransaction(tx.id);
+                                }
+                              }}
                               className="w-7 h-7 2xl:w-8 2xl:h-8 flex items-center justify-center text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors rounded cursor-pointer"
                               title="Удалить запись"
                             >

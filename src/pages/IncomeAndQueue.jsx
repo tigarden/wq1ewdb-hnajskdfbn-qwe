@@ -4,6 +4,7 @@ import StatCard from '../components/StatCard';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
 import { formatMoney, pluralize } from '../utils/format';
+import { copyToClipboard } from '../utils/clipboard';
 import { 
   TrendingUp, 
   Clock, 
@@ -36,11 +37,13 @@ export default function IncomeAndQueue() {
   const [savedSuccessId, setSavedSuccessId] = useState(null);
   const [copiedArticle, setCopiedArticle] = useState(null);
 
-  const handleCopy = (text) => {
+  const handleCopy = async (text) => {
     if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopiedArticle(text);
-    setTimeout(() => setCopiedArticle(null), 1800);
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopiedArticle(text);
+      setTimeout(() => setCopiedArticle(null), 1800);
+    }
   };
 
   const handlePriceChange = (txId, val) => {
@@ -65,14 +68,20 @@ export default function IncomeAndQueue() {
 
   const handleSaveItem = (tx) => {
     const draft = drafts[tx.id] || {};
-    const priceToSave = draft.purchasePrice !== undefined ? draft.purchasePrice : tx.purchasePrice;
+    const priceRaw = draft.purchasePrice !== undefined ? draft.purchasePrice : tx.purchasePrice;
     const supplierToSave = draft.supplierName !== undefined ? draft.supplierName : tx.supplierName;
+
+    const parsedPrice = parseFloat(priceRaw);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      alert('Пожалуйста, укажите цену закупки больше 0');
+      return;
+    }
 
     if (supplierToSave && !data.suppliersList?.includes(supplierToSave)) {
       addSupplierToDirectory(supplierToSave);
     }
 
-    updateItemPurchasePrice(tx.id, priceToSave, supplierToSave);
+    updateItemPurchasePrice(tx.id, parsedPrice, supplierToSave);
 
     setSavedSuccessId(tx.id);
     setTimeout(() => {
