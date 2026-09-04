@@ -1,13 +1,20 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, List
+from decimal import Decimal
+from typing import Optional, List, Annotated
 from datetime import datetime
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
+
+# Money type: Decimal in Python / DB, float in JSON API responses for 100% frontend compatibility
+Money = Annotated[
+    Decimal,
+    PlainSerializer(lambda x: float(round(Decimal(str(x)), 2)) if x is not None else 0.0, return_type=float, when_used='json')
+]
 
 # --- Client Schemas ---
 class ClientBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     phone: Optional[str] = ""
     car: Optional[str] = ""
-    initial_balance: Optional[float] = 0.0
+    initial_balance: Optional[Money] = Decimal("0.00")
     notes: Optional[str] = ""
 
 class ClientCreate(ClientBase):
@@ -17,7 +24,7 @@ class ClientUpdate(BaseModel):
     name: Optional[str] = None
     phone: Optional[str] = None
     car: Optional[str] = None
-    initial_balance: Optional[float] = None
+    initial_balance: Optional[Money] = None
     notes: Optional[str] = None
 
 class ClientOut(ClientBase):
@@ -33,8 +40,8 @@ class ClientTransactionBase(BaseModel):
     description: Optional[str] = ""
     car_name: Optional[str] = ""
     supplier_name: Optional[str] = ""
-    amount: float = 0.0
-    purchase_price: Optional[float] = 0.0
+    amount: Money = Field(default=Decimal("0.00"), ge=0)
+    purchase_price: Optional[Money] = Field(default=Decimal("0.00"), ge=0)
     date: Optional[str] = Field("", pattern=r"^(\d{4}-\d{2}-\d{2})?$")
     note: Optional[str] = ""
 
@@ -48,8 +55,8 @@ class ClientTransactionUpdate(BaseModel):
     description: Optional[str] = None
     car_name: Optional[str] = None
     supplier_name: Optional[str] = None
-    amount: Optional[float] = None
-    purchase_price: Optional[float] = None
+    amount: Optional[Money] = Field(None, ge=0)
+    purchase_price: Optional[Money] = Field(None, ge=0)
     date: Optional[str] = Field(None, pattern=r"^(\d{4}-\d{2}-\d{2})?$")
     note: Optional[str] = None
 
@@ -93,7 +100,7 @@ class OtherCounterpartyOut(OtherCounterpartyBase):
 
 # --- Other Transaction Schemas ---
 class OtherTransactionBase(BaseModel):
-    amount: float = 0.0
+    amount: Money = Field(default=Decimal("0.00"), ge=0)
     note: Optional[str] = ""
     date: Optional[str] = Field("", pattern=r"^(\d{4}-\d{2}-\d{2})?$")
 

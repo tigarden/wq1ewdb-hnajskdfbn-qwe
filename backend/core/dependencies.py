@@ -38,26 +38,45 @@ async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(
     return payload
 
 class RateLimiter:
-    """Sliding-window IP rate limiter to protect against brute-force attacks."""
+    """Sliding-window IP rate limiter to protect against brute-force attacks with memory cleanup."""
     def __init__(self, requests_per_minute: int = 15):
         self.limit = requests_per_minute
         self.window = 60.0
+        self._last_cleanup = time.time()
+
+    def _cleanup_expired(self, now: float):
+        """Prune inactive client entries to prevent unbounded memory growth."""
+        if now - self._last_cleanup < 30.0:
+            return
+        self._last_cleanup = now
+        expired_ips = [ip for ip, times in _request_history.items() if not times or (now - times[-1] >= self.window)]
+        for ip in expired_ips:
+            _request_history.pop(ip, None)
 
     async def __call__(self, request: Request):
-        client_ip = request.client.host if request.client else "unknown"
+        # Support reverse proxy headers (e.g. Nginx, Cloudflare, Traefik)
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            client_ip = forwarded.split(",")[0].strip()
+        else:
+            client_ip = request.client.host if request.client else "unknown"
+
         now = time.time()
-        
-        # Clean older timestamps
-        timestamps = _request_history[client_ip]
-        _request_history[client_ip] = [t for t in timestamps if now - t < self.window]
-        
-        if len(_request_history[client_ip]) >= self.limit:
+        self._cleanup_expired(now)
+
+        # Clean older timestamps for current IP
+        timestamps = _request_history.get(client_ip, [])
+        valid_timestamps = [t for t in timestamps if now - t < self.window]
+
+        if len(valid_timestamps) >= self.limit:
+            _request_history[client_ip] = valid_timestamps
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Слишком много попыток входа. Подождите 1 минуту перед следующей попыткой.",
             )
-        
-        _request_history[client_ip].append(now)
+
+        valid_timestamps.append(now)
+        _request_history[client_ip] = valid_timestamps
 
 # Default auth rate limiter instance
 auth_rate_limiter = RateLimiter(requests_per_minute=settings.AUTH_RATE_LIMIT_PER_MINUTE)

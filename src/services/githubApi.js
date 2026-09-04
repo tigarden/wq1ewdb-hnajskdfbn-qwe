@@ -96,8 +96,13 @@ export async function saveRepoFile(token, owner, repo, path, dataObj, sha, commi
     const contentStr = JSON.stringify(dataObj, null, 2);
     const base64Content = utf8ToBase64(contentStr);
 
+    let finalMessage = commitMessage || `Update debet records [${new Date().toLocaleString('ru-RU')}]`;
+    if (!finalMessage.includes('[skip ci]') && !finalMessage.includes('[ci skip]') && !finalMessage.includes('[skip actions]')) {
+      finalMessage += ' [skip ci]';
+    }
+
     const body = {
-      message: commitMessage || `Update debet records [${new Date().toLocaleString('ru-RU')}]`,
+      message: finalMessage,
       content: base64Content,
     };
     if (sha) {

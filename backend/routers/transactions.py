@@ -20,11 +20,12 @@ router = APIRouter(
 async def list_transactions(
     client_id: Optional[str] = Query(None, description="Filter by client ID"),
     type: Optional[str] = Query(None, description="Filter by type: 'item' or 'payment'"),
-    limit: Optional[int] = Query(None, description="Limit returned transactions"),
+    limit: Optional[int] = Query(None, ge=1, le=2000, description="Limit returned transactions"),
+    offset: Optional[int] = Query(None, ge=0, description="Offset for pagination"),
     db: AsyncSession = Depends(get_db)
 ):
-    """List client transactions with optional client and type filters."""
-    return await TransactionService.get_all(db, client_id=client_id, type=type, limit=limit)
+    """List client transactions with optional client, type, and pagination filters."""
+    return await TransactionService.get_all(db, client_id=client_id, type=type, limit=limit, offset=offset)
 
 @router.get("/{tx_id}", response_model=ClientTransactionOut)
 async def get_transaction(tx_id: str, db: AsyncSession = Depends(get_db)):

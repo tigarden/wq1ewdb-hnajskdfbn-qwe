@@ -154,14 +154,20 @@ export function SyncProvider({ children, data, onDataUpdated }) {
     });
   }, []);
 
+  const lastSyncedDataRef = useRef('');
+
   const pushToGitHub = useCallback(
-    async (commitMsg = 'Автоматическое сохранение') => {
+    async (commitMsg = 'Автоматическое сохранение [skip ci]') => {
       if (!settings.token) {
         return { success: false, error: 'Токен GitHub не указан' };
       }
       setSyncStatus('syncing');
       setSyncError(null);
       try {
+        const msgWithSkipCi = commitMsg.includes('[skip ci]') || commitMsg.includes('[ci skip]')
+          ? commitMsg
+          : `${commitMsg} [skip ci]`;
+
         const res = await saveRepoFile(
           settings.token,
           settings.owner,
@@ -169,11 +175,12 @@ export function SyncProvider({ children, data, onDataUpdated }) {
           settings.path,
           data,
           currentSha,
-          commitMsg
+          msgWithSkipCi
         );
         const now = new Date().toISOString();
         setCurrentSha(res.sha);
         setLastSyncTime(now);
+        lastSyncedDataRef.current = JSON.stringify(data);
         updateSettings({ lastSyncTime: now, lastSha: res.sha });
         setSyncStatus('synced');
         return { success: true };
@@ -201,6 +208,7 @@ export function SyncProvider({ children, data, onDataUpdated }) {
       );
       if (res.exists && res.data) {
         isPullingRef.current = true;
+        lastSyncedDataRef.current = JSON.stringify(res.data);
         onDataUpdated(res.data);
         const now = new Date().toISOString();
         setCurrentSha(res.sha);
@@ -218,11 +226,12 @@ export function SyncProvider({ children, data, onDataUpdated }) {
     }
   }, [settings, onDataUpdated, updateSettings]);
 
-  // Zero-Touch Auto-Sync: фоновая автосинхронизация при старте и любых изменениях
+  // Оптимизированная фоновая автосинхронизация с защитой от лишних коммитов и расхода токенов
   const isInitialMount = useRef(true);
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
+      lastSyncedDataRef.current = JSON.stringify(data);
       // Авто-проверка и тихое обновление при открытии приложения
       if (settings?.token) {
         pullFromGitHub().catch(() => {});
@@ -238,25 +247,50 @@ export function SyncProvider({ children, data, onDataUpdated }) {
       return;
     }
 
-    if (!settings?.token && (!supabaseConfig?.url || !supabaseConfig?.key)) return;
+    const currentDataStr = JSON.stringify(data);
+    if (currentDataStr === lastSyncedDataRef.current) {
+      return;
+    }
+
+    const canSyncGitHub = Boolean(settings?.token && settings?.autoSync !== false);
+    const canSyncSupabase = Boolean(supabaseConfig?.url && supabaseConfig?.key);
+
+    if (!canSyncGitHub && !canSyncSupabase) {
+      return;
+    }
 
     setSyncStatus('unsaved');
-    const timer = setTimeout(async () => {
-      try {
-        if (settings?.token) {
-          await pushToGitHub('Автоматическое сохранение');
-        }
-        if (supabaseConfig?.url && supabaseConfig?.key) {
-          await syncToSupabase();
-        }
-        setSyncStatus('synced');
-      } catch (e) {
-        console.warn('Auto-sync error:', e);
-      }
-    }, 2500);
 
-    return () => clearTimeout(timer);
-  }, [data, settings?.token, supabaseConfig?.url, supabaseConfig?.key, pushToGitHub, pullFromGitHub, syncToSupabase, pullFromSupabase]);
+    // Supabase синхронизируется через 3 секунды
+    let sbTimer;
+    if (canSyncSupabase) {
+      sbTimer = setTimeout(async () => {
+        try {
+          await syncToSupabase();
+        } catch (e) {
+          console.warn('Supabase auto-sync error:', e);
+        }
+      }, 3000);
+    }
+
+    // GitHub коммитится через 30 секунд (чтобы группировать изменения и не сжигать лимиты API и токены Actions)
+    let ghTimer;
+    if (canSyncGitHub) {
+      ghTimer = setTimeout(async () => {
+        try {
+          await pushToGitHub('Автоматическое сохранение [skip ci]');
+          lastSyncedDataRef.current = currentDataStr;
+        } catch (e) {
+          console.warn('GitHub auto-sync error:', e);
+        }
+      }, 30000);
+    }
+
+    return () => {
+      if (sbTimer) clearTimeout(sbTimer);
+      if (ghTimer) clearTimeout(ghTimer);
+    };
+  }, [data, settings?.token, settings?.autoSync, supabaseConfig?.url, supabaseConfig?.key, pushToGitHub, pullFromGitHub, syncToSupabase, pullFromSupabase]);
 
   const value = {
     settings,

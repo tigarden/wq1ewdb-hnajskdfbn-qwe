@@ -119,10 +119,97 @@ def test_totp():
     assert verify_totp_code(secret, "000000") is False
     print("[OK] TOTP RFC 6238 generation & validation passed")
 
+def test_decimal_precision_and_validation():
+    with TestClient(app) as client:
+        res = client.post("/api/auth/login", json={"password": settings.MASTER_PASSWORD})
+        token = res.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # 1. Decimal precision test (0.10 and 0.20 exact arithmetic)
+        cli = client.post("/api/clients", json={
+            "name": "Decimal Test Client",
+            "initial_balance": 0.10
+        }, headers=headers).json()
+        assert cli["initial_balance"] == 0.10
+
+        tx = client.post("/api/transactions", json={
+            "client_id": cli["id"],
+            "type": "item",
+            "amount": 0.20,
+            "purchase_price": 0.15
+        }, headers=headers).json()
+        assert tx["amount"] == 0.20
+        assert tx["purchase_price"] == 0.15
+
+        # Cleanup
+        client.delete(f"/api/clients/{cli['id']}", headers=headers)
+
+        # 2. Negative amounts must be rejected by validation (422)
+        bad_res = client.post("/api/transactions", json={
+            "client_id": cli["id"],
+            "type": "payment",
+            "amount": -100.00
+        }, headers=headers)
+        assert bad_res.status_code == 422
+        print("[OK] Financial precision (Decimal) and negative amount protection (422) verified")
+
+def test_password_change_and_backdoor_elimination():
+    with TestClient(app) as client:
+        # Login with current master password
+        res = client.post("/api/auth/login", json={"password": settings.MASTER_PASSWORD})
+        assert res.status_code == 200
+        token = res.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        new_pass = "SeniorDevAudit2026#Secure"
+        res_change = client.post("/api/auth/change-password", json={
+            "old_password": settings.MASTER_PASSWORD,
+            "new_password": new_pass
+        }, headers=headers)
+        assert res_change.status_code == 200
+
+        # Attempting login with old master password must FAIL (401) - no backdoor!
+        old_login = client.post("/api/auth/login", json={"password": settings.MASTER_PASSWORD})
+        assert old_login.status_code == 401
+
+        # Login with new password must succeed
+        new_login = client.post("/api/auth/login", json={"password": new_pass})
+        assert new_login.status_code == 200
+        new_token = new_login.json()["access_token"]
+        new_headers = {"Authorization": f"Bearer {new_token}"}
+
+        # Revert password back to default for test suite repeatability
+        revert_res = client.post("/api/auth/change-password", json={
+            "old_password": new_pass,
+            "new_password": settings.MASTER_PASSWORD
+        }, headers=new_headers)
+        assert revert_res.status_code == 200
+        print("[OK] Master password change verified & backdoor completely eliminated (401)")
+
+def test_pagination_and_token_bounds():
+    with TestClient(app) as client:
+        # Requesting 99999 days must be clamped to 30 days max
+        res = client.post("/api/auth/login", json={"password": settings.MASTER_PASSWORD, "remember_days": 99999})
+        assert res.status_code == 200
+        assert res.json()["expires_in_days"] == 30
+
+        token = res.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Pagination test
+        cli_res = client.get("/api/clients?limit=1&offset=0", headers=headers)
+        assert cli_res.status_code == 200
+        assert isinstance(cli_res.json(), list)
+        assert len(cli_res.json()) <= 1
+        print("[OK] Session bounds (30d limit) & pagination verified")
+
 if __name__ == "__main__":
     test_health()
     test_unauthorized_access_blocked()
     test_auth_and_protected_crud()
     test_totp()
-    print("\nALL BACKEND TESTS PASSED WITH 100% SECURITY COVERAGE!")
+    test_decimal_precision_and_validation()
+    test_password_change_and_backdoor_elimination()
+    test_pagination_and_token_bounds()
+    print("\nALL SENIOR BACKEND AUDIT TESTS PASSED SUCCESSFULLY (100% GREEN)!")
 

@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.database import get_db
 from backend.core.dependencies import get_current_admin
@@ -18,9 +18,13 @@ router = APIRouter(
 
 # Counterparties CRUD
 @router.get("/other-counterparties", response_model=List[OtherCounterpartyOut])
-async def list_other_counterparties(db: AsyncSession = Depends(get_db)):
-    """List other counterparties (masters, clients, etc.)."""
-    return await CounterpartyService.get_all_counterparties(db)
+async def list_other_counterparties(
+    limit: Optional[int] = Query(None, ge=1, le=1000, description="Max counterparties to return"),
+    offset: Optional[int] = Query(None, ge=0, description="Offset for pagination"),
+    db: AsyncSession = Depends(get_db)
+):
+    """List other counterparties (masters, clients, etc.) with optional pagination."""
+    return await CounterpartyService.get_all_counterparties(db, limit=limit, offset=offset)
 
 @router.post("/other-counterparties", response_model=OtherCounterpartyOut, status_code=status.HTTP_201_CREATED)
 async def create_other_counterparty(cp_in: OtherCounterpartyCreate, db: AsyncSession = Depends(get_db)):
@@ -40,9 +44,19 @@ async def delete_other_counterparty(cp_id: str, db: AsyncSession = Depends(get_d
 
 # Transactions CRUD
 @router.get("/other-transactions", response_model=List[OtherTransactionOut])
-async def list_other_transactions(db: AsyncSession = Depends(get_db)):
-    """List all transactions with other counterparties."""
-    return await CounterpartyService.get_all_transactions(db)
+async def list_other_transactions(
+    counterparty_id: Optional[str] = Query(None, description="Filter by counterparty ID"),
+    limit: Optional[int] = Query(None, ge=1, le=2000, description="Max transactions to return"),
+    offset: Optional[int] = Query(None, ge=0, description="Offset for pagination"),
+    db: AsyncSession = Depends(get_db)
+):
+    """List all transactions with other counterparties with optional filters."""
+    return await CounterpartyService.get_all_transactions(
+        db,
+        counterparty_id=counterparty_id,
+        limit=limit,
+        offset=offset
+    )
 
 @router.post("/other-transactions", response_model=OtherTransactionOut, status_code=status.HTTP_201_CREATED)
 async def create_other_transaction(tx_in: OtherTransactionCreate, db: AsyncSession = Depends(get_db)):

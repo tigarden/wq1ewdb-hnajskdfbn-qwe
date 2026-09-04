@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -11,7 +12,8 @@ class TransactionService:
         db: AsyncSession,
         client_id: Optional[str] = None,
         type: Optional[str] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
+        offset: Optional[int] = None
     ) -> List[ClientTransaction]:
         stmt = select(ClientTransaction)
         if client_id:
@@ -20,6 +22,8 @@ class TransactionService:
             stmt = stmt.filter(ClientTransaction.type == type)
 
         stmt = stmt.order_by(ClientTransaction.date.desc(), ClientTransaction.created_at.desc())
+        if offset:
+            stmt = stmt.offset(offset)
         if limit:
             stmt = stmt.limit(limit)
 
@@ -36,7 +40,10 @@ class TransactionService:
         if not client:
             raise ValueError(f"Клиент с ID '{tx_in.client_id}' не найден")
 
-        tx_id = tx_in.id or f"ctx-{uuid.uuid4().hex[:10]}"
+        # Full uuid4 hex ensures zero ID collisions
+        tx_id = tx_in.id or f"ctx-{uuid.uuid4().hex}"
+        amt = Decimal(str(tx_in.amount or "0.00"))
+        purch = Decimal(str(tx_in.purchase_price or "0.00"))
         tx = ClientTransaction(
             id=tx_id,
             client_id=tx_in.client_id,
@@ -45,8 +52,8 @@ class TransactionService:
             description=tx_in.description.strip() if tx_in.description else "",
             car_name=tx_in.car_name.strip() if tx_in.car_name else "",
             supplier_name=tx_in.supplier_name.strip() if tx_in.supplier_name else "",
-            amount=round(float(tx_in.amount or 0.0), 2),
-            purchase_price=round(float(tx_in.purchase_price or 0.0), 2),
+            amount=round(amt, 2),
+            purchase_price=round(purch, 2),
             date=tx_in.date.strip() if tx_in.date else "",
             note=tx_in.note.strip() if tx_in.note else "",
         )
@@ -72,9 +79,9 @@ class TransactionService:
         if tx_in.supplier_name is not None:
             tx.supplier_name = tx_in.supplier_name.strip()
         if tx_in.amount is not None:
-            tx.amount = round(float(tx_in.amount), 2)
+            tx.amount = round(Decimal(str(tx_in.amount)), 2)
         if tx_in.purchase_price is not None:
-            tx.purchase_price = round(float(tx_in.purchase_price), 2)
+            tx.purchase_price = round(Decimal(str(tx_in.purchase_price)), 2)
         if tx_in.date is not None:
             tx.date = tx_in.date.strip()
         if tx_in.note is not None:

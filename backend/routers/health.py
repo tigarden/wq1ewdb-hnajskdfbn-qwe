@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select, func
 from backend.core.database import get_db
@@ -9,7 +9,7 @@ from backend.schemas import HealthResponse
 router = APIRouter(tags=["Health"])
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check(db: AsyncSession = Depends(get_db)):
+async def health_check(response: Response, db: AsyncSession = Depends(get_db)):
     """Health check endpoint to verify database connectivity and stats."""
     db_type = "PostgreSQL" if "postgresql" in settings.DATABASE_URL else "SQLite"
     try:
@@ -26,6 +26,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
             total_transactions=tx_count
         )
     except Exception as e:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return HealthResponse(
             status="degraded",
             database=f"error: {str(e)}",

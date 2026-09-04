@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -7,8 +8,17 @@ from backend.schemas import ClientCreate, ClientUpdate
 
 class ClientService:
     @staticmethod
-    async def get_all(db: AsyncSession) -> List[Client]:
-        result = await db.execute(select(Client).order_by(Client.created_at.asc()))
+    async def get_all(
+        db: AsyncSession,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None
+    ) -> List[Client]:
+        stmt = select(Client).order_by(Client.created_at.asc())
+        if offset:
+            stmt = stmt.offset(offset)
+        if limit:
+            stmt = stmt.limit(limit)
+        result = await db.execute(stmt)
         return list(result.scalars().all())
 
     @staticmethod
@@ -17,17 +27,19 @@ class ClientService:
 
     @staticmethod
     async def create(db: AsyncSession, client_in: ClientCreate) -> Client:
-        cid = client_in.id or f"cli-{uuid.uuid4().hex[:8]}"
+        # Use full uuid4 hex (32 chars) to guarantee zero primary key collision
+        cid = client_in.id or f"cli-{uuid.uuid4().hex}"
         existing = await db.get(Client, cid)
         if existing:
             raise ValueError(f"Клиент с ID '{cid}' уже существует")
 
+        init_bal = Decimal(str(client_in.initial_balance or "0.00"))
         client = Client(
             id=cid,
             name=client_in.name.strip(),
             phone=client_in.phone.strip() if client_in.phone else "",
             car=client_in.car.strip() if client_in.car else "",
-            initial_balance=float(client_in.initial_balance or 0.0),
+            initial_balance=round(init_bal, 2),
             notes=client_in.notes.strip() if client_in.notes else "",
         )
         db.add(client)
@@ -48,7 +60,7 @@ class ClientService:
         if client_in.car is not None:
             client.car = client_in.car.strip()
         if client_in.initial_balance is not None:
-            client.initial_balance = float(client_in.initial_balance)
+            client.initial_balance = round(Decimal(str(client_in.initial_balance)), 2)
         if client_in.notes is not None:
             client.notes = client_in.notes.strip()
 

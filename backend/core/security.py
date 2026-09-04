@@ -21,10 +21,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except Exception:
         return False
 
+async def async_verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Non-blocking async verification of bcrypt password in threadpool."""
+    import asyncio
+    return await asyncio.to_thread(verify_password, plain_password, hashed_password)
+
 def get_password_hash(password: str) -> str:
     """Hash a password using bcrypt with auto-generated salt."""
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+async def async_get_password_hash(password: str) -> str:
+    """Non-blocking async bcrypt hashing in threadpool."""
+    import asyncio
+    return await asyncio.to_thread(get_password_hash, password)
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
     """Create signed JWT access token with expiration timestamp."""

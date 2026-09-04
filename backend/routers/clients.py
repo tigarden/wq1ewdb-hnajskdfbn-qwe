@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.database import get_db
 from backend.core.dependencies import get_current_admin
@@ -13,9 +13,13 @@ router = APIRouter(
 )
 
 @router.get("", response_model=List[ClientOut])
-async def list_clients(db: AsyncSession = Depends(get_db)):
-    """List all clients ordered by creation date."""
-    return await ClientService.get_all(db)
+async def list_clients(
+    limit: Optional[int] = Query(None, ge=1, le=1000, description="Max clients to return"),
+    offset: Optional[int] = Query(None, ge=0, description="Offset for pagination"),
+    db: AsyncSession = Depends(get_db)
+):
+    """List clients ordered by creation date with optional pagination."""
+    return await ClientService.get_all(db, limit=limit, offset=offset)
 
 @router.get("/{client_id}", response_model=ClientOut)
 async def get_client(client_id: str, db: AsyncSession = Depends(get_db)):

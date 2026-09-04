@@ -44,7 +44,9 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    expire_days = req.remember_days if req.remember_days and req.remember_days > 0 else 7
+    # Enforce safe upper bound of 30 days on session expiration
+    requested_days = req.remember_days if req.remember_days and req.remember_days > 0 else 7
+    expire_days = min(requested_days, 30)
     token = create_access_token({"sub": "admin"}, expires_delta=timedelta(days=expire_days))
 
     return TokenResponse(

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Float, Text, DateTime, ForeignKey, Integer, Boolean
+from decimal import Decimal
+from sqlalchemy import Column, String, Numeric, Text, DateTime, ForeignKey, Integer, Boolean, Index
 from sqlalchemy.orm import relationship
 from backend.core.database import Base
 
@@ -13,7 +14,7 @@ class Client(Base):
     name = Column(String(255), nullable=False, index=True)
     phone = Column(String(64), default="")
     car = Column(String(255), default="")
-    initial_balance = Column(Float, default=0.0)
+    initial_balance = Column(Numeric(12, 2, asdecimal=True), default=Decimal("0.00"))
     notes = Column(Text, default="")
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
@@ -35,11 +36,15 @@ class ClientTransaction(Base):
     description = Column(Text, default="")
     car_name = Column(String(255), default="")
     supplier_name = Column(String(255), default="")
-    amount = Column(Float, default=0.0)
-    purchase_price = Column(Float, default=0.0)
+    amount = Column(Numeric(12, 2, asdecimal=True), default=Decimal("0.00"))
+    purchase_price = Column(Numeric(12, 2, asdecimal=True), default=Decimal("0.00"))
     date = Column(String(32), index=True, default="")
     note = Column(Text, default="")
     created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    __table_args__ = (
+        Index("ix_client_transactions_client_date", "client_id", "date", "created_at"),
+    )
 
     client = relationship("Client", back_populates="transactions")
 
@@ -72,10 +77,14 @@ class OtherTransaction(Base):
 
     id = Column(String(64), primary_key=True, index=True)
     counterparty_id = Column(String(64), ForeignKey("other_counterparties.id", ondelete="CASCADE"), nullable=False, index=True)
-    amount = Column(Float, default=0.0)
+    amount = Column(Numeric(12, 2, asdecimal=True), default=Decimal("0.00"))
     note = Column(Text, default="")
     date = Column(String(32), index=True, default="")
     created_at = Column(DateTime(timezone=True), default=utc_now)
+
+    __table_args__ = (
+        Index("ix_other_transactions_cp_date", "counterparty_id", "date", "created_at"),
+    )
 
     counterparty = relationship("OtherCounterparty", back_populates="transactions")
 

@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -7,13 +8,22 @@ from backend.schemas import OtherCounterpartyCreate, OtherTransactionCreate
 
 class CounterpartyService:
     @staticmethod
-    async def get_all_counterparties(db: AsyncSession) -> List[OtherCounterparty]:
-        result = await db.execute(select(OtherCounterparty).order_by(OtherCounterparty.created_at.asc()))
+    async def get_all_counterparties(
+        db: AsyncSession,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None
+    ) -> List[OtherCounterparty]:
+        stmt = select(OtherCounterparty).order_by(OtherCounterparty.created_at.asc())
+        if offset:
+            stmt = stmt.offset(offset)
+        if limit:
+            stmt = stmt.limit(limit)
+        result = await db.execute(stmt)
         return list(result.scalars().all())
 
     @staticmethod
     async def create_counterparty(db: AsyncSession, cp_in: OtherCounterpartyCreate) -> OtherCounterparty:
-        cid = cp_in.id or f"oth-{uuid.uuid4().hex[:8]}"
+        cid = cp_in.id or f"oth-{uuid.uuid4().hex}"
         existing = await db.get(OtherCounterparty, cid)
         if existing:
             raise ValueError(f"Контрагент с ID '{cid}' уже существует")
@@ -39,8 +49,21 @@ class CounterpartyService:
         return True
 
     @staticmethod
-    async def get_all_transactions(db: AsyncSession) -> List[OtherTransaction]:
-        result = await db.execute(select(OtherTransaction).order_by(OtherTransaction.created_at.desc()))
+    async def get_all_transactions(
+        db: AsyncSession,
+        counterparty_id: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None
+    ) -> List[OtherTransaction]:
+        stmt = select(OtherTransaction)
+        if counterparty_id:
+            stmt = stmt.filter(OtherTransaction.counterparty_id == counterparty_id)
+        stmt = stmt.order_by(OtherTransaction.date.desc(), OtherTransaction.created_at.desc())
+        if offset:
+            stmt = stmt.offset(offset)
+        if limit:
+            stmt = stmt.limit(limit)
+        result = await db.execute(stmt)
         return list(result.scalars().all())
 
     @staticmethod
@@ -49,11 +72,12 @@ class CounterpartyService:
         if not cp:
             raise ValueError(f"Контрагент с ID '{tx_in.counterparty_id}' не найден")
 
-        tx_id = tx_in.id or f"otx-{uuid.uuid4().hex[:10]}"
+        tx_id = tx_in.id or f"otx-{uuid.uuid4().hex}"
+        amt = Decimal(str(tx_in.amount or "0.00"))
         tx = OtherTransaction(
             id=tx_id,
             counterparty_id=tx_in.counterparty_id,
-            amount=round(float(tx_in.amount or 0.0), 2),
+            amount=round(amt, 2),
             note=tx_in.note.strip() if tx_in.note else "",
             date=tx_in.date.strip() if tx_in.date else "",
         )

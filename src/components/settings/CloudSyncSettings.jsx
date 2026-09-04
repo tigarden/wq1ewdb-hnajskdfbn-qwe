@@ -26,6 +26,7 @@ export default function CloudSyncSettings({
   const [ghToken, setGhToken] = useState(settings.token || '');
   const [ghOwner, setGhOwner] = useState(settings.owner || 'tigarden');
   const [ghRepo, setGhRepo] = useState(settings.repo || 'wq1ewdb-hnajskdfbn-qwe');
+  const [ghAutoSync, setGhAutoSync] = useState(() => settings.autoSync !== false);
   const [ghTesting, setGhTesting] = useState(false);
   const [ghMsg, setGhMsg] = useState(null);
 
@@ -75,7 +76,7 @@ export default function CloudSyncSettings({
 
     const token = ghToken.trim();
     if (!token) {
-      updateSettings({ token: '', owner: ghOwner.trim(), repo: ghRepo.trim() });
+      updateSettings({ token: '', owner: ghOwner.trim(), repo: ghRepo.trim(), autoSync: ghAutoSync });
       setGhMsg({ success: true, text: 'Настройки GitHub сохранены в оффлайн-режиме' });
       setGhTesting(false);
       return;
@@ -89,6 +90,7 @@ export default function CloudSyncSettings({
         token,
         owner: ghOwner.trim() || res.user.login,
         repo: ghRepo.trim(),
+        autoSync: ghAutoSync,
       });
       setGhMsg({ success: true, text: `Авторизован: @${res.user.login}. Сохранено!` });
     } else {
@@ -98,9 +100,9 @@ export default function CloudSyncSettings({
 
   const handlePushGitHub = async () => {
     setGhMsg(null);
-    const res = await pushToGitHub('Manual sync from web interface');
+    const res = await pushToGitHub('Ручное сохранение через настройки [skip ci]');
     if (res.success) {
-      setGhMsg({ success: true, text: 'Данные успешно закоммичены в репозиторий GitHub!' });
+      setGhMsg({ success: true, text: 'Данные успешно сохранены в репозиторий GitHub ([skip ci] активирован)!' });
     } else {
       setGhMsg({ success: false, text: res.error || 'Ошибка отправки в GitHub' });
     }
@@ -262,6 +264,21 @@ export default function CloudSyncSettings({
                 className="w-full h-9 px-3 bg-slate-900 border border-white/10 rounded-lg text-xs text-slate-100 focus:outline-hidden focus:border-blue-500"
               />
             </div>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-900/90 border border-white/10 space-y-1.5">
+            <label className="text-xs font-medium text-slate-200 cursor-pointer flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={ghAutoSync}
+                onChange={(e) => setGhAutoSync(e.target.checked)}
+                className="w-4 h-4 rounded border-white/20 bg-slate-800 text-blue-500 focus:ring-blue-500/20"
+              />
+              <span>Автосохранение данных в GitHub</span>
+            </label>
+            <p className="text-[11px] text-slate-400 pl-6 leading-relaxed">
+              Пакетная синхронизация (раз в 30 сек) с флагом <code className="text-amber-300 font-mono bg-amber-950/60 px-1 py-0.5 rounded text-[10px]">[skip ci]</code>. Сборка GitHub Pages не запускается, лимиты и токены GitHub Actions сохраняются.
+            </p>
           </div>
 
           <div className="flex flex-wrap gap-2 pt-1">

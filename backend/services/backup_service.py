@@ -1,9 +1,22 @@
 from datetime import datetime, timezone
-from typing import Dict, Any
+from decimal import Decimal
+from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from backend.models import Client, ClientTransaction, Supplier, OtherCounterparty, OtherTransaction
 from backend.schemas import FullBackupPayload
+
+def _chunked(iterable: list, chunk_size: int = 500):
+    for i in range(0, len(iterable), chunk_size):
+        yield iterable[i:i + chunk_size]
+
+def _to_decimal(val: Any) -> Decimal:
+    if val is None or val == "":
+        return Decimal("0.00")
+    try:
+        return round(Decimal(str(val)), 2)
+    except Exception:
+        return Decimal("0.00")
 
 class BackupService:
     @staticmethod
@@ -33,7 +46,7 @@ class BackupService:
                     "name": c.name,
                     "phone": c.phone or "",
                     "car": c.car or "",
-                    "initialBalance": c.initial_balance or 0.0,
+                    "initialBalance": float(c.initial_balance or Decimal("0.00")),
                     "notes": c.notes or "",
                     "createdAt": c.created_at.isoformat() if c.created_at else None
                 }
@@ -48,8 +61,8 @@ class BackupService:
                     "description": t.description or "",
                     "carName": t.car_name or "",
                     "supplierName": t.supplier_name or "",
-                    "amount": t.amount or 0.0,
-                    "purchasePrice": t.purchase_price or 0.0,
+                    "amount": float(t.amount or Decimal("0.00")),
+                    "purchasePrice": float(t.purchase_price or Decimal("0.00")),
                     "date": t.date or "",
                     "note": t.note or "",
                     "createdAt": t.created_at.isoformat() if t.created_at else None
@@ -71,7 +84,7 @@ class BackupService:
                 {
                     "id": ot.id,
                     "counterpartyId": ot.counterparty_id,
-                    "amount": ot.amount or 0.0,
+                    "amount": float(ot.amount or Decimal("0.00")),
                     "note": ot.note or "",
                     "date": ot.date or "",
                     "createdAt": ot.created_at.isoformat() if ot.created_at else None
@@ -82,119 +95,158 @@ class BackupService:
 
     @staticmethod
     async def import_full_data(db: AsyncSession, payload: FullBackupPayload) -> int:
-        """Import full dataset with upsert logic, ensuring foreign key consistency."""
+        """
+        High-performance batch import with batch lookups to eliminate the N+1 query disaster.
+        Imports thousands of records safely within a single transaction.
+        """
         imported_records = 0
 
-        # 1. Clients
-        for cli_dict in payload.clients:
-            cid = cli_dict.get("id")
-            if not cid:
+        # 1. Batch Upsert Clients
+        for chunk in _chunked(payload.clients, 500):
+            chunk_ids = [c.get("id") for c in chunk if c.get("id")]
+            if not chunk_ids:
                 continue
-            existing = await db.get(Client, cid)
-            if existing:
-                existing.name = cli_dict.get("name", existing.name)
-                existing.phone = cli_dict.get("phone", existing.phone)
-                existing.car = cli_dict.get("car", existing.car)
-                existing.initial_balance = round(float(cli_dict.get("initialBalance", existing.initial_balance) or 0.0), 2)
-                existing.notes = cli_dict.get("notes", existing.notes)
-            else:
-                db.add(Client(
-                    id=cid,
-                    name=cli_dict.get("name", ""),
-                    phone=cli_dict.get("phone", ""),
-                    car=cli_dict.get("car", ""),
-                    initial_balance=round(float(cli_dict.get("initialBalance", 0.0) or 0.0), 2),
-                    notes=cli_dict.get("notes", ""),
-                ))
-            imported_records += 1
+            existing_res = await db.execute(select(Client).where(Client.id.in_(chunk_ids)))
+            existing_map = {c.id: c for c in existing_res.scalars().all()}
 
-        # 2. Suppliers
-        for sup_name in payload.suppliersList:
-            clean = sup_name.strip()
-            if not clean:
-                continue
-            res = await db.execute(select(Supplier).filter(Supplier.name == clean))
-            if not res.scalars().first():
-                db.add(Supplier(name=clean))
+            for cli_dict in chunk:
+                cid = cli_dict.get("id")
+                if not cid:
+                    continue
+                init_bal = _to_decimal(cli_dict.get("initialBalance", cli_dict.get("initial_balance", 0.0)))
+                if cid in existing_map:
+                    c = existing_map[cid]
+                    c.name = cli_dict.get("name", c.name)
+                    c.phone = cli_dict.get("phone", c.phone)
+                    c.car = cli_dict.get("car", c.car)
+                    c.initial_balance = init_bal
+                    c.notes = cli_dict.get("notes", c.notes)
+                else:
+                    db.add(Client(
+                        id=cid,
+                        name=cli_dict.get("name", ""),
+                        phone=cli_dict.get("phone", ""),
+                        car=cli_dict.get("car", ""),
+                        initial_balance=init_bal,
+                        notes=cli_dict.get("notes", ""),
+                    ))
                 imported_records += 1
 
-        # 3. Other Counterparties
-        for cp_dict in payload.otherCounterparties:
-            pid = cp_dict.get("id")
-            if not pid:
-                continue
-            existing = await db.get(OtherCounterparty, pid)
-            if existing:
-                existing.name = cp_dict.get("name", existing.name)
-                existing.phone = cp_dict.get("phone", existing.phone)
-                existing.notes = cp_dict.get("notes", existing.notes)
-            else:
-                db.add(OtherCounterparty(
-                    id=pid,
-                    name=cp_dict.get("name", ""),
-                    phone=cp_dict.get("phone", ""),
-                    notes=cp_dict.get("notes", ""),
-                ))
-            imported_records += 1
+        # 2. Batch Suppliers
+        clean_names = list({s.strip() for s in payload.suppliersList if s and s.strip()})
+        if clean_names:
+            existing_sups = await db.execute(select(Supplier.name).where(Supplier.name.in_(clean_names)))
+            existing_set = set(existing_sups.scalars().all())
+            for name in clean_names:
+                if name not in existing_set:
+                    db.add(Supplier(name=name))
+                    existing_set.add(name)
+                    imported_records += 1
 
-        # Flush before transactions to satisfy foreign keys
+        # 3. Batch Upsert Other Counterparties
+        for chunk in _chunked(payload.otherCounterparties, 500):
+            chunk_ids = [cp.get("id") for cp in chunk if cp.get("id")]
+            if not chunk_ids:
+                continue
+            existing_res = await db.execute(select(OtherCounterparty).where(OtherCounterparty.id.in_(chunk_ids)))
+            existing_map = {cp.id: cp for cp in existing_res.scalars().all()}
+
+            for cp_dict in chunk:
+                pid = cp_dict.get("id")
+                if not pid:
+                    continue
+                if pid in existing_map:
+                    cp = existing_map[pid]
+                    cp.name = cp_dict.get("name", cp.name)
+                    cp.phone = cp_dict.get("phone", cp.phone)
+                    cp.notes = cp_dict.get("notes", cp.notes)
+                else:
+                    db.add(OtherCounterparty(
+                        id=pid,
+                        name=cp_dict.get("name", ""),
+                        phone=cp_dict.get("phone", ""),
+                        notes=cp_dict.get("notes", ""),
+                    ))
+                imported_records += 1
+
+        # Flush clients and counterparties before transactions to guarantee foreign keys
         await db.flush()
 
-        # 4. Client Transactions
-        for tx_dict in payload.clientTransactions:
-            tid = tx_dict.get("id")
-            client_id = tx_dict.get("clientId")
-            if not tid or not client_id:
+        # 4. Batch Upsert Client Transactions
+        for chunk in _chunked(payload.clientTransactions, 500):
+            chunk_ids = [tx.get("id") for tx in chunk if tx.get("id")]
+            if not chunk_ids:
                 continue
-            existing_tx = await db.get(ClientTransaction, tid)
-            if existing_tx:
-                existing_tx.client_id = client_id
-                existing_tx.type = tx_dict.get("type", existing_tx.type)
-                existing_tx.article = (tx_dict.get("article") or "").strip().upper()
-                existing_tx.description = tx_dict.get("description", existing_tx.description)
-                existing_tx.car_name = tx_dict.get("carName", existing_tx.car_name)
-                existing_tx.supplier_name = tx_dict.get("supplierName", existing_tx.supplier_name)
-                existing_tx.amount = round(float(tx_dict.get("amount", existing_tx.amount) or 0.0), 2)
-                existing_tx.purchase_price = round(float(tx_dict.get("purchasePrice", existing_tx.purchase_price) or 0.0), 2)
-                existing_tx.date = tx_dict.get("date", existing_tx.date)
-                existing_tx.note = tx_dict.get("note", existing_tx.note)
-            else:
-                db.add(ClientTransaction(
-                    id=tid,
-                    client_id=client_id,
-                    type=tx_dict.get("type", "item"),
-                    article=(tx_dict.get("article") or "").strip().upper(),
-                    description=tx_dict.get("description", ""),
-                    car_name=tx_dict.get("carName", ""),
-                    supplier_name=tx_dict.get("supplierName", ""),
-                    amount=round(float(tx_dict.get("amount", 0.0) or 0.0), 2),
-                    purchase_price=round(float(tx_dict.get("purchasePrice", 0.0) or 0.0), 2),
-                    date=tx_dict.get("date", ""),
-                    note=tx_dict.get("note", ""),
-                ))
-            imported_records += 1
+            existing_res = await db.execute(select(ClientTransaction).where(ClientTransaction.id.in_(chunk_ids)))
+            existing_map = {tx.id: tx for tx in existing_res.scalars().all()}
 
-        # 5. Other Transactions
-        for ot_dict in payload.otherTransactions:
-            otid = ot_dict.get("id")
-            cpid = ot_dict.get("counterpartyId")
-            if not otid or not cpid:
+            for tx_dict in chunk:
+                tid = tx_dict.get("id")
+                client_id = tx_dict.get("clientId", tx_dict.get("client_id"))
+                if not tid or not client_id:
+                    continue
+                amt = _to_decimal(tx_dict.get("amount", 0.0))
+                purch = _to_decimal(tx_dict.get("purchasePrice", tx_dict.get("purchase_price", 0.0)))
+                art = (tx_dict.get("article") or "").strip().upper()
+
+                if tid in existing_map:
+                    tx = existing_map[tid]
+                    tx.client_id = client_id
+                    tx.type = tx_dict.get("type", tx.type)
+                    tx.article = art
+                    tx.description = tx_dict.get("description", tx.description)
+                    tx.car_name = tx_dict.get("carName", tx_dict.get("car_name", tx.car_name))
+                    tx.supplier_name = tx_dict.get("supplierName", tx_dict.get("supplier_name", tx.supplier_name))
+                    tx.amount = amt
+                    tx.purchase_price = purch
+                    tx.date = tx_dict.get("date", tx.date)
+                    tx.note = tx_dict.get("note", tx.note)
+                else:
+                    db.add(ClientTransaction(
+                        id=tid,
+                        client_id=client_id,
+                        type=tx_dict.get("type", "item"),
+                        article=art,
+                        description=tx_dict.get("description", ""),
+                        car_name=tx_dict.get("carName", tx_dict.get("car_name", "")),
+                        supplier_name=tx_dict.get("supplierName", tx_dict.get("supplier_name", "")),
+                        amount=amt,
+                        purchase_price=purch,
+                        date=tx_dict.get("date", ""),
+                        note=tx_dict.get("note", ""),
+                    ))
+                imported_records += 1
+
+        # 5. Batch Upsert Other Transactions
+        for chunk in _chunked(payload.otherTransactions, 500):
+            chunk_ids = [ot.get("id") for ot in chunk if ot.get("id")]
+            if not chunk_ids:
                 continue
-            existing_ot = await db.get(OtherTransaction, otid)
-            if existing_ot:
-                existing_ot.counterparty_id = cpid
-                existing_ot.amount = round(float(ot_dict.get("amount", existing_ot.amount) or 0.0), 2)
-                existing_ot.note = ot_dict.get("note", existing_ot.note)
-                existing_ot.date = ot_dict.get("date", existing_ot.date)
-            else:
-                db.add(OtherTransaction(
-                    id=otid,
-                    counterparty_id=cpid,
-                    amount=round(float(ot_dict.get("amount", 0.0) or 0.0), 2),
-                    note=ot_dict.get("note", ""),
-                    date=ot_dict.get("date", ""),
-                ))
-            imported_records += 1
+            existing_res = await db.execute(select(OtherTransaction).where(OtherTransaction.id.in_(chunk_ids)))
+            existing_map = {ot.id: ot for ot in existing_res.scalars().all()}
+
+            for ot_dict in chunk:
+                otid = ot_dict.get("id")
+                cpid = ot_dict.get("counterpartyId", ot_dict.get("counterparty_id"))
+                if not otid or not cpid:
+                    continue
+                amt = _to_decimal(ot_dict.get("amount", 0.0))
+
+                if otid in existing_map:
+                    ot = existing_map[otid]
+                    ot.counterparty_id = cpid
+                    ot.amount = amt
+                    ot.note = ot_dict.get("note", ot.note)
+                    ot.date = ot_dict.get("date", ot.date)
+                else:
+                    db.add(OtherTransaction(
+                        id=otid,
+                        counterparty_id=cpid,
+                        amount=amt,
+                        note=ot_dict.get("note", ""),
+                        date=ot_dict.get("date", ""),
+                    ))
+                imported_records += 1
 
         await db.commit()
         return imported_records
