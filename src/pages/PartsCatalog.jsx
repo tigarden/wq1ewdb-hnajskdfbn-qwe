@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
-import { formatMoney, pluralize } from '../utils/format';
+import { formatMoney } from '../utils/format';
 import { 
   Search, 
   Package, 
@@ -11,8 +11,6 @@ import {
   Car, 
   Copy, 
   Check, 
-  TrendingUp, 
-  Layers, 
   X 
 } from 'lucide-react';
 

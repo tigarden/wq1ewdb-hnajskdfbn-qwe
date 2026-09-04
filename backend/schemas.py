@@ -128,6 +128,10 @@ class TotpVerifyRequest(BaseModel):
     code: str
     secret: Optional[str] = None
 
+class PasswordChangeRequest(BaseModel):
+    old_password: str
+    new_password: str = Field(..., min_length=4, max_length=128)
+
 # --- Full Backup & Seed Schemas ---
 class FullBackupPayload(BaseModel):
     version: int = 3

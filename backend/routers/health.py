@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select, func
-from backend.database import get_db, settings
+from backend.core.database import get_db
+from backend.core.config import settings
 from backend.models import Client, ClientTransaction
 from backend.schemas import HealthResponse
 
@@ -12,13 +13,10 @@ async def health_check(db: AsyncSession = Depends(get_db)):
     """Health check endpoint to verify database connectivity and stats."""
     db_type = "PostgreSQL" if "postgresql" in settings.DATABASE_URL else "SQLite"
     try:
-        # Verify query execution
         await db.execute(text("SELECT 1"))
-        
-        # Count records
         cli_count = await db.scalar(select(func.count(Client.id))) or 0
         tx_count = await db.scalar(select(func.count(ClientTransaction.id))) or 0
-        
+
         return HealthResponse(
             status="online",
             database="connected",

@@ -8,18 +8,13 @@ import {
   TrendingUp, 
   Clock, 
   CheckCircle2, 
-  DollarSign, 
   Search, 
   Save, 
   Car, 
   Truck, 
-  Filter, 
-  Percent,
-  Copy,
-  Check,
-  ChevronRight,
-  ArrowUpRight,
-  User
+  Copy, 
+  Check, 
+  User 
 } from 'lucide-react';
 
 export default function IncomeAndQueue() {

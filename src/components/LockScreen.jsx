@@ -38,7 +38,7 @@ export default function LockScreen({ onUnlock }) {
           return;
         }
 
-        const success = onUnlock(cleanPass, rememberMe);
+        const success = await onUnlock(cleanPass, rememberMe);
         if (!success) {
           setError('Неверный пароль доступа');
         }

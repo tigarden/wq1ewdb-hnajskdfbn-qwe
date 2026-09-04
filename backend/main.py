@@ -1,13 +1,14 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.config import settings
-from backend.database import engine, Base
+from backend.core.config import settings
+from backend.core.database import engine, Base
+from backend.core.middleware import SecurityHeadersMiddleware
 from backend.routers import health, auth, clients, transactions, suppliers, counterparties, backup
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure tables are created on startup
+    # Ensure tables exist on startup
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -19,16 +20,20 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS configuration for Vite dev server and GitHub Pages
+# Essential Security Headers
+app.add_middleware(SecurityHeadersMiddleware)
+
+# CORS configuration with strict origins and GitHub Pages support
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows local dev and GitHub Pages
+    allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"^https://[a-zA-Z0-9_-]+\.github\.io$",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
-# Include API routers
+# Register API routers with versioned prefix
 app.include_router(health.router, prefix=settings.API_V1_STR)
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(clients.router, prefix=settings.API_V1_STR)

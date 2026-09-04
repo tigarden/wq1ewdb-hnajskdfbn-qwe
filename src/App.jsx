@@ -1,20 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import Navbar from './components/Navbar';
 import QuickAddModal from './components/QuickAddModal';
 import LockScreen from './components/LockScreen';
-import Dashboard from './pages/Dashboard';
-import Clients from './pages/Clients';
-import IncomeAndQueue from './pages/IncomeAndQueue';
-import OtherSettlements from './pages/OtherSettlements';
-import PartsCatalog from './pages/PartsCatalog';
-import Settings from './pages/Settings';
 import { useData } from './context/DataContext';
 
+// Code-split pages with React.lazy for instant initial bundle loading
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Clients = lazy(() => import('./pages/Clients'));
+const IncomeAndQueue = lazy(() => import('./pages/IncomeAndQueue'));
+const OtherSettlements = lazy(() => import('./pages/OtherSettlements'));
+const PartsCatalog = lazy(() => import('./pages/PartsCatalog'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
+
 export default function App() {
-  const { isUnlocked, unlockApp } = useData();
+  const { isUnlocked, isCheckingSession, unlockApp } = useData();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedClientId, setSelectedClientId] = useState(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+
+  // Prevent lock screen flash while verifying crypto session token
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-[#080b12] flex items-center justify-center">
+        <div className="w-7 h-7 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!isUnlocked) {
     return <LockScreen onUnlock={unlockApp} />;
@@ -29,36 +48,30 @@ export default function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 pb-20 md:pb-8">
-        {activeTab === 'dashboard' && (
-          <Dashboard
-            setActiveTab={setActiveTab}
-            onOpenQuickAdd={() => setIsQuickAddOpen(true)}
-            onSelectClient={(id) => setSelectedClientId(id)}
-          />
-        )}
+        <Suspense fallback={<PageLoader />}>
+          {activeTab === 'dashboard' && (
+            <Dashboard
+              setActiveTab={setActiveTab}
+              onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+              onSelectClient={(id) => setSelectedClientId(id)}
+            />
+          )}
 
-        {activeTab === 'clients' && (
-          <Clients
-            selectedClientId={selectedClientId}
-            onSelectClient={(id) => setSelectedClientId(id)}
-          />
-        )}
+          {activeTab === 'clients' && (
+            <Clients
+              selectedClientId={selectedClientId}
+              onSelectClient={(id) => setSelectedClientId(id)}
+            />
+          )}
 
-        {activeTab === 'income' && (
-          <IncomeAndQueue />
-        )}
+          {activeTab === 'income' && <IncomeAndQueue />}
 
-        {activeTab === 'other' && (
-          <OtherSettlements />
-        )}
+          {activeTab === 'other' && <OtherSettlements />}
 
-        {activeTab === 'parts' && (
-          <PartsCatalog />
-        )}
+          {activeTab === 'parts' && <PartsCatalog />}
 
-        {activeTab === 'settings' && (
-          <Settings />
-        )}
+          {activeTab === 'settings' && <Settings />}
+        </Suspense>
       </main>
 
       <QuickAddModal
@@ -67,7 +80,7 @@ export default function App() {
       />
 
       <footer className="border-t border-white/5 py-4 text-center text-xs text-slate-500 mb-14 md:mb-0">
-        Debet.auto — Учет взаиморасчетов, запчастей и доходов • Защита AES-256
+        Debet.auto — Учет взаиморасчетов, запчастей и доходов • Защита AES-256 + 2FA
       </footer>
     </div>
   );

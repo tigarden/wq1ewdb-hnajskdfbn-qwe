@@ -54,6 +54,9 @@ async function request(endpoint, options = {}) {
     });
 
     if (!res.ok) {
+      if (res.status === 401) {
+        setApiToken('');
+      }
       const err = await res.json().catch(() => ({ detail: res.statusText }));
       throw new Error(err.detail || `HTTP Error ${res.status}`);
     }
@@ -105,6 +108,13 @@ export const api = {
   async disableTotp() {
     return await request('/auth/totp/disable', {
       method: 'POST',
+    });
+  },
+
+  async changePassword(old_password, new_password) {
+    return await request('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ old_password, new_password }),
     });
   },
 

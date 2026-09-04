@@ -7,18 +7,14 @@ import { formatMoney, pluralize } from '../utils/format';
 import { 
   TrendingUp, 
   Users, 
-  UserCheck, 
   Search, 
   Plus, 
   ChevronRight,
   CreditCard,
   Package,
-  DollarSign,
-  Clock,
   Car,
   Copy,
-  Check,
-  ArrowRight
+  Check
 } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient }) {

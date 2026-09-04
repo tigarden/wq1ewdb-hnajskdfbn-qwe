@@ -13,8 +13,6 @@ import {
   Search, 
   Phone, 
   Calendar,
-  Wallet,
-  CheckCircle2,
   FileText
 } from 'lucide-react';
 
