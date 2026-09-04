@@ -117,40 +117,38 @@ export default function IncomeAndQueue() {
         ))}
       </datalist>
 
-      {/* Hero Header Banner */}
-      <div className="card-emboss p-5 sm:p-6 rounded-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="absolute top-0 right-0 w-80 h-36 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <DollarSign className="w-5 h-5" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight">
+      {/* Top Status & Action Bar */}
+      <div className="surface-card p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+            <DollarSign className="w-4 h-4" />
+          </div>
+          <div>
+            <h1 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-200">
               Очередь закупок и маржинальность
             </h1>
+            <p className="text-[11px] text-slate-500">
+              Ввод себестоимости от поставщиков и расчет маржи по каждой позиции
+            </p>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-            Вносите себестоимость от поставщиков, отслеживайте чистую прибыль и наценку по каждой детали в реальном времени.
-          </p>
         </div>
 
         {incomeStats.pendingCount > 0 ? (
-          <div className="relative z-10 flex items-center space-x-2.5 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold shadow-lg shadow-amber-950/20">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <Clock className="w-4 h-4 text-amber-400" />
-            <span>Требуют себестоимость: <strong>{incomeStats.pendingCount} дет.</strong></span>
+          <div className="flex items-center space-x-2 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+            <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <span>Требуют ввода: <strong>{incomeStats.pendingCount} дет.</strong></span>
           </div>
         ) : (
-          <div className="relative z-10 flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Все себестоимости заполнены!</span>
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Все цены заполнены</span>
           </div>
         )}
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <StatCard
           title="Чистый доход"
           value={`+${formatMoney(incomeStats.totalProfit)}`}
@@ -185,40 +183,40 @@ export default function IncomeAndQueue() {
       </div>
 
       {/* Filter and Control Bar */}
-      <div className="card-emboss p-3 sm:p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="surface-card p-2.5 sm:p-3 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-2.5">
         
         {/* Segmented Filter Pills */}
-        <div className="flex items-center space-x-1.5 p-1 bg-slate-950/60 rounded-xl border border-slate-800/80 overflow-x-auto">
+        <div className="h-8 flex p-0.5 bg-[#090d16] rounded-md border border-white/10 overflow-x-auto">
           <button
             onClick={() => setFilterMode('pending')}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`h-7 px-3 rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
               filterMode === 'pending'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25 font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-3 h-3" />
             <span>Очередь ({incomeStats.pendingCount})</span>
           </button>
 
           <button
             onClick={() => setFilterMode('filled')}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`h-7 px-3 rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
               filterMode === 'filled'
-                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25 font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                ? 'bg-emerald-500 text-slate-950 font-bold shadow-xs'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
+            <CheckCircle2 className="w-3 h-3" />
             <span>С ценой ({incomeStats.filledCount})</span>
           </button>
 
           <button
             onClick={() => setFilterMode('all')}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`h-7 px-3 rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
               filterMode === 'all'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 font-bold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                ? 'bg-blue-600 text-white font-bold shadow-xs'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <span>Все детали ({allItems.length})</span>
@@ -230,22 +228,22 @@ export default function IncomeAndQueue() {
           <select
             value={selectedClientFilter}
             onChange={(e) => setSelectedClientFilter(e.target.value)}
-            className="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-hidden focus:border-blue-500 transition-colors"
+            className="input-sm h-8 rounded-md text-xs cursor-pointer"
           >
-            <option value="all">Все клиенты</option>
+            <option value="all" className="bg-[#0b0f19] text-white">Все клиенты</option>
             {(data.clients || []).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+              <option key={c.id} value={c.id} className="bg-[#0b0f19] text-white">{c.name}</option>
             ))}
           </select>
 
           <div className="relative flex-1 sm:flex-initial">
-            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Поиск по коду, названию, авто..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-60 pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-hidden focus:border-blue-500 transition-colors"
+              className="input-sm h-8 w-full sm:w-60 pl-8 pr-2.5 rounded-md text-xs"
             />
           </div>
         </div>
@@ -253,22 +251,22 @@ export default function IncomeAndQueue() {
       </div>
 
       {/* Queue Table Card */}
-      <div className="card-emboss rounded-2xl overflow-hidden shadow-2xl">
+      <div className="surface-card rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800/80 bg-slate-950/70 text-slate-400 uppercase font-semibold text-[11px] tracking-wider">
-                <th className="py-3 px-4">Дата / Клиент</th>
-                <th className="py-3 px-4">Артикул / Деталь</th>
-                <th className="py-3 px-4">Автомобиль</th>
-                <th className="py-3 px-4">Поставщик</th>
-                <th className="py-3 px-4 text-right">Продажа</th>
-                <th className="py-3 px-4 text-center">Себестоимость (закупка)</th>
-                <th className="py-3 px-4 text-right">Чистый доход</th>
-                <th className="py-3 px-4 text-center">Действие</th>
+              <tr className="border-b border-white/10 bg-[#090d16] text-slate-400 uppercase font-semibold text-[10px] tracking-wider">
+                <th className="py-2.5 px-3">Дата / Клиент</th>
+                <th className="py-2.5 px-3">Артикул / Деталь</th>
+                <th className="py-2.5 px-3">Автомобиль</th>
+                <th className="py-2.5 px-3">Поставщик</th>
+                <th className="py-2.5 px-3 text-right">Продажа</th>
+                <th className="py-2.5 px-3 text-center">Себестоимость</th>
+                <th className="py-2.5 px-3 text-right">Чистый доход</th>
+                <th className="py-2.5 px-3 text-center">Действие</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-white/5">
               {filteredItems.map((tx) => {
                 const cli = (data.clients || []).find((c) => c.id === tx.clientId);
                 const draft = drafts[tx.id] || {};
@@ -288,32 +286,32 @@ export default function IncomeAndQueue() {
                 return (
                   <tr 
                     key={tx.id} 
-                    className={`transition-colors group ${
-                      hasPendingCost ? 'bg-amber-500/[0.02] hover:bg-amber-500/[0.06]' : 'hover:bg-slate-800/30'
+                    className={`transition-colors ${
+                      hasPendingCost ? 'bg-amber-500/[0.03] hover:bg-amber-500/[0.06]' : 'hover:bg-white/[0.02]'
                     }`}
                   >
                     
                     {/* Date & Client */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       <div className="font-semibold text-slate-200">
                         {cli?.name || 'Клиент'}
                       </div>
-                      <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                      <div className="text-[10px] font-mono text-slate-500">
                         {tx.date || new Date(tx.createdAt).toLocaleDateString('ru-RU')}
                       </div>
                     </td>
 
                     {/* Article & Description */}
-                    <td className="py-3.5 px-4">
+                    <td className="py-2.5 px-3">
                       {tx.article ? (
                         <div className="flex items-center space-x-1.5">
-                          <span className="font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 text-xs">
+                          <span className="font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.2 rounded border border-blue-500/20 text-[11px]">
                             {tx.article}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleCopy(tx.article)}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-1"
+                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 cursor-pointer"
                             title="Скопировать артикул"
                           >
                             {copiedArticle === tx.article ? (
@@ -332,11 +330,11 @@ export default function IncomeAndQueue() {
                     </td>
 
                     {/* Car */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       {(tx.carName || cli?.car) ? (
-                        <span className="inline-flex items-center space-x-1.5 text-xs text-slate-300 bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800">
-                          <Car className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                          <span className="truncate max-w-[140px]">{tx.carName || cli?.car}</span>
+                        <span className="inline-flex items-center space-x-1 text-xs text-slate-300">
+                          <Car className="w-3 h-3 text-blue-400 shrink-0" />
+                          <span className="truncate max-w-[130px]">{tx.carName || cli?.car}</span>
                         </span>
                       ) : (
                         <span className="text-slate-600">—</span>
@@ -344,26 +342,24 @@ export default function IncomeAndQueue() {
                     </td>
 
                     {/* Supplier Input with Autocomplete */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          list="suppliers-autocomplete-list"
-                          placeholder="Склад / Поставщик"
-                          value={currentSupplierVal}
-                          onChange={(e) => handleSupplierChange(tx.id, e.target.value)}
-                          className="w-32 sm:w-36 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-600 focus:outline-hidden focus:border-blue-500 transition-colors"
-                        />
-                      </div>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      <input
+                        type="text"
+                        list="suppliers-autocomplete-list"
+                        placeholder="Склад / Поставщик"
+                        value={currentSupplierVal}
+                        onChange={(e) => handleSupplierChange(tx.id, e.target.value)}
+                        className="input-sm h-8 w-32 sm:w-36 text-xs px-2 rounded-md"
+                      />
                     </td>
 
                     {/* Client Sale Price */}
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-amber-400 text-sm whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-400 text-xs sm:text-sm whitespace-nowrap">
                       {formatMoney(tx.amount)}
                     </td>
 
                     {/* Purchase Price Input */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
                       <div className="inline-flex items-center space-x-1">
                         <input
                           type="number"
@@ -374,58 +370,50 @@ export default function IncomeAndQueue() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSaveItem(tx);
                           }}
-                          className={`w-28 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold text-right focus:outline-hidden transition-all ${
+                          className={`h-8 w-24 px-2 rounded-md text-xs font-mono font-bold text-right focus:outline-none transition-colors ${
                             numPurchase > 0
-                              ? 'bg-slate-950 text-slate-100 border border-slate-700 focus:border-emerald-500'
-                              : 'bg-amber-950/30 text-amber-200 border border-amber-500/50 shadow-sm shadow-amber-900/30 animate-pulse focus:animate-none'
+                              ? 'bg-[#0b0f19] text-white border border-white/10 focus:border-emerald-500'
+                              : 'bg-amber-950/30 text-amber-200 border border-amber-500/50 focus:border-amber-400'
                           }`}
                         />
-                        <span className="text-slate-500 text-[11px] font-mono">грн</span>
+                        <span className="text-slate-500 text-[10px] font-mono">грн</span>
                       </div>
                     </td>
 
                     {/* Profit / Margin Result */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
                       {numPurchase > 0 ? (
                         <div>
-                          <div className={`font-mono font-bold text-sm ${
+                          <div className={`font-mono font-bold text-xs sm:text-sm ${
                             profit > 0 ? 'text-emerald-400' : profit === 0 ? 'text-slate-400' : 'text-rose-400'
                           }`}>
                             {profit > 0 ? `+${formatMoney(profit)}` : formatMoney(profit)}
                           </div>
-                          <div className="flex items-center justify-end space-x-1 mt-0.5">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-sm ${
-                              marginPercent >= 25 
-                                ? 'bg-emerald-500/10 text-emerald-400' 
-                                : marginPercent > 0 
-                                  ? 'bg-amber-500/10 text-amber-400' 
-                                  : 'bg-rose-500/10 text-rose-400'
-                            }`}>
-                              +{marginPercent.toFixed(0)}% маржа
-                            </span>
+                          <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                            +{marginPercent.toFixed(0)}%
                           </div>
                         </div>
                       ) : (
-                        <span className="text-amber-400/70 text-[11px] font-medium italic">
-                          Ожидает ввода
+                        <span className="text-amber-400/80 text-[11px] font-mono">
+                          Ожидает цену
                         </span>
                       )}
                     </td>
 
                     {/* Save Button */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
                       <button
                         onClick={() => handleSaveItem(tx)}
-                        className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                        className={`btn-sm h-8 px-2.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
                           isSaved
-                            ? 'bg-emerald-500 text-slate-950 font-bold shadow-md shadow-emerald-500/30'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20'
+                            ? 'bg-emerald-500 text-slate-950 font-bold'
+                            : 'bg-blue-600 hover:bg-blue-500 text-white'
                         }`}
                       >
                         {isSaved ? (
                           <>
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Сохранено!</span>
+                            <span>Готово</span>
                           </>
                         ) : (
                           <>

@@ -217,35 +217,35 @@ export default function Clients({ selectedClientId, onSelectClient }) {
     <div className="space-y-6 animate-in fade-in duration-300">
       
       {/* Master-Detail Container */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
         
         {/* Master Column (Left / 4 cols on desktop) */}
-        <div className={`lg:col-span-4 space-y-3 ${mobileShowDetail ? 'hidden lg:block' : 'block'}`}>
-          <div className="bg-[#101726]/80 rounded-2xl border border-white/5 p-4 card-emboss backdrop-blur-sm space-y-3">
+        <div className={`lg:col-span-4 space-y-2.5 ${mobileShowDetail ? 'hidden lg:block' : 'block'}`}>
+          <div className="surface-card rounded-lg p-3 space-y-3">
             
             {/* Master Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-extrabold text-white flex items-center space-x-2">
-                  <Users className="w-4 h-4 text-blue-400" />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
+                  <Users className="w-3.5 h-3.5 text-blue-400" />
                   <span>Клиенты</span>
+                  <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-1.5 py-0.2 rounded">
+                    {data.clients?.length || 0}
+                  </span>
                 </h2>
-                <span className="text-[11px] text-slate-400 font-mono">
-                  Всего: {data.clients?.length || 0}
-                </span>
               </div>
 
               <div className="flex items-center space-x-1.5">
                 <button
                   onClick={() => setSortByDebt(!sortByDebt)}
                   title={sortByDebt ? 'Сортировка по долгу' : 'Сортировка по имени'}
-                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                  className="w-8 h-8 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <ArrowUpDown className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setIsAddCliModalOpen(true)}
-                  className="flex items-center space-x-1 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/25 transition-all card-emboss"
+                  className="btn-sm h-8 px-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md cursor-pointer transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Новый</span>
@@ -255,20 +255,20 @@ export default function Clients({ selectedClientId, onSelectClient }) {
 
             {/* Client Search */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Поиск по имени, авто, тел..."
+                placeholder="Поиск клиента, авто, телефона..."
                 value={clientSearchQuery}
                 onChange={(e) => setClientSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                className="input-md w-full pl-8 pr-3"
               />
             </div>
 
             {/* Clients List */}
-            <div className="space-y-1.5 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+            <div className="space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto pr-0.5">
               {filteredClients.length === 0 ? (
-                <div className="text-center py-8 text-xs text-slate-500">
+                <div className="text-center py-8 text-xs text-slate-500 font-mono">
                   Клиентов не найдено
                 </div>
               ) : (
@@ -280,15 +280,15 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                     <div
                       key={cli.id}
                       onClick={() => handleSelectClient(cli.id)}
-                      className={`cursor-pointer p-3 rounded-xl border transition-all duration-200 flex items-center justify-between ${
+                      className={`cursor-pointer p-2.5 rounded-md border transition-colors flex items-center justify-between ${
                         isSelected
-                          ? 'bg-blue-600/15 border-blue-500/50 shadow-md card-emboss'
-                          : 'bg-slate-900/50 hover:bg-slate-800/60 border-slate-800/70'
+                          ? 'bg-blue-600/15 border-blue-500/40 text-white'
+                          : 'bg-white/[0.01] hover:bg-white/[0.04] border-white/5 text-slate-300'
                       }`}
                     >
                       <div className="min-w-0 pr-2">
                         <div className="flex items-center space-x-2">
-                          <span className={`w-2 h-2 rounded-full ${
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
                             isDebtor ? 'bg-amber-400' : 'bg-emerald-400'
                           }`} />
                           <span className={`text-xs font-bold truncate ${
@@ -298,15 +298,15 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                           </span>
                         </div>
 
-                        <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-1 pl-4">
+                        <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-1 pl-3.5">
                           {cli.car && (
-                            <span className="flex items-center space-x-0.5 truncate text-slate-400">
+                            <span className="flex items-center space-x-1 truncate text-slate-400">
                               <Car className="w-2.5 h-2.5 text-blue-400 shrink-0" />
                               <span className="truncate">{cli.car}</span>
                             </span>
                           )}
                           {cli.phone && (
-                            <span className="text-[10px] text-slate-500 truncate hidden sm:inline">
+                            <span className="text-[10px] text-slate-500 truncate hidden sm:inline font-mono">
                               {cli.phone}
                             </span>
                           )}
@@ -314,12 +314,12 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                       </div>
 
                       <div className="text-right shrink-0">
-                        <div className={`text-xs sm:text-sm font-bold font-mono tracking-tight ${
+                        <div className={`text-xs font-bold font-mono tracking-tight ${
                           isDebtor ? 'text-amber-400' : 'text-emerald-400'
                         }`}>
                           {formatMoney(cli.currentDebt)}
                         </div>
-                        <span className="text-[9px] text-slate-500 font-mono">
+                        <span className="text-[9px] text-slate-500 font-mono block">
                           {pluralize(cli.itemsCount, ['дет', 'дет', 'дет'])}
                         </span>
                       </div>
@@ -333,43 +333,43 @@ export default function Clients({ selectedClientId, onSelectClient }) {
         </div>
 
         {/* Detail Dossier Column (Right / 8 cols on desktop) */}
-        <div className={`lg:col-span-8 space-y-4 ${!mobileShowDetail ? 'hidden lg:block' : 'block'}`}>
+        <div className={`lg:col-span-8 space-y-3.5 ${!mobileShowDetail ? 'hidden lg:block' : 'block'}`}>
           {currentClient && stats ? (
             <>
               {/* Back button on mobile */}
               <div className="lg:hidden mb-2">
                 <button
                   onClick={() => setMobileShowDetail(false)}
-                  className="flex items-center space-x-1 text-xs text-blue-400 font-semibold py-1.5 px-3 rounded-xl bg-slate-900 border border-slate-800"
+                  className="btn-sm h-8 px-3 rounded-md bg-white/5 border border-white/10 text-slate-300 text-xs font-medium inline-flex items-center space-x-1.5"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Список всех клиентов</span>
                 </button>
               </div>
 
               {/* Client Dossier Banner */}
-              <div className="bg-[#101726]/80 rounded-2xl border border-white/5 p-5 card-emboss backdrop-blur-sm space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="surface-card rounded-lg p-4 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   
                   {/* Left: Avatar & Info */}
-                  <div className="flex items-center space-x-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600/20 to-indigo-600/30 border border-blue-500/30 text-blue-400 flex items-center justify-center font-black text-xl shadow-lg shadow-blue-500/10 card-emboss shrink-0">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-md bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm shrink-0 font-mono">
                       {currentClient.name.slice(0, 1).toUpperCase()}
                     </div>
                     
                     <div>
-                      <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                      <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
                         {currentClient.name}
                       </h1>
                       
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300 mt-1">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300 mt-0.5">
                         {currentClient.phone ? (
                           <a 
                             href={`tel:${currentClient.phone}`}
-                            className="inline-flex items-center space-x-1 text-blue-400 hover:text-blue-300 px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 transition-colors"
+                            className="inline-flex items-center space-x-1 text-blue-400 hover:text-blue-300 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[11px] font-mono transition-colors"
                           >
                             <Phone className="w-3 h-3" />
-                            <span className="font-mono">{currentClient.phone}</span>
+                            <span>{currentClient.phone}</span>
                           </a>
                         ) : (
                           <button
@@ -383,7 +383,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                             className="text-[11px] text-slate-500 hover:text-slate-300 flex items-center space-x-1"
                           >
                             <Phone className="w-3 h-3" />
-                            <span>+ Добавить телефон</span>
+                            <span>+ Телефон</span>
                           </button>
                         )}
 
@@ -404,7 +404,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                             className="text-[11px] text-slate-500 hover:text-slate-300 flex items-center space-x-1"
                           >
                             <Car className="w-3 h-3" />
-                            <span>+ Добавить авто</span>
+                            <span>+ Авто</span>
                           </button>
                         )}
                       </div>
@@ -415,7 +415,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={handleOpenAddItem}
-                      className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all card-emboss"
+                      className="btn-sm h-8 px-3 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Деталь</span>
@@ -423,7 +423,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
 
                     <button
                       onClick={() => setIsAddPaymentModalOpen(true)}
-                      className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-all card-emboss"
+                      className="btn-sm h-8 px-3 rounded-md bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Оплата</span>
@@ -437,60 +437,60 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                         setEditCliInitial(currentClient.initialBalance || 0);
                         setIsEditCliModalOpen(true);
                       }}
-                      className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition-colors border border-slate-800"
+                      className="w-8 h-8 rounded-md bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 flex items-center justify-center transition-colors cursor-pointer"
                       title="Настройки клиента"
                     >
-                      <Settings2 className="w-4 h-4" />
+                      <Settings2 className="w-3.5 h-3.5" />
                     </button>
 
                     <button
                       onClick={handleDeleteClient}
-                      className="p-2 text-rose-400/80 hover:text-rose-400 hover:bg-rose-950/30 rounded-xl transition-colors border border-slate-800 hover:border-rose-500/30"
+                      className="w-8 h-8 rounded-md bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 flex items-center justify-center transition-colors cursor-pointer"
                       title="Удалить клиента"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
                 </div>
 
                 {/* KPI Cards for Client */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 card-emboss">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Текущий долг</span>
-                    <span className={`text-lg sm:text-xl font-bold font-mono ${
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                  <div className="surface-elevated p-3 rounded-md border border-white/5">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Текущий долг</span>
+                    <span className={`text-base sm:text-lg font-bold font-mono mt-0.5 block ${
                       stats.currentDebt > 0 ? 'text-amber-400' : 'text-emerald-400'
                     }`}>
                       {formatMoney(stats.currentDebt)}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 card-emboss">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Заказано деталей</span>
-                    <span className="text-lg sm:text-xl font-bold font-mono text-slate-100">
+                  <div className="surface-elevated p-3 rounded-md border border-white/5">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Заказано деталей</span>
+                    <span className="text-base sm:text-lg font-bold font-mono text-slate-100 mt-0.5 block">
                       {formatMoney(stats.totalItems)}
                     </span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                    <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
                       {pluralize(stats.itemsCount, ['позиция', 'позиции', 'позиций'])}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 card-emboss">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Оплачено</span>
-                    <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">
+                  <div className="surface-elevated p-3 rounded-md border border-white/5">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Оплачено</span>
+                    <span className="text-base sm:text-lg font-bold font-mono text-emerald-400 mt-0.5 block">
                       {formatMoney(stats.totalPayments)}
                     </span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                    <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
                       {pluralize(stats.paymentsCount, ['платеж', 'платежа', 'платежей'])}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 card-emboss">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider">Чистый доход</span>
-                    <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">
+                  <div className="surface-elevated p-3 rounded-md border border-white/5">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Чистый доход</span>
+                    <span className="text-base sm:text-lg font-bold font-mono text-emerald-400 mt-0.5 block">
                       +{formatMoney(stats.clientProfit || 0)}
                     </span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                    <span className="text-[10px] text-slate-500 block mt-0.5">
                       маржа с деталей
                     </span>
                   </div>
@@ -499,15 +499,15 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               </div>
 
               {/* Transactions Ledger Container */}
-              <div className="bg-[#101726]/80 rounded-2xl border border-white/5 p-5 card-emboss backdrop-blur-sm space-y-4">
+              <div className="surface-card rounded-lg p-4 space-y-3">
                 
                 {/* Ledger Toolbar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
-                  <div className="flex items-center space-x-1 p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-white/10">
+                  <div className="h-8 flex p-0.5 bg-[#090d16] rounded-md border border-white/10">
                     <button
                       onClick={() => setViewMode('timeline')}
-                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                        viewMode === 'timeline' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                      className={`h-7 px-2.5 rounded text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer ${
+                        viewMode === 'timeline' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
                       <History className="w-3.5 h-3.5" />
@@ -515,7 +515,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                     </button>
                     <button
                       onClick={() => setViewMode('items')}
-                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                      className={`h-7 px-2.5 rounded text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer ${
                         viewMode === 'items' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
@@ -524,7 +524,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                     </button>
                     <button
                       onClick={() => setViewMode('payments')}
-                      className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                      className={`h-7 px-2.5 rounded text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer ${
                         viewMode === 'payments' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
@@ -534,13 +534,13 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                   </div>
 
                   <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                    <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="text"
                       placeholder="Поиск по артикулу, описанию..."
                       value={ledgerSearchQuery}
                       onChange={(e) => setLedgerSearchQuery(e.target.value)}
-                      className="pl-9 pr-3 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-full sm:w-56"
+                      className="input-sm h-8 w-full sm:w-56 pl-7.5 pr-2.5 rounded-md text-xs"
                     />
                   </div>
                 </div>
@@ -774,8 +774,8 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               </div>
             </>
           ) : (
-            <div className="bg-[#101726]/80 rounded-2xl border border-white/5 p-8 text-center card-emboss">
-              <p className="text-slate-400 text-sm">Выберите клиента слева для просмотра досье</p>
+            <div className="surface-card rounded-lg p-8 text-center">
+              <p className="text-slate-400 text-xs font-mono">Выберите клиента слева для просмотра досье</p>
             </div>
           )}
         </div>
@@ -784,57 +784,57 @@ export default function Clients({ selectedClientId, onSelectClient }) {
 
       {/* Modal: Add Client */}
       <Modal isOpen={isAddCliModalOpen} onClose={() => setIsAddCliModalOpen(false)} title="Добавить нового клиента">
-        <form onSubmit={handleCreateClient} className="space-y-4">
+        <form onSubmit={handleCreateClient} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Имя клиента *</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Имя клиента *</label>
             <input
               type="text"
               placeholder="напр. Саня, Влад"
               value={newCliName}
               onChange={(e) => setNewCliName(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full input-md"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Номер телефона</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Номер телефона</label>
               <input
                 type="tel"
                 placeholder="+380..."
                 value={newCliPhone}
                 onChange={(e) => setNewCliPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Автомобиль</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Автомобиль</label>
               <input
                 type="text"
                 placeholder="Passat B6, Camry 70"
                 value={newCliCar}
                 onChange={(e) => setNewCliCar(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Начальный долг (грн)</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Начальный долг (грн)</label>
             <input
               type="number"
               step="0.01"
               placeholder="0.00"
               value={newCliInitial}
               onChange={(e) => setNewCliInitial(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full input-md font-mono"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition-all card-emboss"
+            className="w-full h-10 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-colors mt-2 cursor-pointer"
           >
             Создать клиента
           </button>
@@ -843,53 +843,53 @@ export default function Clients({ selectedClientId, onSelectClient }) {
 
       {/* Modal: Edit Client */}
       <Modal isOpen={isEditCliModalOpen} onClose={() => setIsEditCliModalOpen(false)} title="Редактировать клиента">
-        <form onSubmit={handleUpdateClient} className="space-y-4">
+        <form onSubmit={handleUpdateClient} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Имя клиента *</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Имя клиента *</label>
             <input
               type="text"
               value={editCliName}
               onChange={(e) => setEditCliName(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full input-md"
               required
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Номер телефона</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Номер телефона</label>
               <input
                 type="tel"
                 value={editCliPhone}
                 onChange={(e) => setEditCliPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Автомобиль</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Автомобиль</label>
               <input
                 type="text"
                 value={editCliCar}
                 onChange={(e) => setEditCliCar(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Начальный долг (грн)</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Начальный долг (грн)</label>
             <input
               type="number"
               step="0.01"
               value={editCliInitial}
               onChange={(e) => setEditCliInitial(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full input-md font-mono"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all card-emboss"
+            className="w-full h-10 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider transition-colors mt-2 cursor-pointer"
           >
             Сохранить изменения
           </button>
@@ -898,113 +898,113 @@ export default function Clients({ selectedClientId, onSelectClient }) {
 
       {/* Modal: Add Item */}
       <Modal isOpen={isAddItemModalOpen} onClose={() => setIsAddItemModalOpen(false)} title={`Записать деталь клиенту [${currentClient?.name}]`}>
-        <form onSubmit={handleAddItem} className="space-y-4">
+        <form onSubmit={handleAddItem} className="space-y-3.5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Артикул / Код</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Артикул / Код</label>
               <input
                 type="text"
                 placeholder="напр. S TL C00117/8"
                 value={txArticle}
                 onChange={(e) => setTxArticle(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-xs font-mono focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md uppercase font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Автомобиль</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Автомобиль</label>
               <input
                 type="text"
                 placeholder={currentClient?.car || 'Модель авто'}
                 value={txCarName}
                 onChange={(e) => setTxCarName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Наименование / Описание</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Наименование / Описание</label>
             <input
               type="text"
               placeholder="напр. Колодки тормозные задние"
               value={txDescription}
               onChange={(e) => setTxDescription(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full input-md"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Поставщик</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Поставщик</label>
               <select
                 value={txSupplierName}
                 onChange={(e) => setTxSupplierName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md"
               >
-                <option value="">— Выберите из базы —</option>
+                <option value="" className="bg-[#0b0f19] text-white">— Выберите из базы —</option>
                 {(data.suppliersList || []).map((s) => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s} className="bg-[#0b0f19] text-white">{s}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Или новый поставщик</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Или новый поставщик</label>
               <input
                 type="text"
                 placeholder="напр. Элит, Тотус"
                 value={txNewSupplier}
                 onChange={(e) => setTxNewSupplier(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-amber-300 mb-1.5">Цена продажи клиенту *</label>
+              <label className="block text-[11px] font-semibold text-amber-400 uppercase tracking-wider mb-1">Продажа клиенту *</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 value={txPrice}
                 onChange={(e) => setTxPrice(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-amber-500/40 rounded-xl text-slate-100 text-sm font-mono focus:outline-none focus:border-amber-400 transition-colors"
+                className="w-full input-md font-mono font-bold text-amber-400 border-amber-500/30 focus:border-amber-400"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Закупочная цена (опция)</label>
+              <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Себестоимость (закупка)</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 value={txPurchasePrice}
                 onChange={(e) => setTxPurchasePrice(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full input-md font-mono"
               />
             </div>
           </div>
 
           {txPrice && txPurchasePrice && parseFloat(txPrice) > parseFloat(txPurchasePrice) && (
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono text-emerald-400 flex items-center justify-between">
+            <div className="p-2.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono text-emerald-400 flex items-center justify-between">
               <span>Прибыль с детали:</span>
               <strong className="text-sm font-bold">+{formatMoney(parseFloat(txPrice) - parseFloat(txPurchasePrice))}</strong>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Дата операции</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Дата операции</label>
             <input
               type="date"
               value={txDate}
               onChange={(e) => setTxDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full input-md font-mono"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/25 transition-all card-emboss"
+            className="w-full h-10 rounded-md bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors mt-2 cursor-pointer"
           >
             Добавить деталь в долг
           </button>
@@ -1013,9 +1013,9 @@ export default function Clients({ selectedClientId, onSelectClient }) {
 
       {/* Modal: Add Payment */}
       <Modal isOpen={isAddPaymentModalOpen} onClose={() => setIsAddPaymentModalOpen(false)} title={`Внести оплату от [${currentClient?.name}]`}>
-        <form onSubmit={handleAddPayment} className="space-y-4">
+        <form onSubmit={handleAddPayment} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-emerald-400 mb-1.5">Сумма оплаты (грн) *</label>
+            <label className="block text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-1">Сумма оплаты (грн) *</label>
             <input
               type="number"
               step="0.01"
@@ -1023,35 +1023,35 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
               autoFocus
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-emerald-500/40 rounded-xl text-slate-100 text-lg font-mono focus:outline-none focus:border-emerald-400 transition-colors"
+              className="w-full input-md font-mono font-bold text-emerald-400 border-emerald-500/30 focus:border-emerald-400 text-base"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Примечание</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Примечание</label>
             <input
               type="text"
               placeholder="напр. Наличные, на карту, аванс"
               value={payNote}
               onChange={(e) => setPayNote(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full input-md"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Дата оплаты</label>
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Дата оплаты</label>
             <input
               type="date"
               value={payDate}
               onChange={(e) => setPayDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-full input-md font-mono"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all card-emboss"
+            className="w-full h-10 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-colors mt-2 cursor-pointer"
           >
             Зафиксировать оплату
           </button>

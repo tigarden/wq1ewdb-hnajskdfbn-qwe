@@ -18,10 +18,7 @@ import {
   Car,
   Copy,
   Check,
-  ArrowUpRight,
-  ArrowDownLeft,
-  Sparkles,
-  ShieldAlert
+  ArrowRight
 } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient }) {
@@ -76,80 +73,68 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-4 animate-in fade-in duration-200">
       
-      {/* Top Banner / Hero */}
-      <div className="relative overflow-hidden bg-[#101726]/80 rounded-3xl border border-white/5 p-5 sm:p-6 card-emboss backdrop-blur-md">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-md border border-blue-500/20">
-                Финансовый центр
-              </span>
-              <span className="text-xs text-slate-400 font-mono">
-                {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-1">
-              Учет клиентов и финансов
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-              Сводные балансы, дебиторская задолженность, склад запчастей и аналитика маржинальности
-            </p>
-          </div>
+      {/* Top Header Strip: Minimalist, functional */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+        <div>
+          <h1 className="text-lg font-bold text-white tracking-tight flex items-center space-x-2">
+            <span>Финансовая сводка</span>
+            <span className="text-[11px] font-mono text-slate-400 font-normal">
+              • {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+            </span>
+          </h1>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            {incomeStats.pendingCount > 0 && (
-              <button
-                onClick={() => setActiveTab('income')}
-                className="flex items-center space-x-2 px-3.5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all card-emboss animate-pulse"
-              >
-                <Clock className="w-4 h-4 text-amber-400" />
-                <span>Очередь цен ({incomeStats.pendingCount})</span>
-              </button>
-            )}
-            
+        <div className="flex items-center space-x-2">
+          {incomeStats.pendingCount > 0 && (
             <button
-              onClick={onOpenQuickAdd}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all card-emboss hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => setActiveTab('income')}
+              className="btn-sm bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30"
             >
-              <Plus className="w-4 h-4" />
-              <span>Новая запись</span>
+              <Clock className="w-3.5 h-3.5" />
+              <span>Очередь цен: {incomeStats.pendingCount}</span>
             </button>
-          </div>
+          )}
+
+          <button
+            onClick={onOpenQuickAdd}
+            className="btn-sm bg-blue-600 hover:bg-blue-500 text-white font-bold"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Новая запись</span>
+          </button>
         </div>
       </div>
 
-      {/* KPI Cards: 4 columns grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Precision Metric Tiles (4 columns) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           title="Сводный баланс"
           value={formatMoney(globalSummary.grandBalance)}
           subtitle={
             globalSummary.grandBalance > 0
-              ? 'Клиенты должны нам'
+              ? 'Остаток долга клиентов'
               : globalSummary.grandBalance < 0
-              ? 'Мы должны контрагентам'
-              : 'Баланс сведен к нулю'
+              ? 'Задолженность перед контрагентами'
+              : 'Все счета закрыты'
           }
           icon={TrendingUp}
-          variant={globalSummary.grandBalance > 0 ? 'emerald' : globalSummary.grandBalance < 0 ? 'rose' : 'blue'}
+          variant={globalSummary.grandBalance > 0 ? 'amber' : globalSummary.grandBalance < 0 ? 'rose' : 'slate'}
         />
 
         <StatCard
-          title="Чистый доход"
+          title="Чистая прибыль"
           value={`+${formatMoney(incomeStats.totalProfit)}`}
-          subtitle={`+${incomeStats.marginPercent.toFixed(1)}% наценка на деталях`}
-          actionText="К расчету"
+          subtitle={`+${incomeStats.marginPercent.toFixed(1)}% средняя маржа`}
+          actionText="Расчет"
           icon={DollarSign}
           variant="emerald"
           onClick={() => setActiveTab('income')}
         />
 
         <StatCard
-          title="Долги клиентов"
+          title="Дебет клиентов"
           value={formatMoney(globalSummary.totalClientDebt)}
           subtitle={`${globalSummary.clientsCount} ${pluralize(globalSummary.clientsCount, ['клиент', 'клиента', 'клиентов'])}`}
           actionText="Клиенты"
@@ -161,54 +146,54 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         <StatCard
           title="Контрагенты"
           value={formatMoney(globalSummary.totalOtherBalance)}
-          subtitle={`${data.otherCounterparties?.length || 0} мастеров/сервисов`}
-          actionText="Расчеты"
+          subtitle={`${data.otherCounterparties?.length || 0} субподрядчиков`}
+          actionText="Взаиморасчеты"
           icon={UserCheck}
-          variant="purple"
+          variant="blue"
           onClick={() => setActiveTab('other')}
         />
       </div>
 
-      {/* Main Content Area: 2 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         
         {/* Left Column (7 cols): Recent Activity Feed */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="bg-[#101726]/80 rounded-2xl border border-white/5 p-5 card-emboss backdrop-blur-sm">
+        <div className="lg:col-span-7">
+          <div className="surface-card rounded-lg p-4 space-y-3">
             
             {/* Header with Segmented Filters */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-white/5">
-              <div>
-                <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
-                  <span>Последние движения</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                    {data.clientTransactions?.length || 0}
-                  </span>
-                </h2>
-                <p className="text-xs text-slate-400">История закупок и оплат в реальном времени</p>
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Последние операции
+                </span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                  {data.clientTransactions?.length || 0}
+                </span>
               </div>
 
-              <div className="flex items-center space-x-1 p-1 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
+              {/* Strict Button Switcher */}
+              <div className="flex items-center space-x-1 p-0.5 rounded-md bg-slate-950 border border-slate-800">
                 <button
                   onClick={() => setTxFilter('all')}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                    txFilter === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                  className={`h-6 px-2 rounded text-[11px] font-semibold transition-colors ${
+                    txFilter === 'all' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   Все
                 </button>
                 <button
                   onClick={() => setTxFilter('item')}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                    txFilter === 'item' ? 'bg-amber-500/20 text-amber-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                  className={`h-6 px-2 rounded text-[11px] font-semibold transition-colors ${
+                    txFilter === 'item' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   Детали
                 </button>
                 <button
                   onClick={() => setTxFilter('payment')}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                    txFilter === 'payment' ? 'bg-emerald-500/20 text-emerald-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                  className={`h-6 px-2 rounded text-[11px] font-semibold transition-colors ${
+                    txFilter === 'payment' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   Оплаты
@@ -226,7 +211,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                 onAction={onOpenQuickAdd}
               />
             ) : (
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-white/[0.05]">
                 {filteredTxs.map((tx) => {
                   const cli = (data.clients || []).find((c) => c.id === tx.clientId);
                   const isItem = tx.type === 'item';
@@ -234,7 +219,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                   return (
                     <div 
                       key={tx.id} 
-                      className="py-3.5 flex items-center justify-between group hover:bg-white/[0.02] px-2 -mx-2 rounded-xl transition-colors cursor-pointer"
+                      className="py-2.5 px-2 flex items-center justify-between hover:bg-white/[0.02] rounded-md transition-colors cursor-pointer group"
                       onClick={() => {
                         if (cli?.id) {
                           onSelectClient(cli.id);
@@ -242,20 +227,16 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                         }
                       }}
                     >
-                      <div className="flex items-center space-x-3 min-w-0 pr-3">
-                        {/* Type Icon */}
-                        <div className={`p-2.5 rounded-xl shrink-0 ${
-                          isItem 
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
-                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        }`}>
-                          {isItem ? <Package className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
-                        </div>
+                      <div className="flex items-center space-x-3 min-w-0 pr-2">
+                        {/* Status Bar */}
+                        <span className={`w-1 h-8 rounded-full shrink-0 ${
+                          isItem ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`} />
 
                         {/* Details */}
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-xs font-bold text-slate-100 group-hover:text-blue-300 transition-colors">
+                            <span className="text-xs font-bold text-slate-100 group-hover:text-blue-400 transition-colors">
                               {cli?.name || 'Клиент'}
                             </span>
                             
@@ -267,13 +248,13 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                               <button
                                 onClick={(e) => handleCopyArticle(tx.article, e)}
                                 title="Скопировать артикул"
-                                className="inline-flex items-center space-x-1 px-1.5 py-0.2 rounded bg-slate-950/80 hover:bg-slate-900 text-blue-400 border border-blue-500/30 text-[10px] font-mono font-bold transition-colors"
+                                className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-slate-950 text-blue-400 border border-blue-500/30 text-[10px] font-mono font-bold hover:border-blue-400 transition-colors"
                               >
                                 <span>{tx.article}</span>
                                 {copiedArticle === tx.article ? (
                                   <Check className="w-2.5 h-2.5 text-emerald-400" />
                                 ) : (
-                                  <Copy className="w-2.5 h-2.5 opacity-60 hover:opacity-100" />
+                                  <Copy className="w-2.5 h-2.5 opacity-50" />
                                 )}
                               </button>
                             )}
@@ -286,20 +267,20 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                             )}
                           </div>
 
-                          <p className="text-xs text-slate-400 truncate mt-0.5">
-                            {tx.description || tx.note || (isItem ? 'Установка автозапчасти' : 'Погашение задолженности')}
+                          <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                            {tx.description || tx.note || (isItem ? 'Автозапчасть' : 'Оплата')}
                           </p>
                         </div>
                       </div>
 
                       {/* Right: Amount & Date */}
                       <div className="text-right shrink-0">
-                        <div className={`text-sm sm:text-base font-bold font-mono tracking-tight ${
+                        <div className={`text-xs sm:text-sm font-bold font-mono tracking-tight ${
                           isItem ? 'text-amber-400' : 'text-emerald-400'
                         }`}>
                           {isItem ? `+${formatMoney(tx.amount)}` : `-${formatMoney(tx.amount)}`}
                         </div>
-                        <span className="text-[10px] text-slate-500 font-mono">
+                        <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
                           {tx.date || new Date(tx.createdAt).toLocaleDateString('ru-RU')}
                         </span>
                       </div>
@@ -312,30 +293,29 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
         </div>
 
         {/* Right Column (5 cols): Top Debtors & Fast Part Search */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-4">
           
           {/* Top Debtors Leaderboard */}
-          <div className="bg-[#101726]/80 rounded-2xl border border-white/5 p-5 card-emboss backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
-                <Users className="w-4 h-4 text-amber-400" />
-                <span>Топ должников</span>
-              </h2>
+          <div className="surface-card rounded-lg p-4">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3 mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                Топ должников
+              </span>
               <button
                 onClick={() => setActiveTab('clients')}
-                className="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center space-x-0.5"
+                className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1"
               >
                 <span>Все клиенты</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3 h-3" />
               </button>
             </div>
 
             {topDebtors.length === 0 ? (
-              <div className="text-center py-6 text-xs text-slate-400">
-                Задолженностей по клиентам нет! Все счета закрыты.
+              <div className="text-center py-6 text-xs text-slate-500">
+                Задолженностей по клиентам нет
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {topDebtors.map((debtor, idx) => {
                   const percent = Math.min(100, Math.round((debtor.currentDebt / maxDebt) * 100));
                   return (
@@ -345,32 +325,32 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                         onSelectClient(debtor.id);
                         setActiveTab('clients');
                       }}
-                      className="group cursor-pointer p-3 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700 transition-all"
+                      className="cursor-pointer p-2.5 rounded-md bg-slate-950/70 hover:bg-slate-900 border border-slate-800/80 transition-colors group"
                     >
                       <div className="flex items-center justify-between text-xs mb-1.5">
                         <div className="flex items-center space-x-2">
-                          <span className="w-5 h-5 rounded-md bg-slate-800 text-slate-400 font-mono font-bold flex items-center justify-center text-[10px]">
+                          <span className="w-4 h-4 rounded bg-slate-800 text-slate-400 font-mono font-bold flex items-center justify-center text-[10px]">
                             {idx + 1}
                           </span>
                           <span className="font-bold text-slate-100 group-hover:text-blue-400 transition-colors">
                             {debtor.name}
                           </span>
                           {debtor.car && (
-                            <span className="text-[10px] text-slate-400 bg-slate-950 px-1.5 py-0.2 rounded border border-slate-800 truncate max-w-[100px]">
+                            <span className="text-[10px] text-slate-400 bg-slate-900 px-1 py-0.5 rounded border border-slate-800 truncate max-w-[90px]">
                               {debtor.car}
                             </span>
                           )}
                         </div>
 
-                        <div className="font-mono font-bold text-amber-400">
+                        <div className="font-mono font-bold text-amber-400 text-xs">
                           {formatMoney(debtor.currentDebt)}
                         </div>
                       </div>
 
                       {/* Progress bar */}
-                      <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+                      <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden">
                         <div 
-                          className="bg-gradient-to-r from-amber-500 to-amber-400 h-1.5 rounded-full transition-all duration-500" 
+                          className="bg-amber-500 h-1 rounded-full transition-all duration-300" 
                           style={{ width: `${percent}%` }}
                         />
                       </div>
@@ -382,76 +362,64 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
           </div>
 
           {/* Fast Part Code Finder */}
-          <div className="bg-[#101726]/80 rounded-2xl border border-white/5 p-5 card-emboss backdrop-blur-sm flex flex-col justify-between">
-            <div>
-              <div className="flex items-center space-x-2 mb-1.5">
-                <Search className="w-4 h-4 text-blue-400" />
-                <h2 className="text-base font-bold text-slate-100">
-                  Поиск артикула
-                </h2>
-              </div>
-              <p className="text-xs text-slate-400 mb-3">
-                Мгновенный поиск истории цен и автомобилей по коду запчасти
-              </p>
-
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  placeholder="Введите артикул (например: S TL C00117/8)..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchQuery.trim()) {
-                      setActiveTab('parts');
-                    }
-                  }}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 text-xs font-mono focus:outline-none focus:border-blue-500 input-glow transition-all"
-                />
-              </div>
-
-              {/* Suggestions */}
-              {searchResults.length > 0 && (
-                <div className="mt-3 space-y-1.5">
-                  {searchResults.map((t) => {
-                    const cli = (data.clients || []).find((c) => c.id === t.clientId);
-                    return (
-                      <div 
-                        key={t.id} 
-                        onClick={() => setActiveTab('parts')}
-                        className="cursor-pointer p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 flex items-center justify-between text-xs transition-colors"
-                      >
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-mono font-bold text-blue-300">{t.article}</span>
-                            {t.carName && <span className="text-[10px] text-slate-400">({t.carName})</span>}
-                          </div>
-                          <span className="text-[11px] text-slate-400 truncate block max-w-[200px]">
-                            {t.description || cli?.name}
-                          </span>
-                        </div>
-                        <span className="font-mono font-bold text-emerald-400">
-                          {formatMoney(t.amount)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="pt-4 border-t border-white/5 mt-4 flex items-center justify-between text-xs text-slate-400">
-              <span>
-                Всего в каталоге: <strong className="text-slate-200 font-mono">{globalSummary.totalItemsCount}</strong>
+          <div className="surface-card rounded-lg p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                Поиск артикула
               </span>
               <button
                 onClick={() => setActiveTab('parts')}
-                className="text-blue-400 hover:text-blue-300 font-semibold flex items-center space-x-1"
+                className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1"
               >
                 <span>В каталог</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3 h-3" />
               </button>
             </div>
+
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder="Поиск кода (напр. S TL C00117/8)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    setActiveTab('parts');
+                  }
+                }}
+                className="w-full h-9 pl-9 pr-3 bg-slate-950 border border-slate-800 rounded-md text-slate-100 text-xs font-mono focus:outline-hidden focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            {/* Suggestions */}
+            {searchResults.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                {searchResults.map((t) => {
+                  const cli = (data.clients || []).find((c) => c.id === t.clientId);
+                  return (
+                    <div 
+                      key={t.id} 
+                      onClick={() => setActiveTab('parts')}
+                      className="cursor-pointer p-2 rounded-md bg-slate-950 hover:bg-slate-900 border border-slate-800 flex items-center justify-between text-xs transition-colors"
+                    >
+                      <div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-mono font-bold text-blue-400">{t.article}</span>
+                          {t.carName && <span className="text-[10px] text-slate-500">({t.carName})</span>}
+                        </div>
+                        <span className="text-[10px] text-slate-400 truncate block max-w-[180px]">
+                          {t.description || cli?.name}
+                        </span>
+                      </div>
+                      <span className="font-mono font-bold text-amber-400 text-xs">
+                        {formatMoney(t.amount)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
         </div>
