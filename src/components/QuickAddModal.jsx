@@ -115,11 +115,11 @@ export default function QuickAddModal({ isOpen, onClose }) {
       </datalist>
 
       {/* Segmented Tabs Switcher */}
-      <div className="flex p-0.5 bg-[#090d16] rounded-lg border border-white/10 mb-4 h-9">
+      <div className="flex p-0.5 bg-[#090d16] rounded-xl border border-white/10 mb-4 h-11 sm:h-9">
         <button
           type="button"
           onClick={() => setTab('item')}
-          className={`flex-1 flex items-center justify-center space-x-1.5 rounded-md text-xs font-semibold transition-all ${
+          className={`flex-1 flex items-center justify-center space-x-1.5 rounded-lg sm:rounded-md text-xs font-semibold transition-all ${
             tab === 'item' 
               ? 'bg-blue-600 text-white shadow-xs' 
               : 'text-slate-400 hover:text-slate-200'
@@ -131,7 +131,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
         <button
           type="button"
           onClick={() => setTab('payment')}
-          className={`flex-1 flex items-center justify-center space-x-1.5 rounded-md text-xs font-semibold transition-all ${
+          className={`flex-1 flex items-center justify-center space-x-1.5 rounded-lg sm:rounded-md text-xs font-semibold transition-all ${
             tab === 'payment' 
               ? 'bg-emerald-600 text-white shadow-xs' 
               : 'text-slate-400 hover:text-slate-200'
@@ -143,7 +143,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
         <button
           type="button"
           onClick={() => setTab('other')}
-          className={`flex-1 flex items-center justify-center space-x-1.5 rounded-md text-xs font-semibold transition-all ${
+          className={`flex-1 flex items-center justify-center space-x-1.5 rounded-lg sm:rounded-md text-xs font-semibold transition-all ${
             tab === 'other' 
               ? 'bg-indigo-600 text-white shadow-xs' 
               : 'text-slate-400 hover:text-slate-200'
@@ -286,7 +286,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <button
             type="submit"
-            className="w-full h-10 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer"
+            className="w-full h-12 sm:h-10 rounded-xl sm:rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer active:scale-[0.98]"
           >
             Записать деталь клиенту
           </button>
@@ -349,7 +349,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
 
           <button
             type="submit"
-            className="w-full h-10 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer"
+            className="w-full h-12 sm:h-10 rounded-xl sm:rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer active:scale-[0.98]"
           >
             Внести оплату от клиента
           </button>
@@ -418,7 +418,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           <button
             type="submit"
             disabled={(data.otherCounterparties || []).length === 0}
-            className="w-full h-10 rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer"
+            className="w-full h-12 sm:h-10 rounded-xl sm:rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer active:scale-[0.98]"
           >
             Записать операцию
           </button>

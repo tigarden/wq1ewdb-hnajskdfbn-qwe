@@ -42,11 +42,11 @@ export default function ClientLedger({
     <div className="surface-card rounded-xl border border-white/[0.08] overflow-hidden flex flex-col shadow-lg">
       {/* Ledger Header & Filters */}
       <div className="p-3.5 sm:p-4 2xl:p-5 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center space-x-1 bg-slate-950/80 p-0.5 rounded-lg border border-white/[0.08] w-fit">
+        <div className="flex items-center space-x-1 bg-slate-950/80 p-1 rounded-xl sm:rounded-lg border border-white/[0.08] w-full sm:w-fit">
           <button
             type="button"
             onClick={() => setFilterType('all')}
-            className={`px-3.5 py-1.5 rounded-md text-xs 2xl:text-sm font-semibold transition-all ${
+            className={`flex-1 sm:flex-initial px-3.5 h-11 sm:h-7 rounded-lg sm:rounded-md text-xs sm:text-xs font-semibold transition-all ${
               filterType === 'all'
                 ? 'bg-slate-800 text-white shadow-xs'
                 : 'text-slate-400 hover:text-slate-200'
@@ -57,7 +57,7 @@ export default function ClientLedger({
           <button
             type="button"
             onClick={() => setFilterType('item')}
-            className={`px-3.5 py-1.5 rounded-md text-xs 2xl:text-sm font-semibold transition-all ${
+            className={`flex-1 sm:flex-initial px-3.5 h-11 sm:h-7 rounded-lg sm:rounded-md text-xs sm:text-xs font-semibold transition-all ${
               filterType === 'item'
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -68,7 +68,7 @@ export default function ClientLedger({
           <button
             type="button"
             onClick={() => setFilterType('payment')}
-            className={`px-3.5 py-1.5 rounded-md text-xs 2xl:text-sm font-semibold transition-all ${
+            className={`flex-1 sm:flex-initial px-3.5 h-11 sm:h-7 rounded-lg sm:rounded-md text-xs sm:text-xs font-semibold transition-all ${
               filterType === 'payment'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 : 'text-slate-400 hover:text-slate-200'
@@ -79,13 +79,13 @@ export default function ClientLedger({
         </div>
 
         <div className="relative max-w-xs w-full">
-          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-400 absolute left-3 top-2.5 2xl:top-3" />
+          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Поиск по артикулу, детали..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full input-sm 2xl:h-9 pl-9 font-mono text-xs 2xl:text-sm"
+            className="w-full input-md sm:input-sm 2xl:h-9 pl-9 font-mono"
           />
         </div>
       </div>
@@ -212,9 +212,10 @@ export default function ClientLedger({
                       }
                     }}
                     title="Удалить запись"
-                    className="w-8 h-8 2xl:w-9 2xl:h-9 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center transition-colors opacity-60 group-hover:opacity-100 cursor-pointer"
+                    aria-label="Удалить запись"
+                    className="w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:text-rose-400 active:bg-rose-500/20 flex items-center justify-center transition-colors opacity-100 sm:opacity-60 sm:group-hover:opacity-100 cursor-pointer shrink-0"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4.5 h-4.5 sm:w-4 sm:h-4" />
                   </button>
                 </div>
               </div>

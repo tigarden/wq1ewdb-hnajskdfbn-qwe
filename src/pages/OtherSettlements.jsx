@@ -28,6 +28,7 @@ export default function OtherSettlements() {
 
   const [selectedPersonId, setSelectedPersonId] = useState(data.otherCounterparties[0]?.id || null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileShowDetail, setMobileShowDetail] = useState(false);
 
   const currentPerson = data.otherCounterparties.find((p) => p.id === selectedPersonId);
   const currentStats = currentPerson ? getOtherCounterpartyStats(currentPerson.id) : null;
@@ -110,7 +111,7 @@ export default function OtherSettlements() {
           </div>
           <button
             onClick={() => setIsAddPersonModalOpen(true)}
-            className="btn-sm 2xl:btn-md h-8 2xl:h-9 px-3.5 2xl:px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs 2xl:text-sm font-bold transition-colors cursor-pointer shadow-xs shadow-emerald-500/20"
+            className="btn-md sm:btn-sm 2xl:btn-md h-8 2xl:h-9 px-3.5 2xl:px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs 2xl:text-sm font-bold transition-colors cursor-pointer shadow-xs shadow-emerald-500/20"
           >
             <Plus className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
             <span>Добавить</span>
@@ -121,8 +122,8 @@ export default function OtherSettlements() {
       {/* Two Columns: Persons List & Details */}
       <div className="grid grid-cols-1 lg:grid-cols-12 2xl:grid-cols-12 gap-5 items-start">
         
-        {/* Left Column: Persons List */}
-        <div className="lg:col-span-4 2xl:col-span-3 space-y-3">
+        {/* Left Column: Persons List — hidden on mobile when detail is shown */}
+        <div className={`lg:col-span-4 2xl:col-span-3 space-y-3 ${mobileShowDetail ? 'hidden lg:block' : 'block'}`}>
           {/* Search bar */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -155,7 +156,7 @@ export default function OtherSettlements() {
                 return (
                   <div
                     key={p.id}
-                    onClick={() => setSelectedPersonId(p.id)}
+                    onClick={() => { setSelectedPersonId(p.id); setMobileShowDetail(true); }}
                     className={`cursor-pointer p-3 rounded-lg border transition-colors flex items-center justify-between ${
                       isSelected
                         ? 'bg-emerald-500/15 border-emerald-500/40 text-white'
@@ -189,7 +190,16 @@ export default function OtherSettlements() {
         </div>
 
         {/* Right Column: Person Transactions History */}
-        <div className="lg:col-span-8 2xl:col-span-9">
+        <div className={`lg:col-span-8 2xl:col-span-9 ${mobileShowDetail ? 'block' : 'hidden lg:block'}`}>
+          {/* Mobile Back Button */}
+          <button
+            type="button"
+            onClick={() => setMobileShowDetail(false)}
+            className="lg:hidden w-full flex items-center justify-center space-x-2 rounded-xl bg-slate-900/90 border border-white/10 py-2.5 text-sm text-slate-300 mb-3 active:scale-[0.98]"
+          >
+            <span>← Все контрагенты</span>
+          </button>
+
           {currentPerson && currentStats ? (
             <div className="surface-card rounded-xl p-4 2xl:p-5 space-y-4 shadow-lg border border-white/[0.08]">
               
@@ -216,9 +226,9 @@ export default function OtherSettlements() {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setIsAddTxModalOpen(true)}
-                    className="btn-sm 2xl:btn-md h-8 2xl:h-9 px-3.5 2xl:px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs 2xl:text-sm font-bold transition-colors cursor-pointer shadow-xs shadow-emerald-500/20"
+                    className="btn-md sm:btn-sm bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all cursor-pointer shadow-sm shadow-emerald-500/20 active:scale-95"
                   >
-                    <Plus className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
+                    <Plus className="w-4 h-4" />
                     <span>Записать сумму</span>
                   </button>
                   <button
@@ -228,16 +238,78 @@ export default function OtherSettlements() {
                         setSelectedPersonId(null);
                       }
                     }}
-                    className="h-8 2xl:h-9 w-8 2xl:w-9 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 flex items-center justify-center transition-colors cursor-pointer"
+                    className="h-12 w-12 sm:h-9 sm:w-9 rounded-xl sm:rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
                     title="Удалить контрагента"
                   >
-                    <Trash2 className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
+                    <Trash2 className="w-4.5 h-4.5 sm:w-4 sm:h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Transactions Table */}
-              <div className="overflow-x-auto rounded-lg border border-white/10">
+              {/* Mobile Transactions Cards (Ergonomic for iPhone 17 Pro Max) */}
+              <div className="lg:hidden space-y-2.5">
+                {currentStats.transactions.map((tx) => {
+                  const isPositive = (tx.amount || 0) >= 0;
+                  return (
+                    <div 
+                      key={tx.id} 
+                      className="p-3.5 rounded-xl bg-slate-950/70 border border-white/[0.08] flex items-center justify-between gap-3 shadow-xs"
+                    >
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                            isPositive
+                              ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                          }`}>
+                            {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownLeft className="w-3 h-3" />}
+                            <span>{isPositive ? '+ Долг нам' : '- Оплата'}</span>
+                          </span>
+                          <span className="text-xs text-slate-500 font-mono">
+                            {tx.date || new Date(tx.createdAt).toLocaleDateString('ru-RU')}
+                          </span>
+                        </div>
+                        {tx.note && (
+                          <p className="text-xs text-slate-300 font-medium truncate">
+                            {tx.note}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-3 shrink-0">
+                        <div className={`text-base font-mono font-bold tracking-tight ${
+                          isPositive ? 'text-emerald-400' : 'text-rose-400'
+                        }`}>
+                          {isPositive ? `+${formatMoney(tx.amount)}` : formatMoney(tx.amount)}
+                        </div>
+                        <button
+                          onClick={() => deleteOtherTransaction(tx.id)}
+                          className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:text-rose-400 active:bg-rose-500/20 rounded-xl transition-colors cursor-pointer"
+                          title="Удалить запись"
+                          aria-label="Удалить запись"
+                        >
+                          <Trash2 className="w-4.5 h-4.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {currentStats.transactions.length === 0 && (
+                  <div className="surface-card p-8 rounded-2xl border border-white/10">
+                    <EmptyState
+                      icon={Users}
+                      title="Нет операций по контрагенту"
+                      description="Запишите первую операцию: начисление долга или возврат/оплату."
+                      actionLabel="Записать сумму"
+                      onAction={() => setIsAddTxModalOpen(true)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop Transactions Table */}
+              <div className="hidden lg:block overflow-x-auto rounded-lg border border-white/10">
                 <table className="w-full text-left text-xs sm:text-sm border-collapse">
                   <thead>
                     <tr className="border-b border-white/10 bg-[#090d16] text-slate-400 uppercase font-semibold text-xs 2xl:text-sm tracking-wider">
@@ -345,7 +417,7 @@ export default function OtherSettlements() {
           <div className="pt-1">
             <button
               type="submit"
-              className="w-full h-10 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer"
+              className="w-full h-12 sm:h-10 rounded-xl sm:rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer active:scale-[0.98]"
             >
               Создать контрагента
             </button>
@@ -404,7 +476,7 @@ export default function OtherSettlements() {
           <div className="pt-1">
             <button
               type="submit"
-              className="w-full h-10 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer"
+              className="w-full h-12 sm:h-10 rounded-xl sm:rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors cursor-pointer active:scale-[0.98]"
             >
               Сохранить запись
             </button>

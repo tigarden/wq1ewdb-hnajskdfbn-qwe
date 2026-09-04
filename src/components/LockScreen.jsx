@@ -51,16 +51,16 @@ export default function LockScreen({ onUnlock }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#090d16]/95 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-sm surface-card rounded-xl p-5 sm:p-6 shadow-2xl space-y-4 border border-white/10 z-10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#090d16]/95 backdrop-blur-md animate-in fade-in duration-200 pt-[max(env(safe-area-inset-top,0px),54px)] pb-[max(env(safe-area-inset-bottom,0px),24px)]">
+      <div className="relative w-full max-w-sm surface-card rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 border border-white/10 z-10">
         
         {/* Header Branding */}
         <div className="text-center space-y-2.5">
-          <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 text-blue-400 mx-auto flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 text-blue-400 mx-auto flex items-center justify-center shadow-inner">
             {mode === 'totp' ? <Smartphone className="w-5 h-5 text-blue-400" /> : <Lock className="w-5 h-5 text-emerald-400" />}
           </div>
           <div>
-            <h1 className="text-base font-bold text-slate-100 tracking-tight">
+            <h1 className="text-base sm:text-lg font-bold text-slate-100 tracking-tight">
               Debet<span className="text-blue-400">.auto</span>
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -72,20 +72,20 @@ export default function LockScreen({ onUnlock }) {
         </div>
 
         {/* 7-day indicator badge */}
-        <div className="flex items-center justify-center space-x-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-slate-400 text-xs mx-auto w-fit font-mono">
+        <div className="flex items-center justify-center space-x-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-400 text-xs mx-auto w-fit font-mono">
           <Calendar className="w-3.5 h-3.5 text-blue-400" />
           <span>Сессия действует 7 дней</span>
         </div>
 
         {/* Mode switch if TOTP is enabled */}
         {isTotpEnabled && (
-          <div className="flex h-8 rounded-md bg-slate-900 p-0.5 border border-white/10">
+          <div className="flex h-10 rounded-xl bg-slate-900 p-1 border border-white/10">
             <button
               type="button"
               onClick={() => { setMode('totp'); setError(null); }}
-              className={`flex-1 h-7 text-xs font-medium rounded transition-colors flex items-center justify-center space-x-1.5 ${
+              className={`flex-1 h-8 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5 ${
                 mode === 'totp'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -95,9 +95,9 @@ export default function LockScreen({ onUnlock }) {
             <button
               type="button"
               onClick={() => { setMode('password'); setError(null); }}
-              className={`flex-1 h-7 text-xs font-medium rounded transition-colors flex items-center justify-center space-x-1.5 ${
+              className={`flex-1 h-8 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center space-x-1.5 ${
                 mode === 'password'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -125,7 +125,7 @@ export default function LockScreen({ onUnlock }) {
                   setError(null);
                 }}
                 autoFocus
-                className="w-full h-11 text-center tracking-[0.4em] text-xl bg-slate-900 border border-white/15 rounded-lg text-slate-100 font-mono font-bold focus:outline-hidden focus:border-blue-500 transition-colors"
+                className="w-full h-12 text-center tracking-[0.4em] text-xl bg-slate-900 border border-white/15 rounded-xl text-slate-100 font-mono font-bold focus:outline-hidden focus:border-blue-500 transition-colors"
               />
             </div>
           ) : (
@@ -143,12 +143,12 @@ export default function LockScreen({ onUnlock }) {
                     setError(null);
                   }}
                   autoFocus
-                  className="w-full h-10 pl-3 pr-10 bg-slate-900 border border-white/15 rounded-lg text-slate-100 text-sm font-mono focus:outline-hidden focus:border-blue-500 transition-colors"
+                  className="w-full h-12 bg-slate-900 border border-white/15 rounded-xl px-3.5 pr-10 text-slate-100 text-sm focus:outline-hidden focus:border-blue-500 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -156,20 +156,20 @@ export default function LockScreen({ onUnlock }) {
             </div>
           )}
 
-          <div className="flex items-center justify-between text-xs pt-0.5">
+          <div className="flex items-center justify-between text-xs pt-1">
             <label className="flex items-center space-x-2 text-slate-300 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-white/20 bg-slate-900 text-blue-600 focus:ring-0 w-3.5 h-3.5"
+                className="rounded border-white/20 bg-slate-900 text-blue-600 focus:ring-0 w-4 h-4"
               />
               <span className="text-slate-400 hover:text-slate-200 transition-colors text-xs">Запомнить устройство (7 дней)</span>
             </label>
           </div>
 
           {error && (
-            <div className="p-2.5 rounded-md bg-rose-950/50 border border-rose-500/40 text-rose-300 text-xs text-center font-medium flex items-center justify-center space-x-1.5 animate-in fade-in">
+            <div className="p-2.5 rounded-xl bg-rose-950/50 border border-rose-500/40 text-rose-300 text-xs text-center font-medium flex items-center justify-center space-x-1.5 animate-in fade-in">
               <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               <span>{error}</span>
             </div>
@@ -178,10 +178,10 @@ export default function LockScreen({ onUnlock }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-10 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 mt-2"
+            className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold text-sm transition-all flex items-center justify-center space-x-2 disabled:opacity-50 mt-2 cursor-pointer shadow-lg shadow-blue-500/20"
           >
             <span>{loading ? 'Проверка ключа...' : 'Войти в систему'}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 

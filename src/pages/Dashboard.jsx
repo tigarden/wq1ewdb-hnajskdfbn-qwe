@@ -128,18 +128,18 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
           {incomeStats.pendingCount > 0 && (
             <button
               onClick={() => setActiveTab('income')}
-              className="btn-sm 2xl:btn-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-xs group"
+              className="btn-md sm:btn-sm bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-xs group cursor-pointer"
             >
-              <Clock className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-amber-400 group-hover:rotate-45 transition-transform" />
+              <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-400 group-hover:rotate-45 transition-transform" />
               <span>Очередь цен: <strong className="font-mono">{incomeStats.pendingCount}</strong></span>
             </button>
           )}
 
           <button
             onClick={onOpenQuickAdd}
-            className="btn-sm 2xl:btn-md btn-primary font-bold shadow-md shadow-blue-500/20"
+            className="hidden sm:inline-flex btn-md btn-primary font-bold shadow-md shadow-blue-500/20 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 stroke-[2.5]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Новая запись</span>
           </button>
         </div>
@@ -215,11 +215,11 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                 </span>
               </div>
 
-              {/* Segmented Filter Pills */}
-              <div className="flex items-center space-x-1 p-0.5 rounded-lg bg-slate-950/80 border border-white/[0.08]">
+              {/* Segmented Filter Pills (Touch-optimized) */}
+              <div className="flex items-center space-x-1 p-1 rounded-xl bg-slate-950/80 border border-white/[0.08]">
                 <button
                   onClick={() => setTxFilter('all')}
-                  className={`h-7 2xl:h-8 px-3 rounded-md text-xs font-semibold transition-all ${
+                  className={`h-9 sm:h-7 px-3.5 sm:px-3 rounded-lg sm:rounded-md text-xs font-semibold transition-all cursor-pointer ${
                     txFilter === 'all' 
                       ? 'bg-slate-800 text-white shadow-xs' 
                       : 'text-slate-400 hover:text-slate-200'
@@ -229,7 +229,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                 </button>
                 <button
                   onClick={() => setTxFilter('item')}
-                  className={`h-7 2xl:h-8 px-3 rounded-md text-xs font-semibold transition-all ${
+                  className={`h-9 sm:h-7 px-3.5 sm:px-3 rounded-lg sm:rounded-md text-xs font-semibold transition-all cursor-pointer ${
                     txFilter === 'item' 
                       ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
                       : 'text-slate-400 hover:text-slate-200'
@@ -239,7 +239,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                 </button>
                 <button
                   onClick={() => setTxFilter('payment')}
-                  className={`h-7 2xl:h-8 px-3 rounded-md text-xs font-semibold transition-all ${
+                  className={`h-9 sm:h-7 px-3.5 sm:px-3 rounded-lg sm:rounded-md text-xs font-semibold transition-all cursor-pointer ${
                     txFilter === 'payment' 
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
                       : 'text-slate-400 hover:text-slate-200'
@@ -414,18 +414,18 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') handleSaveInlinePrice(item.id);
                           }}
-                          className="input-sm 2xl:h-9 flex-1 font-mono text-xs 2xl:text-sm"
+                          className="input-md sm:input-sm flex-1 font-mono text-base sm:text-xs"
                         />
                         <button
                           onClick={() => handleSaveInlinePrice(item.id)}
                           disabled={!draftVal}
-                          className={`btn-sm 2xl:h-9 px-3 ${
+                          className={`btn-md sm:btn-sm px-4 sm:px-3 ${
                             isSaved 
                               ? 'bg-emerald-600 text-white' 
                               : 'btn-primary'
-                          } disabled:opacity-40 disabled:pointer-events-none`}
+                          } disabled:opacity-40 disabled:pointer-events-none cursor-pointer`}
                         >
-                          {isSaved ? <Check className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" /> : <Save className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />}
+                          {isSaved ? <Check className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> : <Save className="w-4 h-4 sm:w-3.5 sm:h-3.5" />}
                           <span>{isSaved ? 'Сохранено' : 'Внести'}</span>
                         </button>
                       </div>
@@ -522,7 +522,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
             </div>
 
             <div className="relative">
-              <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Поиск по коду (напр. S TL C00117/8)..."
@@ -533,7 +533,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                     setActiveTab('parts');
                   }
                 }}
-                className="w-full input-sm 2xl:h-9 pl-9 font-mono text-xs 2xl:text-sm"
+                className="w-full input-md pl-10 font-mono text-base sm:text-xs"
               />
             </div>
 

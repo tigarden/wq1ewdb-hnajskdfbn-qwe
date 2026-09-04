@@ -109,13 +109,13 @@ export default function PartsCatalog() {
       {/* Search Input Bar */}
       <div className="surface-card p-2.5 2xl:p-3 rounded-xl border border-white/[0.08]">
         <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-500 absolute left-3 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Поиск по артикулу (напр. S SF OF1053), названию или модели авто..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="input-md 2xl:h-10 w-full pl-9 pr-9 font-mono text-xs 2xl:text-sm"
+            className="input-md 2xl:h-10 w-full pl-9 pr-9 font-mono"
           />
           {query && (
             <button

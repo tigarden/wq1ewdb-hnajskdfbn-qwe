@@ -50,7 +50,7 @@ export default function ClientList({
           <button
             type="button"
             onClick={onOpenAddModal}
-            className="btn-sm 2xl:btn-md btn-primary px-3 font-bold shadow-xs shadow-blue-500/20"
+            className="btn-md sm:btn-sm 2xl:btn-md btn-primary px-3 font-bold shadow-xs shadow-blue-500/20"
           >
             <Plus className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 stroke-[2.5]" />
             <span>Клиент</span>
@@ -58,13 +58,13 @@ export default function ClientList({
         </div>
 
         <div className="relative">
-          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-400 absolute left-3 top-2.5 2xl:top-3" />
+          <Search className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Поиск по имени, авто, тел..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full input-sm 2xl:h-9 pl-9 font-mono text-xs 2xl:text-sm"
+            className="w-full input-md sm:input-sm 2xl:h-9 pl-9 font-mono"
           />
         </div>
 

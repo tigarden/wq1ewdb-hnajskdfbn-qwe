@@ -60,25 +60,25 @@ export default function AddItemModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Артикул / Номер</label>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Артикул / Номер</label>
             <div className="relative">
-              <Package className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Package className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="OC90, 50014299..."
                 value={article}
                 onChange={(e) => setArticle(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 uppercase font-mono focus:outline-hidden focus:border-blue-500"
+                className="w-full pl-9 pr-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-100 uppercase font-mono focus:outline-hidden focus:border-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
-              Сумма клиенту ($) <span className="text-rose-400">*</span>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              Сумма клиенту (грн) <span className="text-rose-400">*</span>
             </label>
             <div className="relative">
-              <DollarSign className="w-4 h-4 text-emerald-400 absolute left-3 top-3" />
+              <DollarSign className="w-4 h-4 text-emerald-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="number"
                 step="any"
@@ -86,49 +86,49 @@ export default function AddItemModal({
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-emerald-400 font-bold font-mono focus:outline-hidden focus:border-emerald-500"
+                className="w-full pl-9 pr-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-emerald-400 font-bold font-mono focus:outline-hidden focus:border-emerald-500"
               />
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">Наименование детали</label>
+          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Наименование детали</label>
           <input
             type="text"
             placeholder="Фильтр масляный, рычаг передний левый..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
+            className="w-full px-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Автомобиль</label>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Автомобиль</label>
             <div className="relative">
-              <Car className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Car className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="BMW X5 / Passat"
                 value={carName}
                 onChange={(e) => setCarName(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
+                className="w-full pl-9 pr-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Поставщик</label>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Поставщик</label>
             <div className="relative">
-              <Truck className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Truck className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 list="suppliers-datalist"
                 placeholder="Склад, Тотус, Автодок..."
                 value={supplierName}
                 onChange={(e) => setSupplierName(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
+                className="w-full pl-9 pr-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
               />
               <datalist id="suppliers-datalist">
                 {suppliersList.map((sup) => (
@@ -141,64 +141,64 @@ export default function AddItemModal({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
-              Закупочная цена ($)
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              Себестоимость (закупка)
             </label>
             <div className="relative">
-              <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="number"
                 step="any"
                 placeholder="0.00"
                 value={purchasePrice}
                 onChange={(e) => setPurchasePrice(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 font-mono focus:outline-hidden focus:border-blue-500"
+                className="w-full pl-9 pr-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-100 font-mono focus:outline-hidden focus:border-blue-500"
               />
             </div>
             <p className="text-xs text-slate-400 mt-1">Оставьте пустым для очереди закупок</p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Дата</label>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Дата</label>
             <div className="relative">
-              <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
+                className="w-full pl-9 pr-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-100 font-mono focus:outline-hidden focus:border-blue-500"
               />
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">Примечание</label>
+          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Примечание</label>
           <div className="relative">
-            <FileText className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <FileText className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Дополнительно..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-white/10 rounded-lg text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
+              className="w-full pl-9 pr-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
             />
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2 pt-2">
+        <div className="grid grid-cols-2 sm:flex sm:justify-end gap-2.5 pt-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            className="btn-md sm:btn-sm bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold cursor-pointer"
           >
             Отмена
           </button>
           <button
             type="submit"
-            className="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
+            className="btn-md sm:btn-sm btn-primary font-bold shadow-md shadow-blue-500/25 cursor-pointer"
           >
-            Записать в долг
+            Записать деталь
           </button>
         </div>
       </form>

@@ -1,6 +1,18 @@
 @import "tailwindcss";
 
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  /* Dynamic Island & Notch safe clearance: fallback to 48px on iOS devices if env is 0 */
+  --sat-island: max(env(safe-area-inset-top, 0px), 50px);
+}
+
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
     background-color: #080b12;
     color: #f1f5f9;
@@ -55,42 +67,64 @@
   box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
-/* Mobile Floating Glass Dock */
+/* Mobile iOS Tab Bar & Floating Glass Dock */
 .glass-dock {
-  background: rgba(13, 18, 29, 0.92);
+  background: rgba(13, 18, 29, 0.94);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Strict Precision Control System */
+.mobile-tab-bar {
+  background: rgba(8, 11, 18, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -4px 28px 0 rgba(0, 0, 0, 0.55);
+}
+
+/* Dynamic Island & Notch Protection for Top Sticky Header */
+.dynamic-island-header {
+  padding-top: max(env(safe-area-inset-top, 0px), 48px);
+}
+@media (min-width: 768px) {
+  .dynamic-island-header {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* Strict Precision Control System with Mobile Ergonomics (Apple HIG ≥ 44-48px touch targets) */
 .btn-sm {
-  height: 32px;
-  padding-left: 10px;
-  padding-right: 10px;
-  font-size: 12px;
+  height: 44px;
+  min-height: 44px;
+  padding-left: 14px;
+  padding-right: 14px;
+  font-size: 14px;
   font-weight: 600;
-  border-radius: 7px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   white-space: nowrap;
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .btn-sm:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .btn-md {
-  height: 38px;
-  padding-left: 14px;
-  padding-right: 14px;
-  font-size: 13px;
+  height: 48px;
+  min-height: 48px;
+  padding-left: 18px;
+  padding-right: 18px;
+  font-size: 15px;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -98,9 +132,30 @@
   white-space: nowrap;
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .btn-md:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+}
+
+@media (min-width: 640px) {
+  .btn-sm {
+    height: 34px;
+    min-height: 34px;
+    padding-left: 11px;
+    padding-right: 11px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+  .btn-md {
+    height: 40px;
+    min-height: 40px;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 13px;
+    border-radius: 9px;
+  }
 }
 
 .btn-primary {
@@ -115,11 +170,11 @@
 }
 
 .input-sm {
-  height: 32px;
-  padding-left: 10px;
-  padding-right: 10px;
-  font-size: 12px;
-  border-radius: 7px;
+  height: 40px;
+  padding-left: 12px;
+  padding-right: 12px;
+  font-size: 16px; /* 16px on mobile prevents iOS Safari from auto-zooming */
+  border-radius: 8px;
   background-color: rgba(6, 8, 14, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #f1f5f9;
@@ -132,11 +187,11 @@
 }
 
 .input-md {
-  height: 38px;
-  padding-left: 12px;
-  padding-right: 12px;
-  font-size: 13px;
-  border-radius: 8px;
+  height: 44px;
+  padding-left: 14px;
+  padding-right: 14px;
+  font-size: 16px; /* 16px on mobile prevents iOS Safari from auto-zooming */
+  border-radius: 10px;
   background-color: rgba(6, 8, 14, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #f1f5f9;
@@ -146,6 +201,23 @@
 .input-md:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 1px #3b82f6, 0 0 14px rgba(59, 130, 246, 0.3);
+}
+
+@media (min-width: 640px) {
+  .input-sm {
+    height: 32px;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 12px;
+    border-radius: 7px;
+  }
+  .input-md {
+    height: 38px;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
 }
 
 /* Custom modern sleek scrollbars */

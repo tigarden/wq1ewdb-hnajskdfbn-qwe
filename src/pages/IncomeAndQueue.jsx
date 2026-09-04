@@ -183,10 +183,10 @@ export default function IncomeAndQueue() {
       <div className="surface-card p-2.5 sm:p-3 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-2.5">
         
         {/* Segmented Filter Pills */}
-        <div className="h-8 flex p-0.5 bg-[#090d16] rounded-md border border-white/10 overflow-x-auto">
+        <div className="h-10 sm:h-8 flex p-0.5 bg-[#090d16] rounded-xl sm:rounded-md border border-white/10 overflow-x-auto">
           <button
             onClick={() => setFilterMode('pending')}
-            className={`h-7 px-3 rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
+            className={`h-9 sm:h-7 px-3 rounded-lg sm:rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
               filterMode === 'pending'
                 ? 'bg-amber-500 text-slate-950 font-bold shadow-xs'
                 : 'text-slate-400 hover:text-slate-200'
@@ -198,7 +198,7 @@ export default function IncomeAndQueue() {
 
           <button
             onClick={() => setFilterMode('filled')}
-            className={`h-7 px-3 rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
+            className={`h-9 sm:h-7 px-3 rounded-lg sm:rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
               filterMode === 'filled'
                 ? 'bg-emerald-500 text-slate-950 font-bold shadow-xs'
                 : 'text-slate-400 hover:text-slate-200'
@@ -210,7 +210,7 @@ export default function IncomeAndQueue() {
 
           <button
             onClick={() => setFilterMode('all')}
-            className={`h-7 px-3 rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
+            className={`h-9 sm:h-7 px-3 rounded-lg sm:rounded text-xs font-semibold whitespace-nowrap flex items-center space-x-1.5 transition-colors cursor-pointer ${
               filterMode === 'all'
                 ? 'bg-blue-600 text-white font-bold shadow-xs'
                 : 'text-slate-400 hover:text-slate-200'
@@ -225,7 +225,7 @@ export default function IncomeAndQueue() {
           <select
             value={selectedClientFilter}
             onChange={(e) => setSelectedClientFilter(e.target.value)}
-            className="input-sm h-8 rounded-md text-xs cursor-pointer"
+            className="input-md sm:input-sm h-10 sm:h-8 rounded-xl sm:rounded-md text-xs cursor-pointer"
           >
             <option value="all" className="bg-[#0b0f19] text-white">Все клиенты</option>
             {(data.clients || []).map((c) => (
@@ -240,15 +240,168 @@ export default function IncomeAndQueue() {
               placeholder="Поиск по коду, названию, авто..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-sm h-8 w-full sm:w-60 pl-8 pr-2.5 rounded-md text-xs"
+              className="input-md sm:input-sm h-10 sm:h-8 w-full sm:w-60 pl-8 pr-2.5 rounded-xl sm:rounded-md"
             />
           </div>
         </div>
 
       </div>
 
-      {/* Queue Table Card */}
-      <div className="surface-card rounded-xl overflow-hidden shadow-lg border border-white/[0.08]">
+      {/* Mobile Queue Card View (Ergonomic for iPhone 17 Pro Max) */}
+      <div className="md:hidden space-y-3.5">
+        {filteredItems.map((tx) => {
+          const cli = (data.clients || []).find((c) => c.id === tx.clientId);
+          const draft = drafts[tx.id] || {};
+          const currentPurchaseVal = draft.purchasePrice !== undefined 
+            ? draft.purchasePrice 
+            : (tx.purchasePrice || '');
+          const currentSupplierVal = draft.supplierName !== undefined
+            ? draft.supplierName
+            : (tx.supplierName || '');
+
+          const numPurchase = parseFloat(currentPurchaseVal) || 0;
+          const profit = numPurchase > 0 ? (tx.amount - numPurchase) : 0;
+          const marginPercent = numPurchase > 0 ? ((profit / numPurchase) * 100) : 0;
+          const isSaved = savedSuccessId === tx.id;
+          const hasPendingCost = !numPurchase;
+
+          return (
+            <div 
+              key={tx.id}
+              className={`surface-card p-4 rounded-2xl border transition-all space-y-3 shadow-md ${
+                hasPendingCost ? 'border-amber-500/30 bg-[#0c121e]' : 'border-white/[0.08]'
+              }`}
+            >
+              {/* Header: Article, Customer & Sale Price */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center space-x-2">
+                    {tx.article ? (
+                      <span className="font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20 text-xs tracking-wider">
+                        {tx.article}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-500">Без кода</span>
+                    )}
+                    <span className="text-xs text-slate-400 font-mono">
+                      {tx.date || new Date(tx.createdAt).toLocaleDateString('ru-RU')}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-slate-100 text-sm leading-snug">
+                    {tx.description || 'Деталь'}
+                  </h3>
+                  <div className="flex items-center space-x-2 text-xs text-slate-400">
+                    <span className="font-semibold text-slate-300">{cli?.name || 'Клиент'}</span>
+                    {(tx.carName || cli?.car) && (
+                      <span className="text-slate-400 font-mono">• {tx.carName || cli?.car}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] text-slate-400 uppercase font-semibold block">Продажа</span>
+                  <div className="font-mono font-bold text-base text-amber-400">
+                    {formatMoney(tx.amount)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Inputs: Purchase Price & Supplier */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                    Себестоимость
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00 грн"
+                      value={currentPurchaseVal}
+                      onChange={(e) => handlePriceChange(tx.id, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSaveItem(tx);
+                      }}
+                      className={`w-full h-12 px-3 rounded-xl text-base font-mono font-bold focus:outline-hidden transition-colors ${
+                        numPurchase > 0
+                          ? 'bg-[#090d16] text-white border border-white/15 focus:border-emerald-500'
+                          : 'bg-amber-950/20 text-amber-300 border border-amber-500/40 focus:border-amber-400'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                    Поставщик
+                  </label>
+                  <input
+                    type="text"
+                    list="suppliers-autocomplete-list"
+                    placeholder="Склад / СТО"
+                    value={currentSupplierVal}
+                    onChange={(e) => handleSupplierChange(tx.id, e.target.value)}
+                    className="w-full h-12 px-3 bg-[#090d16] border border-white/15 rounded-xl text-base text-slate-100 focus:outline-hidden focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Live profit & full-touch Save button */}
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/5">
+                <div>
+                  {numPurchase > 0 ? (
+                    <div className="text-xs font-mono">
+                      <span className="text-slate-400">Доход: </span>
+                      <span className={`font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        +{formatMoney(profit)}
+                      </span>
+                      <span className="text-slate-500 ml-1.5">({marginPercent.toFixed(0)}%)</span>
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-amber-400 font-mono">
+                      Ожидает цену входа
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleSaveItem(tx)}
+                  className={`h-11 px-5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm active:scale-95 ${
+                    isSaved
+                      ? 'bg-emerald-500 text-slate-950 shadow-emerald-500/25'
+                      : 'btn-primary'
+                  }`}
+                >
+                  {isSaved ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Готово</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Записать</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {filteredItems.length === 0 && (
+          <div className="surface-card p-8 rounded-2xl border border-white/10">
+            <EmptyState
+              icon={CheckCircle2}
+              title={filterMode === 'pending' ? 'Очередь цен пуста!' : 'Нет подходящих деталей'}
+              description={filterMode === 'pending' ? 'Все закупки уже внесены и маржинальность полностью рассчитана.' : 'Попробуйте сбросить поисковый запрос или фильтр клиентов.'}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Queue Table Card */}
+      <div className="hidden md:block surface-card rounded-xl overflow-hidden shadow-lg border border-white/[0.08]">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs sm:text-sm">
             <thead>

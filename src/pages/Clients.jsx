@@ -65,10 +65,10 @@ export default function Clients({ selectedClientId, onSelectClient }) {
           <button
             type="button"
             onClick={() => setMobileShowDetail(false)}
-            className="flex items-center space-x-1.5 text-xs text-blue-400 hover:text-blue-300 font-medium py-1 mb-2"
+            className="w-full flex items-center justify-center space-x-2 px-4 h-11 min-h-[44px] rounded-xl bg-slate-800/90 hover:bg-slate-700/90 text-blue-400 border border-white/10 font-bold text-sm tracking-wide shadow-sm active:scale-[0.98] transition-all mb-3 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Вернуться к списку клиентов</span>
+            <span>Назад ко всем клиентам</span>
           </button>
         )}
       </div>
@@ -77,7 +77,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
       <div className="grid grid-cols-1 md:grid-cols-12 2xl:grid-cols-12 gap-5">
         {/* Left Column: Clients List */}
         <div
-          className={`md:col-span-4 lg:col-span-4 2xl:col-span-3 h-[calc(100vh-140px)] ${
+          className={`md:col-span-4 lg:col-span-4 2xl:col-span-3 h-[calc(100dvh-180px)] ${
             mobileShowDetail ? 'hidden md:block' : 'block'
           }`}
         >

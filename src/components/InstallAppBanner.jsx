@@ -23,12 +23,12 @@ export default function InstallAppBanner({ onOpenModal }) {
   return (
     <aside
       aria-label="Установка приложения"
-      className="fixed bottom-14 md:bottom-5 left-2 right-2 md:left-auto md:right-5 z-40 md:max-w-md animate-in slide-in-from-bottom-3 duration-300 pointer-events-auto"
+      className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.25rem)] md:bottom-5 left-3 right-3 md:left-auto md:right-5 z-40 md:max-w-md animate-in slide-in-from-bottom-3 duration-300 pointer-events-auto"
     >
       <div className="p-3 bg-[#0d1322]/95 backdrop-blur-md border border-blue-500/30 rounded-xl shadow-2xl shadow-black/60 flex items-center justify-between gap-2.5">
         
         {/* App Icon */}
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-mono font-black text-xs shrink-0 shadow-xs">
+        <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-mono font-black text-xs shrink-0 shadow-xs">
           D
         </div>
 
@@ -45,7 +45,7 @@ export default function InstallAppBanner({ onOpenModal }) {
         {/* Action Button */}
         <button
           onClick={handleInstallClick}
-          className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs inline-flex items-center space-x-1 shrink-0 shadow-xs transition-colors"
+          className="h-8 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs inline-flex items-center space-x-1 shrink-0 shadow-xs transition-colors active:scale-95"
         >
           <Download className="w-3.5 h-3.5" />
           <span>Установить</span>
@@ -55,7 +55,8 @@ export default function InstallAppBanner({ onOpenModal }) {
         <button
           onClick={dismissBanner}
           title="Скрыть"
-          className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/5 transition-colors shrink-0"
+          aria-label="Скрыть баннер установки"
+          className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5 flex items-center justify-center transition-colors shrink-0 active:scale-95"
         >
           <X className="w-4 h-4" />
         </button>
