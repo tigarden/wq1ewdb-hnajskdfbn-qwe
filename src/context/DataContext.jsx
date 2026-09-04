@@ -5,6 +5,13 @@ import { fetchRepoFile, saveRepoFile } from '../services/githubApi';
 import { encryptData, decryptData } from '../services/crypto';
 import { generateTotpSecret, verifyTotpCode, getOtpAuthUrl } from '../services/totp';
 import { api, getApiUrl, setApiUrl } from '../services/api';
+import { 
+  getSupabaseConfig, 
+  saveSupabaseConfig, 
+  testSupabase, 
+  fetchSupabaseData, 
+  saveSupabaseData 
+} from '../services/supabase';
 
 const DataContext = createContext(null);
 
@@ -26,10 +33,16 @@ export function DataProvider({ children }) {
   const [currentSha, setCurrentSha] = useState(() => settings.lastSha);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // PostgreSQL Backend status
+  // PostgreSQL Backend status (only ping if configured)
   const [backendUrl, setBackendUrl] = useState(() => getApiUrl());
-  const [backendHealth, setBackendHealth] = useState(null);
+  const [backendHealth, setBackendHealth] = useState(() => {
+    return getApiUrl() ? null : { status: 'not_configured' };
+  });
   const [backendLoading, setBackendLoading] = useState(false);
+
+  // Supabase Cloud PostgreSQL Config
+  const [supabaseConfig, setSupabaseConfig] = useState(() => getSupabaseConfig());
+  const [supabaseStatus, setSupabaseStatus] = useState('idle');
 
   // 2FA / TOTP State
   const [isTotpEnabled, setIsTotpEnabled] = useState(() => {
@@ -140,6 +153,11 @@ export function DataProvider({ children }) {
 
   // --- Backend Health Check & Sync ---
   const checkBackend = useCallback(async () => {
+    const url = getApiUrl();
+    if (!url) {
+      setBackendHealth({ status: 'not_configured' });
+      return null;
+    }
     setBackendLoading(true);
     const res = await api.checkHealth();
     setBackendLoading(false);
@@ -155,7 +173,11 @@ export function DataProvider({ children }) {
   const updateBackendUrl = useCallback((newUrl) => {
     const clean = setApiUrl(newUrl);
     setBackendUrl(clean);
-    checkBackend();
+    if (clean) {
+      checkBackend();
+    } else {
+      setBackendHealth({ status: 'not_configured' });
+    }
   }, [checkBackend]);
 
   const syncToPostgres = useCallback(async () => {
@@ -190,9 +212,62 @@ export function DataProvider({ children }) {
     }
   }, [checkBackend]);
 
+  // --- Supabase Cloud PostgreSQL Methods ---
+  const updateSupabase = useCallback((url, key) => {
+    saveSupabaseConfig(url, key);
+    setSupabaseConfig({ url, key });
+  }, []);
+
+  const syncToSupabase = useCallback(async () => {
+    if (!supabaseConfig.url || !supabaseConfig.key) {
+      return { success: false, error: 'Настройки Supabase не указаны' };
+    }
+    setSupabaseStatus('syncing');
+    const res = await saveSupabaseData(supabaseConfig.url, supabaseConfig.key, data);
+    if (res.success) {
+      setSupabaseStatus('synced');
+      setHasUnsavedChanges(false);
+    } else {
+      setSupabaseStatus('error');
+    }
+    return res;
+  }, [supabaseConfig, data]);
+
+  const pullFromSupabase = useCallback(async () => {
+    if (!supabaseConfig.url || !supabaseConfig.key) {
+      return { success: false, error: 'Настройки Supabase не указаны' };
+    }
+    setSupabaseStatus('syncing');
+    const res = await fetchSupabaseData(supabaseConfig.url, supabaseConfig.key);
+    if (res.success && res.data) {
+      setData(res.data);
+      saveLocalData(res.data);
+      setSupabaseStatus('synced');
+      setHasUnsavedChanges(false);
+      return { success: true, loaded: true };
+    } else if (res.success && !res.data) {
+      // First save to Supabase
+      await saveSupabaseData(supabaseConfig.url, supabaseConfig.key, data);
+      setSupabaseStatus('synced');
+      return { success: true, created: true };
+    } else {
+      setSupabaseStatus('error');
+      return { success: false, error: res.error };
+    }
+  }, [supabaseConfig, data]);
+
   useEffect(() => {
-    checkBackend();
-  }, [checkBackend]);
+    if (backendUrl) {
+      checkBackend();
+    }
+  }, [checkBackend, backendUrl]);
+
+  // Pull from Supabase on startup if configured
+  useEffect(() => {
+    if (supabaseConfig.url && supabaseConfig.key && isUnlocked) {
+      pullFromSupabase();
+    }
+  }, [isUnlocked]);
 
   // --- Data State Management ---
   const updateData = useCallback((updater) => {
@@ -713,7 +788,7 @@ export function DataProvider({ children }) {
     getTotpSetupData,
     enableTotp,
     disableTotp,
-    // PostgreSQL Backend
+    // PostgreSQL Backend (FastAPI)
     backendUrl,
     updateBackendUrl,
     backendHealth,
@@ -721,6 +796,12 @@ export function DataProvider({ children }) {
     checkBackend,
     syncToPostgres,
     pullFromPostgres,
+    // Supabase Cloud PostgreSQL
+    supabaseConfig,
+    updateSupabase,
+    syncToSupabase,
+    pullFromSupabase,
+    supabaseStatus,
     // Clients
     addClient,
     updateClient,

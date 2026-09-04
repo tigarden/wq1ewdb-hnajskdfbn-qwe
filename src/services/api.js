@@ -3,10 +3,15 @@
 const API_URL_KEY = 'debet_backend_api_url';
 const API_TOKEN_KEY = 'debet_backend_api_token';
 
-export const DEFAULT_API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:8000/api';
+// If running in browser and NOT localhost, don't default to localhost
+const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+export const DEFAULT_API_URL = import.meta.env?.VITE_API_URL || (isLocalhost ? 'http://localhost:8000/api' : '');
 
 export function getApiUrl() {
-  return localStorage.getItem(API_URL_KEY) || DEFAULT_API_URL;
+  const saved = localStorage.getItem(API_URL_KEY);
+  if (saved !== null) return saved;
+  return DEFAULT_API_URL;
 }
 
 export function setApiUrl(url) {
@@ -29,6 +34,10 @@ export function setApiToken(token) {
 
 async function request(endpoint, options = {}) {
   const baseUrl = getApiUrl();
+  if (!baseUrl) {
+    throw new Error('API URL не настроен');
+  }
+
   const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
   const token = getApiToken();
 
@@ -58,6 +67,10 @@ async function request(endpoint, options = {}) {
 export const api = {
   // Healthcheck & Database info
   async checkHealth() {
+    const baseUrl = getApiUrl();
+    if (!baseUrl) {
+      return { success: false, notConfigured: true, error: 'Сервер API не подключен' };
+    }
     try {
       const data = await request('/health');
       return { success: true, data };
