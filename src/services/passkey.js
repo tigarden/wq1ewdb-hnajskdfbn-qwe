@@ -82,9 +82,9 @@ export async function registerPasskeyCredential(accountName = 'admin@debet.auto'
   const challenge = new Uint8Array(32);
   crypto.getRandomValues(challenge);
 
-  // Generate random user ID
-  const userId = new Uint8Array(16);
-  crypto.getRandomValues(userId);
+  // Generate stable user ID based on account name (critical for Apple Passwords / iCloud Keychain)
+  const enc = new TextEncoder();
+  const userId = enc.encode(accountName);
 
   // Relying Party identifier (hostname without port or protocol)
   // For localhost, hostname is 'localhost'. For GitHub Pages, it is '<username>.github.io'.
@@ -102,13 +102,14 @@ export async function registerPasskeyCredential(accountName = 'admin@debet.auto'
       displayName: 'Debet Admin',
     },
     pubKeyCredParams: [
-      { alg: -7, type: 'public-key' },  // ES256 (ECDSA w/ SHA-256) - default for Apple/iOS
+      { alg: -7, type: 'public-key' },  // ES256 (ECDSA w/ SHA-256) - default for Apple / iOS / macOS
       { alg: -257, type: 'public-key' }, // RS256 (RSA w/ SHA-256) - Windows Hello
     ],
     authenticatorSelection: {
-      authenticatorAttachment: 'platform', // Platform-native: Touch ID, Face ID, Windows Hello
-      userVerification: 'preferred',
-      residentKey: 'preferred',
+      authenticatorAttachment: 'platform', // Strictly use device platform (Face ID, Touch ID, Windows Hello)
+      userVerification: 'required',       // Trigger Face ID / Touch ID prompt immediately
+      residentKey: 'required',            // Required by Apple to save as Passkey in iCloud Keychain
+      requireResidentKey: true,           // Backwards compatibility for iOS WebAuthn L2
     },
     timeout: 60000,
     attestation: 'none',
@@ -165,7 +166,7 @@ export async function authenticateWithPasskey(registeredCredentials = []) {
     challenge,
     rpId,
     timeout: 60000,
-    userVerification: 'preferred',
+    userVerification: 'required',
   };
 
   if (allowCredentials.length > 0) {

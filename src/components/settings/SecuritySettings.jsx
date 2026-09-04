@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import {
   Smartphone,
   Key,
@@ -15,6 +16,8 @@ import {
   Plus,
   Sparkles,
   Info,
+  ExternalLink,
+  QrCode,
 } from 'lucide-react';
 import Badge from '../Badge';
 import ConfirmModal from '../ConfirmModal';
@@ -38,11 +41,27 @@ export default function SecuritySettings({
 
   // TOTP Setup state
   const [setupData, setSetupData] = useState(null);
+  const [qrDataUrl, setQrDataUrl] = useState('');
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
   const [totpVerifyCode, setTotpVerifyCode] = useState('');
   const [totpMsg, setTotpMsg] = useState(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [totpLoading, setTotpLoading] = useState(false);
+
+  // Generate QR code whenever setupData changes
+  useEffect(() => {
+    if (setupData?.otpauthUrl) {
+      QRCode.toDataURL(setupData.otpauthUrl, {
+        margin: 1,
+        width: 180,
+        color: { dark: '#000000', light: '#ffffff' },
+      })
+        .then(setQrDataUrl)
+        .catch((err) => console.error('Error rendering QR code', err));
+    } else {
+      setQrDataUrl('');
+    }
+  }, [setupData]);
 
   // Password change state
   const [oldPass, setOldPass] = useState('');
@@ -287,29 +306,56 @@ export default function SecuritySettings({
         {/* Setup Drawer if active */}
         {setupData && !isTotpEnabled && (
           <div className="p-4 rounded-xl bg-slate-900/90 border border-blue-500/30 space-y-3.5 animate-in fade-in">
-            <div className="text-xs font-medium text-slate-200">
-              Шаги подключения в приложении Google Authenticator:
+            {/* Quick 1-tap Apple Passwords / Authenticator Button */}
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-slate-200 flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Быстрое добавление на iPhone (без сканирования):</span>
+              </span>
+              <a
+                href={setupData.otpauthUrl}
+                className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium text-xs shadow-md transition-all cursor-pointer border border-emerald-400/30"
+              >
+                <Key className="w-4 h-4 text-emerald-200" />
+                <span>Добавить код в «Пароли» Apple (Связка ключей)</span>
+                <ExternalLink className="w-3.5 h-3.5 text-emerald-200 ml-1" />
+              </a>
+              <p className="text-[11px] text-slate-400">
+                Нажмите эту кнопку на iPhone, и iOS автоматически откроет раздел «Пароли» и настроит код проверки.
+              </p>
             </div>
 
-            <ol className="text-xs text-slate-300 space-y-1.5 list-decimal list-inside">
-              <li>Откройте Google Authenticator на смартфоне и нажмите значок <b>«+»</b>.</li>
-              <li>Выберите <b>«Ввести ключ настройки»</b>.</li>
-              <li>
-                Укажите аккаунт: <code className="text-blue-400">Debet.auto</code> и вставьте секретный ключ:
-              </li>
-            </ol>
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-white/10"></div>
+              <span className="flex-shrink mx-2 text-[10px] text-slate-500 uppercase tracking-wider font-mono">
+                или через QR-код / вручную
+              </span>
+              <div className="flex-grow border-t border-white/10"></div>
+            </div>
 
-            {/* Secret key box */}
-            <div className="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-950 border border-white/10 font-mono text-xs text-amber-300 justify-between">
-              <span className="tracking-wider break-all">{setupData.secret}</span>
-              <button
-                type="button"
-                onClick={handleCopyKey}
-                className="flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 shrink-0 transition-colors cursor-pointer"
-              >
-                {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedKey ? 'Скопировано' : 'Копировать'}</span>
-              </button>
+            {/* QR Code and Secret Key box */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-slate-950/70 border border-white/10 rounded-xl">
+              {qrDataUrl && (
+                <div className="shrink-0 bg-white p-1.5 rounded-lg shadow-md">
+                  <img src={qrDataUrl} alt="QR Code" className="w-28 h-28 block" />
+                </div>
+              )}
+              <div className="space-y-2 w-full min-w-0">
+                <p className="text-[11px] text-slate-300">
+                  Если настраиваете с экрана компьютера — наведите камеру смартфона на QR-код. Для ручного ввода:
+                </p>
+                <div className="flex items-center space-x-2 p-2 rounded-lg bg-slate-900 border border-white/10 font-mono text-xs text-amber-300 justify-between">
+                  <span className="tracking-wider break-all text-[11px]">{setupData.secret}</span>
+                  <button
+                    type="button"
+                    onClick={handleCopyKey}
+                    className="flex items-center space-x-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 shrink-0 transition-colors cursor-pointer text-xs"
+                  >
+                    {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedKey ? 'Скопировано' : 'Копировать'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Verify Form */}
