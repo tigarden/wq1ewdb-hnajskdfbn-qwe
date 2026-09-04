@@ -1,38 +1,72 @@
 {
   "id": "debet-auto-app",
-  "name": "Debet.auto — Учет взаиморасчетов",
+  "name": "Debet.auto — Учет взаиморасчетов и запчастей",
   "short_name": "Debet.auto",
   "description": "Учет взаиморасчетов, запчастей и доходов автосервиса",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#080b12",
   "theme_color": "#080b12",
-  "categories": ["business", "finance", "productivity"],
+  "categories": [
+    "business",
+    "finance",
+    "productivity"
+  ],
   "lang": "ru",
   "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Главная панель",
+      "url": "./index.html#dashboard",
+      "description": "Сводка доходов и долгов"
     },
     {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "name": "Клиенты",
+      "url": "./index.html#clients",
+      "description": "Список клиентов и балансы"
+    },
+    {
+      "name": "Каталог запчастей",
+      "url": "./index.html#parts",
+      "description": "Поиск деталей и остатков"
     }
   ]
 }
