@@ -1,40 +1,40 @@
 {
   "version": 1,
   "updatedAt": "2026-09-04T22:18:35.987Z",
-  "clients": [
-    {
-      "id": "sup-1",
-      "car": "",
-      "name": "Тотус",
-      "phone": "",
-      "createdAt": "2026-09-03T20:53:04.600Z",
-      "initialBalance": 0
-    },
-    {
-      "id": "sup-2",
-      "car": "",
-      "name": "Эрнест",
-      "phone": "",
-      "createdAt": "2026-09-03T20:53:04.600Z",
-      "initialBalance": 0
-    },
-    {
-      "id": "sup-3",
-      "car": "",
-      "name": "Витя",
-      "phone": "",
-      "createdAt": "2026-09-03T20:53:04.600Z",
-      "initialBalance": 0
-    }
-  ],
+  "clients": [],
   "clientTransactions": [],
   "suppliersList": [
     "Склад",
     "Партс-Трейд",
     "Автодок",
-    "Одесса"
+    "Одесса",
+    "Тотус",
+    "Эрнест",
+    "Витя",
+    "Элит"
   ],
   "otherCounterparties": [
+    {
+      "id": "sup-1",
+      "name": "Тотус",
+      "phone": "",
+      "notes": "",
+      "createdAt": "2026-09-03T20:53:04.600Z"
+    },
+    {
+      "id": "sup-2",
+      "name": "Эрнест",
+      "phone": "",
+      "notes": "",
+      "createdAt": "2026-09-03T20:53:04.600Z"
+    },
+    {
+      "id": "sup-3",
+      "name": "Витя",
+      "phone": "",
+      "notes": "",
+      "createdAt": "2026-09-03T20:53:04.600Z"
+    },
     {
       "id": "oth-mtninqp6",
       "name": "Элит",

@@ -43,20 +43,20 @@ export async function exportToExcel(data, getClientStats, incomeStats) {
   const wsTx = XLSX.utils.json_to_sheet(txData);
   XLSX.utils.book_append_sheet(wb, wsTx, 'Запчасти и Платежи');
 
-  // 3. Sheet: Other Counterparties
+  // 3. Sheet: Suppliers
   const otherData = (data.otherCounterparties || []).map((p) => {
     const txs = (data.otherTransactions || []).filter((ot) => ot.counterpartyId === p.id);
     const balance = txs.reduce((sum, ot) => sum + (parseFloat(ot.amount) || 0), 0);
     return {
       'ID': p.id,
-      'Имя': p.name,
+      'Поставщик': p.name,
       'Телефон': p.phone || '',
-      'Баланс ($)': balance,
+      'Баланс (₴)': balance,
       'Заметки': p.notes || '',
     };
   });
   const wsOther = XLSX.utils.json_to_sheet(otherData);
-  XLSX.utils.book_append_sheet(wb, wsOther, 'Другие расчеты');
+  XLSX.utils.book_append_sheet(wb, wsOther, 'Поставщики');
 
   // Write and download
   const dateStr = new Date().toISOString().split('T')[0];

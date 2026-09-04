@@ -39,8 +39,8 @@ async def delete_other_counterparty(cp_id: str, db: AsyncSession = Depends(get_d
     """Delete a counterparty and their transactions."""
     deleted = await CounterpartyService.delete_counterparty(db, cp_id)
     if not deleted:
-        raise HTTPException(status_code=404, detail="Контрагент не найден")
-    return {"success": True, "message": f"Контрагент {cp_id} удален"}
+        raise HTTPException(status_code=404, detail="Поставщик не найден")
+    return {"success": True, "message": f"Поставщик {cp_id} удален"}
 
 # Transactions CRUD
 @router.get("/other-transactions", response_model=List[OtherTransactionOut])

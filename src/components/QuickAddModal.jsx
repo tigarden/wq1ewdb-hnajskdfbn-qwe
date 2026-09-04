@@ -165,8 +165,8 @@ export default function QuickAddModal({ isOpen, onClose }) {
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          <UserPlus className="w-3.5 h-3.5" />
-          <span>Контрагент</span>
+          <Truck className="w-3.5 h-3.5" />
+          <span>Поставщик</span>
         </button>
       </div>
 
@@ -375,7 +375,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
       {tab === 'other' && (
         <form onSubmit={handleAddOther} className="space-y-3.5">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Контрагент *</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Поставщик *</label>
             {(data.otherCounterparties || []).length > 0 ? (
               <select
                 value={otherCounterpartyId}
@@ -389,7 +389,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
               </select>
             ) : (
               <p className="text-xs text-amber-400 p-2.5 rounded-md bg-amber-500/10 border border-amber-500/20">
-                Сначала создайте контрагента во вкладке «Контрагенты»!
+                Сначала создайте поставщика во вкладке «Поставщики»!
               </p>
             )}
           </div>
@@ -403,7 +403,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
                 className="w-full input-md font-semibold"
               >
                 <option value="plus" className="bg-[#0b0f19] text-white">+ Долг нам (начисление)</option>
-                <option value="minus" className="bg-[#0b0f19] text-white">- Возврат / Оплата</option>
+                <option value="minus" className="bg-[#0b0f19] text-white">- Оплата поставщику / Возврат</option>
               </select>
             </div>
             <div>
@@ -436,7 +436,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
             disabled={(data.otherCounterparties || []).length === 0}
             className="w-full h-12 sm:h-10 rounded-xl sm:rounded-md bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors mt-2 cursor-pointer active:scale-[0.98]"
           >
-            Записать операцию
+            Записать поставщику
           </button>
         </form>
       )}

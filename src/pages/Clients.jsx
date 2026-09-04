@@ -122,7 +122,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
             <div className="surface-card rounded-xl border border-white/5 p-8 text-center">
               <EmptyState
                 title="Клиенты еще не добавлены"
-                description="Создайте первую карточку клиента или поставщика для ведения учета"
+                description="Создайте первую карточку клиента для ведения учета"
                 actionLabel="+ Создать клиента"
                 onAction={() => setIsAddCliModalOpen(true)}
               />

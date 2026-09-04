@@ -26,7 +26,7 @@ class CounterpartyService:
         cid = cp_in.id or f"oth-{uuid.uuid4().hex}"
         existing = await db.get(OtherCounterparty, cid)
         if existing:
-            raise ValueError(f"Контрагент с ID '{cid}' уже существует")
+            raise ValueError(f"Поставщик с ID '{cid}' уже существует")
 
         cp = OtherCounterparty(
             id=cid,
@@ -70,7 +70,7 @@ class CounterpartyService:
     async def create_transaction(db: AsyncSession, tx_in: OtherTransactionCreate) -> OtherTransaction:
         cp = await db.get(OtherCounterparty, tx_in.counterparty_id)
         if not cp:
-            raise ValueError(f"Контрагент с ID '{tx_in.counterparty_id}' не найден")
+            raise ValueError(f"Поставщик с ID '{tx_in.counterparty_id}' не найден")
 
         tx_id = tx_in.id or f"otx-{uuid.uuid4().hex}"
         amt = Decimal(str(tx_in.amount or "0.00"))

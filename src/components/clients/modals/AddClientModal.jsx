@@ -34,7 +34,7 @@ export default function AddClientModal({ isOpen, onClose, onAddClient, onSelectC
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Новый клиент / мастер">
+    <Modal isOpen={isOpen} onClose={onClose} title="Новый клиент">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
@@ -45,7 +45,7 @@ export default function AddClientModal({ isOpen, onClose, onAddClient, onSelectC
             <input
               type="text"
               required
-              placeholder="Например: Тотус или Сергей Мастер"
+              placeholder="Например: Сергей Мастер или Иван (Passat)"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full pl-9 pr-3 h-12 sm:h-9 bg-slate-900 border border-white/10 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-100 focus:outline-hidden focus:border-blue-500"
