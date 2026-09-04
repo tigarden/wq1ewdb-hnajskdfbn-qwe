@@ -12,6 +12,7 @@ Money = Annotated[
 # --- Client Schemas ---
 class ClientBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
+    client_type: Optional[str] = "retail"
     phone: Optional[str] = ""
     car: Optional[str] = ""
     initial_balance: Optional[Money] = Decimal("0.00")
@@ -22,6 +23,7 @@ class ClientCreate(ClientBase):
 
 class ClientUpdate(BaseModel):
     name: Optional[str] = None
+    client_type: Optional[str] = None
     phone: Optional[str] = None
     car: Optional[str] = None
     initial_balance: Optional[Money] = None

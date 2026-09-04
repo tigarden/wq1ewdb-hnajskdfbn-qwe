@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, CreditCard, Settings2, Trash2, Car, Phone, FileText } from 'lucide-react';
+import { Plus, CreditCard, Settings2, Trash2, Car, Phone, FileText, Building2 } from 'lucide-react';
 import StatCard from '../StatCard';
 import ConfirmModal from '../ConfirmModal';
 import { formatMoney } from '../../utils/format';
@@ -30,9 +30,16 @@ export default function ClientHeader({
           <div className="flex items-center justify-between sm:justify-start sm:space-x-2.5">
             <div className="flex items-center space-x-2.5">
               <h1 className="text-lg sm:text-xl 2xl:text-2xl font-bold text-white tracking-tight">{client.name}</h1>
-              <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 font-mono">
-                ID: {client.id.slice(-6)}
-              </span>
+              {client.clientType === 'wholesale' ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider font-mono flex items-center space-x-1">
+                  <Building2 className="w-3 h-3" />
+                  <span>ОПТ / СТО</span>
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 font-mono">
+                  ID: {client.id.slice(-6)}
+                </span>
+              )}
             </div>
 
             {/* Quick Action Icons on Mobile */}
@@ -57,12 +64,17 @@ export default function ClientHeader({
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-slate-300">
-            {client.car && (
+            {client.clientType === 'wholesale' ? (
+              <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-md bg-indigo-950/50 border border-indigo-500/20 text-indigo-300">
+                <Building2 className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="font-medium">Оптовый клиент (авто указывается в деталях)</span>
+              </span>
+            ) : client.car ? (
               <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-md bg-slate-900 border border-white/5">
                 <Car className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-blue-400" />
                 <span className="font-medium text-slate-200">{client.car}</span>
               </span>
-            )}
+            ) : null}
             {client.phone && (
               <span className="flex items-center space-x-1.5 px-2.5 py-0.5 rounded-md bg-slate-900 border border-white/5 font-mono text-xs sm:text-sm">
                 <Phone className="w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-emerald-400" />
@@ -88,7 +100,7 @@ export default function ClientHeader({
             className="btn-md btn-primary font-bold shadow-sm shadow-blue-500/25 cursor-pointer"
           >
             <Plus className="w-4 h-4 2xl:w-4 2xl:h-4 stroke-[2.5]" />
-            <span>Запчасть</span>
+            <span>Деталь / Заказ</span>
           </button>
 
           <button

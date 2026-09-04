@@ -12,6 +12,7 @@ class Client(Base):
 
     id = Column(String(64), primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
+    client_type = Column(String(32), default="retail")
     phone = Column(String(64), default="")
     car = Column(String(255), default="")
     initial_balance = Column(Numeric(12, 2, asdecimal=True), default=Decimal("0.00"))

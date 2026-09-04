@@ -39,6 +39,7 @@ export function DataProviderInternal({ children }) {
     const newClient = {
       id: clientData.id || `cli-${Date.now().toString(36)}`,
       name: clientData.name.trim(),
+      clientType: clientData.clientType || (clientData.car ? 'retail' : 'retail'),
       phone: (clientData.phone || '').trim(),
       car: (clientData.car || '').trim(),
       initialBalance: round2(clientData.initialBalance || 0),
@@ -61,13 +62,14 @@ export function DataProviderInternal({ children }) {
         return {
           ...c,
           ...updates,
+          clientType: updates.clientType !== undefined ? updates.clientType : (c.clientType || 'retail'),
           name: updates.name !== undefined ? updates.name.trim() : c.name,
           phone: updates.phone !== undefined ? updates.phone.trim() : c.phone,
           car: updates.car !== undefined ? updates.car.trim() : c.car,
           initialBalance:
             updates.initialBalance !== undefined
-              ? round2(updates.initialBalance)
-              : c.initialBalance,
+               ? round2(updates.initialBalance)
+               : c.initialBalance,
           notes: updates.notes !== undefined ? updates.notes.trim() : c.notes,
         };
       }),

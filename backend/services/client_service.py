@@ -37,6 +37,7 @@ class ClientService:
         client = Client(
             id=cid,
             name=client_in.name.strip(),
+            client_type=client_in.client_type or "retail",
             phone=client_in.phone.strip() if client_in.phone else "",
             car=client_in.car.strip() if client_in.car else "",
             initial_balance=round(init_bal, 2),
@@ -55,6 +56,8 @@ class ClientService:
 
         if client_in.name is not None:
             client.name = client_in.name.strip()
+        if client_in.client_type is not None:
+            client.client_type = client_in.client_type
         if client_in.phone is not None:
             client.phone = client_in.phone.strip()
         if client_in.car is not None:

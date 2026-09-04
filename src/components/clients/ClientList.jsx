@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Plus, Car, Phone, ArrowUpDown, User } from 'lucide-react';
+import { Search, Plus, Car, Phone, ArrowUpDown, User, Building2 } from 'lucide-react';
 import Badge from '../Badge';
 import { formatMoney } from '../../utils/format';
 
@@ -104,9 +104,16 @@ export default function ClientList({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm 2xl:text-base font-bold text-slate-100 truncate pr-2">
-                    {client.name}
-                  </span>
+                  <div className="flex items-center space-x-1.5 truncate pr-2">
+                    <span className="text-xs sm:text-sm 2xl:text-base font-bold text-slate-100 truncate">
+                      {client.name}
+                    </span>
+                    {client.clientType === 'wholesale' && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
+                        Опт
+                      </span>
+                    )}
+                  </div>
                   <span className={`text-xs sm:text-sm 2xl:text-base font-bold font-mono tracking-tight ${
                     currentDebt > 0 ? 'text-amber-400' : currentDebt < 0 ? 'text-emerald-400' : 'text-slate-400'
                   }`}>
@@ -115,12 +122,17 @@ export default function ClientList({
                 </div>
 
                 <div className="flex items-center space-x-2 text-xs text-slate-400">
-                  {client.car && (
+                  {client.clientType === 'wholesale' ? (
+                    <span className="flex items-center space-x-1 truncate max-w-[150px] px-2 py-0.5 rounded bg-indigo-950/40 border border-indigo-500/20 text-[11px] text-indigo-300">
+                      <Building2 className="w-3 h-3 text-indigo-400 shrink-0" />
+                      <span>СТО / Оптовик</span>
+                    </span>
+                  ) : client.car ? (
                     <span className="flex items-center space-x-1 truncate max-w-[150px] px-2 py-0.5 rounded bg-slate-900 border border-white/5 text-xs font-mono">
                       <Car className="w-3 h-3 text-slate-400 shrink-0" />
                       <span className="truncate">{client.car}</span>
                     </span>
-                  )}
+                  ) : null}
                   {client.phone && (
                     <span className="flex items-center space-x-1 shrink-0 text-xs text-slate-400 font-mono">
                       <Phone className="w-3 h-3 text-slate-500 shrink-0" />

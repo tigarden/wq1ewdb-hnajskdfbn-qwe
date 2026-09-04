@@ -27,11 +27,23 @@ export default function OtherSettlements() {
     getOtherCounterpartyStats 
   } = useData();
 
-  const [selectedPersonId, setSelectedPersonId] = useState(data.otherCounterparties[0]?.id || null);
+  const counterparties = data.otherCounterparties || [];
+  const [selectedPersonId, setSelectedPersonId] = useState(counterparties[0]?.id || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
 
-  const currentPerson = data.otherCounterparties.find((p) => p.id === selectedPersonId);
+  // Sync selected person if missing or deleted
+  React.useEffect(() => {
+    if (counterparties.length > 0) {
+      if (!selectedPersonId || !counterparties.some((p) => p.id === selectedPersonId)) {
+        setSelectedPersonId(counterparties[0].id);
+      }
+    } else {
+      setSelectedPersonId(null);
+    }
+  }, [counterparties, selectedPersonId]);
+
+  const currentPerson = counterparties.find((p) => p.id === selectedPersonId);
   const currentStats = currentPerson ? getOtherCounterpartyStats(currentPerson.id) : null;
 
   // Modals
@@ -48,6 +60,13 @@ export default function OtherSettlements() {
   const [txNote, setTxNote] = useState('');
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0]);
 
+  const parseMoney = (val) => {
+    if (!val) return 0;
+    const clean = String(val).replace(/\s+/g, '').replace(',', '.');
+    const num = parseFloat(clean);
+    return isNaN(num) ? 0 : num;
+  };
+
   const handleCreatePerson = (e) => {
     e.preventDefault();
     if (!personName.trim()) return;
@@ -60,13 +79,14 @@ export default function OtherSettlements() {
 
   const handleAddTx = (e) => {
     e.preventDefault();
-    if (!txAmount || !currentPerson) return;
-    const finalAmount = txType === 'minus' ? -Math.abs(parseFloat(txAmount)) : Math.abs(parseFloat(txAmount));
+    const parsedAmt = parseMoney(txAmount);
+    if (parsedAmt <= 0 || !currentPerson) return;
+    const finalAmount = txType === 'minus' ? -Math.abs(parsedAmt) : Math.abs(parsedAmt);
     addOtherTransaction({
       counterpartyId: currentPerson.id,
       amount: finalAmount,
       note: txNote.trim(),
-      date: txDate,
+      date: txDate || new Date().toISOString().split('T')[0],
     });
     setTxAmount('');
     setTxNote('');
