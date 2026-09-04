@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
-import { formatMoney } from '../utils/format';
+import { formatMoney, pluralize } from '../utils/format';
 import { 
   Search, 
   Package, 
@@ -11,7 +11,8 @@ import {
   Car, 
   Copy, 
   Check, 
-  X 
+  X,
+  Layers
 } from 'lucide-react';
 
 export default function PartsCatalog() {

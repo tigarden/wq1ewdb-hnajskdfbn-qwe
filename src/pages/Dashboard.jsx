@@ -9,19 +9,33 @@ import {
   Users, 
   Search, 
   Plus, 
-  ChevronRight,
-  CreditCard,
-  Package,
-  Car,
-  Copy,
-  Check
+  ChevronRight, 
+  Package, 
+  Car, 
+  Copy, 
+  Check, 
+  Clock, 
+  DollarSign, 
+  UserCheck, 
+  ArrowUpRight,
+  Sparkles,
+  Save
 } from 'lucide-react';
 
 export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient }) {
-  const { data, globalSummary, getClientStats, incomeStats } = useData();
+  const { 
+    data, 
+    globalSummary, 
+    getClientStats, 
+    incomeStats, 
+    updateItemPurchasePrice 
+  } = useData();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [txFilter, setTxFilter] = useState('all'); // 'all' | 'item' | 'payment'
   const [copiedArticle, setCopiedArticle] = useState(null);
+  const [inlinePriceDrafts, setInlinePriceDrafts] = useState({});
+  const [savedPriceId, setSavedPriceId] = useState(null);
 
   // Filtered recent transactions
   const filteredTxs = useMemo(() => {
@@ -61,6 +75,13 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
       .slice(0, 5);
   }, [data.clientTransactions, searchQuery]);
 
+  // Pending price queue items (items waiting for purchase price)
+  const pendingItems = useMemo(() => {
+    return (data.clientTransactions || [])
+      .filter((t) => t.type === 'item' && (!t.purchasePrice || Number(t.purchasePrice) === 0))
+      .slice(0, 3);
+  }, [data.clientTransactions]);
+
   const handleCopyArticle = (article, e) => {
     e.stopPropagation();
     navigator.clipboard?.writeText(article);
@@ -68,43 +89,64 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
     setTimeout(() => setCopiedArticle(null), 1500);
   };
 
+  const handleSaveInlinePrice = (txId) => {
+    const priceVal = inlinePriceDrafts[txId];
+    if (priceVal === undefined || priceVal === '') return;
+    const num = parseFloat(priceVal);
+    if (isNaN(num) || num < 0) return;
+
+    updateItemPurchasePrice(txId, num);
+    setSavedPriceId(txId);
+    setTimeout(() => {
+      setSavedPriceId(null);
+      setInlinePriceDrafts((prev) => {
+        const copy = { ...prev };
+        delete copy[txId];
+        return copy;
+      });
+    }, 1200);
+  };
+
   return (
-    <div className="space-y-4 animate-in fade-in duration-200">
+    <div className="space-y-5 animate-in fade-in duration-200">
       
-      {/* Top Header Strip: Minimalist, functional */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+      {/* Top Header Command Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-white/[0.06]">
         <div>
-          <h1 className="text-lg font-bold text-white tracking-tight flex items-center space-x-2">
-            <span>Финансовая сводка</span>
-            <span className="text-[11px] font-mono text-slate-400 font-normal">
-              • {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+          <h1 className="text-xl font-bold text-white tracking-tight flex items-center space-x-2">
+            <span>Финансовый центр</span>
+            <span className="text-xs font-mono text-slate-400 font-normal px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/5">
+              {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
             </span>
           </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Контроль дебета, маржинальности запчастей и балансов поставщиков
+          </p>
         </div>
 
         <div className="flex items-center space-x-2">
           {incomeStats.pendingCount > 0 && (
             <button
               onClick={() => setActiveTab('income')}
-              className="btn-sm bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30"
+              className="btn-sm bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-xs group"
             >
-              <Clock className="w-3.5 h-3.5" />
-              <span>Очередь цен: {incomeStats.pendingCount}</span>
+              <Clock className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-45 transition-transform" />
+              <span>Очередь цен: <strong className="font-mono">{incomeStats.pendingCount}</strong></span>
             </button>
           )}
 
           <button
             onClick={onOpenQuickAdd}
-            className="btn-sm bg-blue-600 hover:bg-blue-500 text-white font-bold"
+            className="btn-sm btn-primary font-bold shadow-md shadow-blue-500/20"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Новая запись</span>
           </button>
         </div>
       </div>
 
-      {/* Precision Metric Tiles (4 columns) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* 4 Precision Metric Tiles (Concept A) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <StatCard
           title="Сводный баланс"
           value={formatMoney(globalSummary.grandBalance)}
@@ -112,20 +154,22 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
             globalSummary.grandBalance > 0
               ? 'Остаток долга клиентов'
               : globalSummary.grandBalance < 0
-              ? 'Задолженность перед контрагентами'
+              ? 'Долг перед контрагентами'
               : 'Все счета закрыты'
           }
           icon={TrendingUp}
           variant={globalSummary.grandBalance > 0 ? 'amber' : globalSummary.grandBalance < 0 ? 'rose' : 'slate'}
+          badgeText="₴ UAH"
         />
 
         <StatCard
           title="Чистая прибыль"
           value={`+${formatMoney(incomeStats.totalProfit)}`}
           subtitle={`+${incomeStats.marginPercent.toFixed(1)}% средняя маржа`}
-          actionText="Расчет"
+          actionText="В очередь"
           icon={DollarSign}
           variant="emerald"
+          badgeText={`+${incomeStats.marginPercent.toFixed(0)}%`}
           onClick={() => setActiveTab('income')}
         />
 
@@ -136,60 +180,69 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
           actionText="Клиенты"
           icon={Users}
           variant="amber"
+          badgeText={`${globalSummary.clientsCount} чел.`}
           onClick={() => setActiveTab('clients')}
         />
 
         <StatCard
           title="Контрагенты"
           value={formatMoney(globalSummary.totalOtherBalance)}
-          subtitle={`${data.otherCounterparties?.length || 0} субподрядчиков`}
+          subtitle={`${data.otherCounterparties?.length || 0} поставщиков`}
           actionText="Взаиморасчеты"
           icon={UserCheck}
           variant="blue"
+          badgeText="Тотус / др."
           onClick={() => setActiveTab('other')}
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      {/* Main Responsive Grid (12 Columns on Desktop) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
-        {/* Left Column (7 cols): Recent Activity Feed */}
-        <div className="lg:col-span-7">
-          <div className="surface-card rounded-lg p-4 space-y-3">
+        {/* Left Column (7 cols): High-Density Operations Journal */}
+        <div className="lg:col-span-7 space-y-3">
+          <div className="surface-card rounded-xl p-4 space-y-3.5">
             
-            {/* Header with Segmented Filters */}
-            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+            {/* Header with Segmented Filter Pills */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-white/[0.06] pb-3">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  Последние операции
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center space-x-1.5">
+                  <Package className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Журнал операций</span>
                 </span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-300 border border-white/10 font-bold">
                   {data.clientTransactions?.length || 0}
                 </span>
               </div>
 
-              {/* Strict Button Switcher */}
-              <div className="flex items-center space-x-1 p-0.5 rounded-md bg-slate-950 border border-slate-800">
+              {/* Segmented Filter Pills */}
+              <div className="flex items-center space-x-1 p-0.5 rounded-lg bg-slate-950/80 border border-white/[0.08]">
                 <button
                   onClick={() => setTxFilter('all')}
-                  className={`h-6 px-2 rounded text-[11px] font-semibold transition-colors ${
-                    txFilter === 'all' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'
+                  className={`h-6 px-2.5 rounded-md text-[11px] font-semibold transition-all ${
+                    txFilter === 'all' 
+                      ? 'bg-slate-800 text-white shadow-xs' 
+                      : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   Все
                 </button>
                 <button
                   onClick={() => setTxFilter('item')}
-                  className={`h-6 px-2 rounded text-[11px] font-semibold transition-colors ${
-                    txFilter === 'item' ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200'
+                  className={`h-6 px-2.5 rounded-md text-[11px] font-semibold transition-all ${
+                    txFilter === 'item' 
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
+                      : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  Детали
+                  Запчасти
                 </button>
                 <button
                   onClick={() => setTxFilter('payment')}
-                  className={`h-6 px-2 rounded text-[11px] font-semibold transition-colors ${
-                    txFilter === 'payment' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400 hover:text-slate-200'
+                  className={`h-6 px-2.5 rounded-md text-[11px] font-semibold transition-all ${
+                    txFilter === 'payment' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                      : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   Оплаты
@@ -197,17 +250,17 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
               </div>
             </div>
 
-            {/* List */}
+            {/* List of Recent Transactions */}
             {filteredTxs.length === 0 ? (
               <EmptyState
                 icon={Package}
                 title="Нет операций в этом фильтре"
-                description="Добавьте деталь или оплату нажатием кнопки «Новая запись»."
+                description="Зарегистрируйте запчасть или оплату через кнопку «Новая запись»."
                 actionLabel="Новая запись"
                 onAction={onOpenQuickAdd}
               />
             ) : (
-              <div className="divide-y divide-white/[0.05]">
+              <div className="divide-y divide-white/[0.06]">
                 {filteredTxs.map((tx) => {
                   const cli = (data.clients || []).find((c) => c.id === tx.clientId);
                   const isItem = tx.type === 'item';
@@ -215,7 +268,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                   return (
                     <div 
                       key={tx.id} 
-                      className="py-2.5 px-2 flex items-center justify-between hover:bg-white/[0.02] rounded-md transition-colors cursor-pointer group"
+                      className="py-2.5 px-2 flex items-center justify-between hover:bg-white/[0.03] rounded-lg transition-colors cursor-pointer group"
                       onClick={() => {
                         if (cli?.id) {
                           onSelectClient(cli.id);
@@ -224,9 +277,9 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                       }}
                     >
                       <div className="flex items-center space-x-3 min-w-0 pr-2">
-                        {/* Status Bar */}
-                        <span className={`w-1 h-8 rounded-full shrink-0 ${
-                          isItem ? 'bg-amber-500' : 'bg-emerald-500'
+                        {/* Status Vertical Bar */}
+                        <span className={`w-1 h-9 rounded-full shrink-0 ${
+                          isItem ? 'bg-amber-500' : 'bg-emerald-500 shadow-xs shadow-emerald-500/30'
                         }`} />
 
                         {/* Details */}
@@ -236,21 +289,21 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                               {cli?.name || 'Клиент'}
                             </span>
                             
-                            <Badge variant={isItem ? 'item' : 'payment'} size="xs">
+                            <Badge variant={isItem ? 'item' : 'payment'} size="xs" showDot>
                               {isItem ? 'Деталь' : 'Оплата'}
                             </Badge>
 
                             {tx.article && (
                               <button
                                 onClick={(e) => handleCopyArticle(tx.article, e)}
-                                title="Скопировать артикул"
-                                className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-slate-950 text-blue-400 border border-blue-500/30 text-[10px] font-mono font-bold hover:border-blue-400 transition-colors"
+                                title="Нажмите, чтобы скопировать артикул"
+                                className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-blue-950/40 text-blue-400 border border-blue-500/30 text-[10px] font-mono font-bold hover:border-blue-400 transition-colors"
                               >
                                 <span>{tx.article}</span>
                                 {copiedArticle === tx.article ? (
                                   <Check className="w-2.5 h-2.5 text-emerald-400" />
                                 ) : (
-                                  <Copy className="w-2.5 h-2.5 opacity-50" />
+                                  <Copy className="w-2.5 h-2.5 opacity-60" />
                                 )}
                               </button>
                             )}
@@ -288,18 +341,113 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
           </div>
         </div>
 
-        {/* Right Column (5 cols): Top Debtors & Fast Part Search */}
+        {/* Right Column (5 cols): Operational Power Column */}
         <div className="lg:col-span-5 space-y-4">
           
-          {/* Top Debtors Leaderboard */}
-          <div className="surface-card rounded-lg p-4">
+          {/* 1. Interactive Fast Price Queue Widget */}
+          <div className="surface-card rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
+              <div className="flex items-center space-x-1.5">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Очередь цен на закупку
+                </span>
+                {incomeStats.pendingCount > 0 && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-bold">
+                    {incomeStats.pendingCount}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setActiveTab('income')}
+                className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-0.5"
+              >
+                <span>Все</span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+
+            {pendingItems.length === 0 ? (
+              <div className="py-4 text-center">
+                <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-400 mb-1.5">
+                  <Check className="w-4 h-4" />
+                </div>
+                <p className="text-xs font-medium text-slate-200">Все входящие цены указаны</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Маржа и прибыль рассчитываются в 100% объеме</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {pendingItems.map((item) => {
+                  const cli = (data.clients || []).find((c) => c.id === item.clientId);
+                  const isSaved = savedPriceId === item.id;
+                  const draftVal = inlinePriceDrafts[item.id] !== undefined ? inlinePriceDrafts[item.id] : '';
+
+                  return (
+                    <div 
+                      key={item.id}
+                      className="p-2.5 rounded-lg bg-slate-950/70 border border-white/[0.06] space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="min-w-0 pr-2">
+                          <span className="font-bold text-slate-100 truncate block">
+                            {item.description || item.article || 'Деталь'}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {cli?.name} {item.carName && `• ${item.carName}`}
+                          </span>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-slate-200 shrink-0">
+                          Прод: {formatMoney(item.amount)}
+                        </span>
+                      </div>
+
+                      {/* Inline Input & Save Row */}
+                      <div className="flex items-center space-x-2 pt-0.5">
+                        <input
+                          type="number"
+                          placeholder="Цена входа (₴)..."
+                          value={draftVal}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setInlinePriceDrafts((prev) => ({ ...prev, [item.id]: val }));
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveInlinePrice(item.id);
+                          }}
+                          className="input-sm flex-1 font-mono text-xs"
+                        />
+                        <button
+                          onClick={() => handleSaveInlinePrice(item.id)}
+                          disabled={!draftVal}
+                          className={`btn-sm px-2.5 ${
+                            isSaved 
+                              ? 'bg-emerald-600 text-white' 
+                              : 'btn-primary'
+                          } disabled:opacity-40 disabled:pointer-events-none`}
+                        >
+                          {isSaved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+                          <span>{isSaved ? 'Сохранено' : 'Внести'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 2. Top Debtors Leaderboard */}
+          <div className="surface-card rounded-xl p-4">
             <div className="flex items-center justify-between border-b border-white/[0.06] pb-3 mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                Топ должников
-              </span>
+              <div className="flex items-center space-x-1.5">
+                <Users className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Топ должников
+                </span>
+              </div>
               <button
                 onClick={() => setActiveTab('clients')}
-                className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1"
+                className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-0.5"
               >
                 <span>Все клиенты</span>
                 <ChevronRight className="w-3 h-3" />
@@ -321,18 +469,18 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                         onSelectClient(debtor.id);
                         setActiveTab('clients');
                       }}
-                      className="cursor-pointer p-2.5 rounded-md bg-slate-950/70 hover:bg-slate-900 border border-slate-800/80 transition-colors group"
+                      className="cursor-pointer p-2.5 rounded-lg bg-slate-950/70 hover:bg-slate-900/80 border border-white/[0.06] hover:border-white/15 transition-all group"
                     >
                       <div className="flex items-center justify-between text-xs mb-1.5">
                         <div className="flex items-center space-x-2">
-                          <span className="w-4 h-4 rounded bg-slate-800 text-slate-400 font-mono font-bold flex items-center justify-center text-[10px]">
+                          <span className="w-4 h-4 rounded bg-slate-800 text-slate-300 font-mono font-bold flex items-center justify-center text-[10px]">
                             {idx + 1}
                           </span>
                           <span className="font-bold text-slate-100 group-hover:text-blue-400 transition-colors">
                             {debtor.name}
                           </span>
                           {debtor.car && (
-                            <span className="text-[10px] text-slate-400 bg-slate-900 px-1 py-0.5 rounded border border-slate-800 truncate max-w-[90px]">
+                            <span className="text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-white/5 truncate max-w-[100px]">
                               {debtor.car}
                             </span>
                           )}
@@ -343,10 +491,10 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                         </div>
                       </div>
 
-                      {/* Progress bar */}
-                      <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden">
+                      {/* Visual Gradient Progress Bar */}
+                      <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
                         <div 
-                          className="bg-amber-500 h-1 rounded-full transition-all duration-300" 
+                          className="bg-gradient-to-r from-amber-600 to-amber-400 h-1.5 rounded-full transition-all duration-300" 
                           style={{ width: `${percent}%` }}
                         />
                       </div>
@@ -357,26 +505,27 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
             )}
           </div>
 
-          {/* Fast Part Code Finder */}
-          <div className="surface-card rounded-lg p-4 space-y-3">
+          {/* 3. Fast Part Code Finder */}
+          <div className="surface-card rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                Поиск артикула
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center space-x-1.5">
+                <Search className="w-3.5 h-3.5 text-blue-400" />
+                <span>Быстрый поиск артикула</span>
               </span>
               <button
                 onClick={() => setActiveTab('parts')}
-                className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-1"
+                className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold inline-flex items-center space-x-0.5"
               >
-                <span>В каталог</span>
+                <span>Каталог</span>
                 <ChevronRight className="w-3 h-3" />
               </button>
             </div>
 
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
               <input
                 type="text"
-                placeholder="Поиск кода (напр. S TL C00117/8)..."
+                placeholder="Поиск по коду (напр. S TL C00117/8)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -384,7 +533,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                     setActiveTab('parts');
                   }
                 }}
-                className="w-full h-9 pl-9 pr-3 bg-slate-950 border border-slate-800 rounded-md text-slate-100 text-xs font-mono focus:outline-hidden focus:border-blue-500 transition-colors"
+                className="w-full input-sm pl-9 font-mono"
               />
             </div>
 
@@ -397,12 +546,12 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
                     <div 
                       key={t.id} 
                       onClick={() => setActiveTab('parts')}
-                      className="cursor-pointer p-2 rounded-md bg-slate-950 hover:bg-slate-900 border border-slate-800 flex items-center justify-between text-xs transition-colors"
+                      className="cursor-pointer p-2 rounded-lg bg-slate-950 hover:bg-slate-900 border border-white/[0.06] flex items-center justify-between text-xs transition-colors"
                     >
                       <div>
                         <div className="flex items-center space-x-1.5">
                           <span className="font-mono font-bold text-blue-400">{t.article}</span>
-                          {t.carName && <span className="text-[10px] text-slate-500">({t.carName})</span>}
+                          {t.carName && <span className="text-[10px] text-slate-400">({t.carName})</span>}
                         </div>
                         <span className="text-[10px] text-slate-400 truncate block max-w-[180px]">
                           {t.description || cli?.name}

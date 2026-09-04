@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Package, CreditCard, Copy, Check, Trash2, Search, Calendar, Truck, Car } from 'lucide-react';
+import { Package, CreditCard, Copy, Check, Trash2, Search, Calendar, Truck, Car, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import Badge from '../Badge';
 import EmptyState from '../EmptyState';
 import { formatMoney } from '../../utils/format';
@@ -39,16 +39,16 @@ export default function ClientLedger({
   }, [transactions, filterType, search]);
 
   return (
-    <div className="surface-card rounded-xl border border-white/5 overflow-hidden flex flex-col">
+    <div className="surface-card rounded-xl border border-white/[0.08] overflow-hidden flex flex-col shadow-lg">
       {/* Ledger Header & Filters */}
-      <div className="p-3 sm:p-4 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex items-center space-x-1 bg-slate-900/60 p-0.5 rounded-lg border border-white/5 w-fit">
+      <div className="p-3 sm:p-4 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center space-x-1 bg-slate-950/80 p-0.5 rounded-lg border border-white/[0.08] w-fit">
           <button
             type="button"
             onClick={() => setFilterType('all')}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
               filterType === 'all'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-slate-800 text-white shadow-xs'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -57,9 +57,9 @@ export default function ClientLedger({
           <button
             type="button"
             onClick={() => setFilterType('item')}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
               filterType === 'item'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -68,9 +68,9 @@ export default function ClientLedger({
           <button
             type="button"
             onClick={() => setFilterType('payment')}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
               filterType === 'payment'
-                ? 'bg-blue-600 text-white'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -85,7 +85,7 @@ export default function ClientLedger({
             placeholder="Поиск по артикулу, детали..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-white/10 rounded-lg text-xs text-slate-200 focus:outline-hidden focus:border-blue-500"
+            className="w-full input-sm pl-8 font-mono text-xs"
           />
         </div>
       </div>
@@ -103,59 +103,61 @@ export default function ClientLedger({
           onAction={onOpenAddItem}
         />
       ) : (
-        <div className="divide-y divide-white/5">
+        <div className="divide-y divide-white/[0.06]">
           {filteredTransactions.map((tx) => {
             const isItem = tx.type === 'item';
+            const profit = isItem && tx.purchasePrice > 0 ? tx.amount - tx.purchasePrice : null;
+            const margin = profit && tx.amount > 0 ? ((profit / tx.amount) * 100).toFixed(0) : null;
 
             return (
               <div
                 key={tx.id}
-                className="p-3 sm:p-4 hover:bg-white/2 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                className="p-3 sm:p-4 hover:bg-white/[0.02] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 group"
               >
                 {/* Left: Info */}
-                <div className="flex items-start space-x-3">
+                <div className="flex items-start space-x-3 min-w-0">
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                       isItem
-                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25'
+                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 shadow-xs shadow-emerald-500/10'
                     }`}
                   >
                     {isItem ? <Package className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       {isItem && tx.article && (
                         <button
                           type="button"
                           onClick={() => handleCopy(tx.article, tx.id)}
-                          className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-blue-300 font-mono text-xs font-semibold transition-colors group"
-                          title="Нажмите чтобы скопировать артикул"
+                          className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-blue-950/40 text-blue-400 border border-blue-500/30 font-mono text-[11px] font-bold hover:border-blue-400 transition-colors cursor-pointer"
+                          title="Скопировать артикул"
                         >
                           <span>{tx.article}</span>
                           {copiedId === tx.id ? (
-                            <Check className="w-3 h-3 text-emerald-400" />
+                            <Check className="w-2.5 h-2.5 text-emerald-400" />
                           ) : (
-                            <Copy className="w-3 h-3 text-slate-500 group-hover:text-blue-300" />
+                            <Copy className="w-2.5 h-2.5 opacity-60" />
                           )}
                         </button>
                       )}
 
-                      <span className="text-xs font-medium text-slate-200">
+                      <span className="text-xs font-bold text-slate-100">
                         {isItem ? tx.description || 'Деталь' : 'Оплата от клиента'}
                       </span>
 
-                      <span className="text-[11px] text-slate-500 flex items-center space-x-1 font-mono">
-                        <Calendar className="w-3 h-3" />
+                      <span className="text-[10px] text-slate-500 flex items-center space-x-1 font-mono">
+                        <Calendar className="w-3 h-3 text-slate-500" />
                         <span>{tx.date}</span>
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-400">
                       {tx.carName && (
-                        <span className="flex items-center space-x-1 text-slate-400">
-                          <Car className="w-3 h-3 text-slate-500" />
+                        <span className="flex items-center space-x-1 text-slate-300">
+                          <Car className="w-3 h-3 text-blue-400" />
                           <span>{tx.carName}</span>
                         </span>
                       )}
@@ -173,18 +175,31 @@ export default function ClientLedger({
                 </div>
 
                 {/* Right: Amounts & Actions */}
-                <div className="flex items-center justify-between sm:justify-end space-x-3 shrink-0 pl-11 sm:pl-0">
+                <div className="flex items-center justify-between sm:justify-end space-x-3.5 shrink-0 pl-11 sm:pl-0">
                   <div className="text-right">
                     <div
-                      className={`text-sm font-bold font-mono ${
-                        isItem ? 'text-slate-100' : 'text-emerald-400'
+                      className={`text-sm font-bold font-mono tracking-tight ${
+                        isItem ? 'text-amber-400' : 'text-emerald-400'
                       }`}
                     >
                       {isItem ? `+${formatMoney(tx.amount)}` : `-${formatMoney(tx.amount)}`}
                     </div>
-                    {isItem && tx.purchasePrice > 0 && (
-                      <div className="text-[10px] text-slate-500 font-mono">
-                        Закупка: {formatMoney(tx.purchasePrice)}
+                    {isItem && (
+                      <div className="text-[10px] font-mono flex items-center justify-end space-x-1 mt-0.5">
+                        {tx.purchasePrice > 0 ? (
+                          <>
+                            <span className="text-slate-500">Вход: {formatMoney(tx.purchasePrice)}</span>
+                            {profit > 0 && (
+                              <span className="text-emerald-400 font-semibold">
+                                (+{formatMoney(profit)} • {margin}%)
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-amber-500/80 italic font-sans text-[10px]">
+                            Вход не указан
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -197,7 +212,7 @@ export default function ClientLedger({
                       }
                     }}
                     title="Удалить запись"
-                    className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-white/5 transition-colors"
+                    className="w-7 h-7 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center transition-colors opacity-60 group-hover:opacity-100"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>

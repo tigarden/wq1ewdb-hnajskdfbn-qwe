@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { useData } from '../context/DataContext';
-import { Package, CreditCard, TrendingUp } from 'lucide-react';
+import { Package, CreditCard, TrendingUp, UserPlus } from 'lucide-react';
 import { formatMoney } from '../utils/format';
 
 export default function QuickAddModal({ isOpen, onClose }) {

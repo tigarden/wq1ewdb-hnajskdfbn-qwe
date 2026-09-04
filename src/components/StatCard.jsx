@@ -3,43 +3,63 @@ import { ChevronRight } from 'lucide-react';
 
 export default function StatCard({
   title,
+  label,
   value,
   subtitle,
+  subValue,
   icon: Icon,
   variant = 'slate',
   valueColor,
   onClick,
   actionText,
+  badgeText,
   className = '',
 }) {
   const isClickable = Boolean(onClick);
+  const displayTitle = title || label;
+  const displaySubtitle = subtitle || subValue;
 
   const getVariantStyles = () => {
     switch (variant) {
       case 'emerald':
         return {
           text: 'text-emerald-400',
-          indicator: 'bg-emerald-500',
+          indicator: 'bg-emerald-400',
+          glow: 'from-emerald-500/10 via-emerald-500/5 to-transparent',
+          borderHover: 'hover:border-emerald-500/30',
+          badge: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
         };
       case 'amber':
         return {
           text: 'text-amber-400',
-          indicator: 'bg-amber-500',
+          indicator: 'bg-amber-400',
+          glow: 'from-amber-500/10 via-amber-500/5 to-transparent',
+          borderHover: 'hover:border-amber-500/30',
+          badge: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
         };
       case 'rose':
         return {
           text: 'text-rose-400',
-          indicator: 'bg-rose-500',
+          indicator: 'bg-rose-400',
+          glow: 'from-rose-500/10 via-rose-500/5 to-transparent',
+          borderHover: 'hover:border-rose-500/30',
+          badge: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
         };
       case 'blue':
         return {
           text: 'text-blue-400',
-          indicator: 'bg-blue-500',
+          indicator: 'bg-blue-400',
+          glow: 'from-blue-500/10 via-blue-500/5 to-transparent',
+          borderHover: 'hover:border-blue-500/30',
+          badge: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
         };
       default:
         return {
           text: 'text-slate-200',
-          indicator: 'bg-slate-500',
+          indicator: 'bg-slate-400',
+          glow: 'from-slate-500/10 via-slate-500/5 to-transparent',
+          borderHover: 'hover:border-white/20',
+          badge: 'bg-slate-800 text-slate-300 border-slate-700',
         };
     }
   };
@@ -49,32 +69,48 @@ export default function StatCard({
   return (
     <div
       onClick={onClick}
-      className={`surface-card p-3.5 sm:p-4 rounded-lg transition-colors ${
-        isClickable ? 'cursor-pointer hover:border-white/20' : ''
+      className={`relative overflow-hidden surface-card p-3.5 sm:p-4 rounded-xl border border-white/[0.08] transition-all duration-200 group ${
+        isClickable ? `cursor-pointer hover:-translate-y-0.5 hover:shadow-xl ${v.borderHover}` : ''
       } ${className}`}
     >
-      <div className="flex items-center justify-between">
+      {/* Ambient corner light */}
+      <div 
+        className={`absolute -top-12 -right-12 w-28 h-28 rounded-full bg-gradient-to-br ${v.glow} blur-xl pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity`} 
+      />
+
+      <div className="relative z-10 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <span className={`w-1.5 h-1.5 rounded-full ${v.indicator}`} />
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${v.indicator}`} />
           <span className="text-[11px] font-semibold tracking-wider uppercase text-slate-400">
-            {title}
+            {displayTitle}
           </span>
         </div>
-        {Icon && <Icon className="w-4 h-4 text-slate-500" />}
+        {Icon && (
+          <div className="w-6 h-6 rounded-md bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-slate-400 group-hover:text-slate-200 transition-colors">
+            <Icon className="w-3.5 h-3.5" />
+          </div>
+        )}
       </div>
 
-      <div className="mt-2">
-        <div className={`text-xl sm:text-2xl font-bold font-mono tracking-tight ${valueColor || v.text}`}>
-          {value}
+      <div className="relative z-10 mt-2.5">
+        <div className="flex items-baseline space-x-2">
+          <div className={`text-xl sm:text-2xl font-bold font-mono tracking-tight ${valueColor || v.text}`}>
+            {value}
+          </div>
+          {badgeText && (
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border font-mono ${v.badge}`}>
+              {badgeText}
+            </span>
+          )}
         </div>
 
-        {(subtitle || actionText) && (
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
-            {subtitle && <span className="truncate">{subtitle}</span>}
+        {(displaySubtitle || actionText) && (
+          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1.5">
+            {displaySubtitle && <span className="truncate pr-2">{displaySubtitle}</span>}
             {actionText && (
-              <span className="inline-flex items-center space-x-1 font-semibold text-blue-400 ml-auto">
+              <span className="inline-flex items-center space-x-0.5 font-semibold text-blue-400 group-hover:text-blue-300 ml-auto shrink-0 transition-colors">
                 <span>{actionText}</span>
-                <ChevronRight className="w-3 h-3" />
+                <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </span>
             )}
           </div>

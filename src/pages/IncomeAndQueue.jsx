@@ -14,7 +14,9 @@ import {
   Truck, 
   Copy, 
   Check, 
-  User 
+  User,
+  DollarSign,
+  Percent
 } from 'lucide-react';
 
 export default function IncomeAndQueue() {

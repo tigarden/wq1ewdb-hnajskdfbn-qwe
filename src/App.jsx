@@ -51,7 +51,7 @@ export default function App() {
         onOpenInstallModal={() => setIsInstallModalOpen(true)}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 pb-20 md:pb-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 pb-24 md:pb-8">
         <Suspense fallback={<PageLoader />}>
           {activeTab === 'dashboard' && (
             <Dashboard
@@ -92,7 +92,7 @@ export default function App() {
         onClose={() => setIsInstallModalOpen(false)}
       />
 
-      <footer className="border-t border-white/5 py-4 text-center text-xs text-slate-500 mb-14 md:mb-0">
+      <footer className="border-t border-white/5 py-4 text-center text-xs text-slate-500 mb-20 md:mb-0">
         Debet.auto — Учет взаиморасчетов, запчастей и доходов • Защита AES-256 + 2FA
       </footer>
     </div>
