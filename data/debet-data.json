@@ -1,45 +1,74 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-04T22:18:35.987Z",
-  "clients": [],
-  "clientTransactions": [],
+  "updatedAt": "2026-09-04T23:48:13.121Z",
+  "clients": [
+    {
+      "id": "sup-1",
+      "car": "",
+      "name": "Тотус",
+      "phone": "",
+      "createdAt": "2026-09-03T20:53:04.600Z",
+      "initialBalance": 0
+    },
+    {
+      "id": "sup-2",
+      "car": "",
+      "name": "Эрнест",
+      "phone": "",
+      "createdAt": "2026-09-03T20:53:04.600Z",
+      "initialBalance": 0
+    },
+    {
+      "id": "sup-3",
+      "car": "",
+      "name": "Витя",
+      "phone": "",
+      "createdAt": "2026-09-03T20:53:04.600Z",
+      "initialBalance": 0
+    }
+  ],
+  "clientTransactions": [
+    {
+      "id": "ctx-mtnlnlb3-e0qa",
+      "date": "2026-09-04",
+      "note": "",
+      "type": "item",
+      "amount": 850,
+      "article": "",
+      "carName": "",
+      "clientId": "sup-1",
+      "createdAt": "2026-09-04T23:43:12.543Z",
+      "description": "Свечи зажигания NGK",
+      "supplierName": "",
+      "purchasePrice": 0
+    },
+    {
+      "id": "ctx-mtnlmycu-89l8",
+      "date": "2026-09-04",
+      "note": "",
+      "type": "item",
+      "amount": 2400,
+      "article": "OC90",
+      "carName": "",
+      "clientId": "sup-1",
+      "createdAt": "2026-09-04T23:42:42.798Z",
+      "description": "",
+      "supplierName": "",
+      "purchasePrice": 0
+    }
+  ],
   "suppliersList": [
     "Склад",
     "Партс-Трейд",
     "Автодок",
-    "Одесса",
-    "Тотус",
-    "Эрнест",
-    "Витя",
-    "Элит"
+    "Одесса"
   ],
   "otherCounterparties": [
     {
-      "id": "sup-1",
-      "name": "Тотус",
-      "phone": "",
-      "notes": "",
-      "createdAt": "2026-09-03T20:53:04.600Z"
-    },
-    {
-      "id": "sup-2",
-      "name": "Эрнест",
-      "phone": "",
-      "notes": "",
-      "createdAt": "2026-09-03T20:53:04.600Z"
-    },
-    {
-      "id": "sup-3",
-      "name": "Витя",
-      "phone": "",
-      "notes": "",
-      "createdAt": "2026-09-03T20:53:04.600Z"
-    },
-    {
       "id": "oth-mtninqp6",
       "name": "Элит",
-      "phone": "",
       "notes": "",
+      "phone": "",
       "createdAt": "2026-09-04T22:19:20.682Z"
     }
   ],
