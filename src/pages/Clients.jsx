@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import Modal from '../components/Modal';
+import StatCard from '../components/StatCard';
+import Badge from '../components/Badge';
+import EmptyState from '../components/EmptyState';
+import { formatMoney, pluralize } from '../utils/format';
 import { 
   Users, 
   Plus, 
@@ -67,10 +71,6 @@ export default function Clients({ selectedClientId, onSelectClient }) {
   const [payAmount, setPayAmount] = useState('');
   const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0]);
   const [payNote, setPayNote] = useState('');
-
-  const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
-  };
 
   const handleCreateClient = (e) => {
     e.preventDefault();
@@ -295,45 +295,33 @@ export default function Clients({ selectedClientId, onSelectClient }) {
 
           {/* Client Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
-              <span className="text-xs text-slate-400 font-medium">Начальный долг</span>
-              <div className="text-lg sm:text-xl font-bold font-mono text-slate-300 mt-1">
-                {formatMoney(stats.initialBalance)}
-              </div>
-              <span className="text-[10px] text-slate-500">на начало учета</span>
-            </div>
+            <StatCard
+              title="Стартовый баланс"
+              value={formatMoney(stats.initialBalance)}
+              subtitle="Начальное состояние"
+              variant="slate"
+            />
 
-            <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
-              <span className="text-xs text-amber-400 font-medium">Заказы / Детали (+)</span>
-              <div className="text-lg sm:text-xl font-bold font-mono text-amber-400 mt-1">
-                {formatMoney(stats.totalItems)}
-              </div>
-              <span className="text-[10px] text-slate-400">{stats.itemsCount} позиций</span>
-            </div>
+            <StatCard
+              title="Заказы / Детали (+)"
+              value={formatMoney(stats.totalItems)}
+              subtitle={pluralize(stats.itemsCount, ['позиция', 'позиции', 'позиций'])}
+              variant="amber"
+            />
 
-            <div className="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
-              <span className="text-xs text-emerald-400 font-medium">Оплаты клиента (-)</span>
-              <div className="text-lg sm:text-xl font-bold font-mono text-emerald-400 mt-1">
-                {formatMoney(stats.totalPayments)}
-              </div>
-              <span className="text-[10px] text-slate-400">{stats.paymentsCount} платежей</span>
-            </div>
+            <StatCard
+              title="Оплаты клиента (-)"
+              value={formatMoney(stats.totalPayments)}
+              subtitle={pluralize(stats.paymentsCount, ['платеж', 'платежа', 'платежей'])}
+              variant="emerald"
+            />
 
-            <div className={`p-4 rounded-2xl border shadow-lg ${
-              stats.currentDebt > 0 
-                ? 'bg-rose-950/20 border-rose-500/30 text-rose-300 shadow-rose-950/10' 
-                : 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300 shadow-emerald-950/10'
-            }`}>
-              <span className="text-xs font-semibold uppercase tracking-wider">
-                Текущий долг клиента
-              </span>
-              <div className="text-xl sm:text-2xl font-bold font-mono mt-1">
-                {formatMoney(stats.currentDebt)}
-              </div>
-              <span className="text-[10px] opacity-80">
-                {stats.currentDebt > 0 ? 'Клиент должен нам' : 'Клиент переплатил'}
-              </span>
-            </div>
+            <StatCard
+              title="Текущий долг клиента"
+              value={formatMoney(stats.currentDebt)}
+              subtitle={stats.currentDebt > 0 ? 'Клиент должен нам' : stats.currentDebt < 0 ? 'Переплата клиента' : 'Взаиморасчет закрыт'}
+              variant={stats.currentDebt > 0 ? 'rose' : 'emerald'}
+            />
           </div>
 
           {/* Action Toolbar */}
@@ -347,7 +335,7 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                 }`}
               >
                 <History className="w-3.5 h-3.5" />
-                <span>Лента сальдо</span>
+                <span>История операций</span>
               </button>
               <button
                 onClick={() => setViewMode('items')}
@@ -438,11 +426,9 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                               {tx.date || new Date(tx.createdAt).toLocaleDateString('ru-RU')}
                             </td>
                             <td className="py-3 px-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium ${
-                                isItem ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'
-                              }`}>
+                              <Badge variant={isItem ? 'item' : 'payment'} size="sm">
                                 {isItem ? 'Деталь' : 'Оплата'}
-                              </span>
+                              </Badge>
                             </td>
                             <td className="py-3 px-4">
                               <div className="font-semibold text-slate-100 font-mono">
@@ -490,8 +476,14 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                       })}
                     {stats.timeline.length === 0 && (
                       <tr>
-                        <td colSpan="9" className="py-10 text-center text-slate-500">
-                          Нет записей. Добавьте первую деталь или оплату кнопками выше.
+                        <td colSpan="9" className="py-8">
+                          <EmptyState
+                            icon={History}
+                            title="История операций пуста"
+                            description="Добавьте деталь или оплату кнопками выше."
+                            actionLabel="Добавить деталь"
+                            onAction={handleOpenAddItem}
+                          />
                         </td>
                       </tr>
                     )}
@@ -559,6 +551,19 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                           </tr>
                         );
                       })}
+                    {data.clientTransactions.filter((t) => t.clientId === currentClient.id && t.type === 'item').length === 0 && (
+                      <tr>
+                        <td colSpan="9" className="py-8">
+                          <EmptyState
+                            icon={Package}
+                            title="Нет добавленных деталей"
+                            description="Здесь будут отображаться все запчасти, установленные клиенту."
+                            actionLabel="Добавить деталь"
+                            onAction={handleOpenAddItem}
+                          />
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -599,6 +604,19 @@ export default function Clients({ selectedClientId, onSelectClient }) {
                           </td>
                         </tr>
                       ))}
+                    {data.clientTransactions.filter((t) => t.clientId === currentClient.id && t.type === 'payment').length === 0 && (
+                      <tr>
+                        <td colSpan="4" className="py-8">
+                          <EmptyState
+                            icon={CreditCard}
+                            title="Оплат пока не поступало"
+                            description="Фиксируйте поступившие платежи и переводы от клиента."
+                            actionLabel="Внести оплату"
+                            onAction={() => setIsAddPaymentModalOpen(true)}
+                          />
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

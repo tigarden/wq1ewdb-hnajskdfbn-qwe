@@ -259,9 +259,9 @@ export default function Settings() {
               <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
               <Download className="w-4 h-4 text-slate-500 group-hover:text-emerald-400 transition-colors" />
             </div>
-            <h3 className="font-semibold text-slate-200 text-sm">Выгрузка в Excel</h3>
+            <h3 className="font-semibold text-slate-200 text-sm">Экспорт в Excel (.xlsx)</h3>
             <p className="text-[11px] text-slate-400 mt-1">
-              Скачать книгу .xlsx со всеми поставщиками и заказами
+              Выгрузить файл .xlsx со всеми клиентами, деталями и расчетами
             </p>
           </button>
 

@@ -23,10 +23,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenQuickAdd }) {
 
   const navItems = [
     { id: 'dashboard', label: 'Дашборд', icon: LayoutDashboard },
-    { id: 'clients', label: 'Мои клиенты', icon: Users },
+    { id: 'clients', label: 'Клиенты', icon: Users },
     { id: 'income', label: 'Доход & Очередь', icon: DollarSign, badge: incomeStats?.pendingCount },
-    { id: 'other', label: 'Другие расчеты', icon: UserCheck },
-    { id: 'parts', label: 'Поиск артикула', icon: Search },
+    { id: 'other', label: 'Контрагенты', icon: UserCheck },
+    { id: 'parts', label: 'База артикулов', icon: Search },
     { id: 'settings', label: 'Настройки', icon: Settings },
   ];
 

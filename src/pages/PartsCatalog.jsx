@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
+import Badge from '../components/Badge';
+import EmptyState from '../components/EmptyState';
+import { formatMoney, pluralize } from '../utils/format';
 import { Search, Package, User, Truck, Car } from 'lucide-react';
 
 export default function PartsCatalog() {
   const { data } = useData();
   const [query, setQuery] = useState('');
-
-  const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
-  };
 
   const catalog = useMemo(() => {
     const map = {};
@@ -90,9 +89,9 @@ export default function PartsCatalog() {
                   <span className="text-base font-bold font-mono text-blue-300">
                     {item.article}
                   </span>
-                  <span className="text-xs text-slate-400 px-2 py-0.5 rounded-full bg-slate-800">
-                    {item.entries.length} записей
-                  </span>
+                  <Badge variant="neutral" size="sm">
+                    {pluralize(item.entries.length, ['запись', 'записи', 'записей'])}
+                  </Badge>
                 </div>
                 {item.descriptions.length > 0 && (
                   <p className="text-xs text-slate-300 mt-1">
@@ -146,9 +145,11 @@ export default function PartsCatalog() {
         ))}
 
         {filtered.length === 0 && (
-          <div className="bg-slate-900/60 p-12 rounded-2xl border border-slate-800 text-center text-slate-500 text-sm">
-            Артикулов не найдено.
-          </div>
+          <EmptyState
+            icon={Package}
+            title="Артикулов не найдено"
+            description={query ? `По запросу «${query}» ничего не найдено.` : 'В базе еще нет добавленных деталей с кодами артикулов.'}
+          />
         )}
       </div>
 

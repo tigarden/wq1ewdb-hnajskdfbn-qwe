@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
 import Modal from '../components/Modal';
+import Badge from '../components/Badge';
+import EmptyState from '../components/EmptyState';
+import { formatMoney } from '../utils/format';
 import { Users, Plus, Trash2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 export default function OtherSettlements() {
@@ -25,13 +28,9 @@ export default function OtherSettlements() {
   const [personName, setPersonName] = useState('');
   const [personPhone, setPersonPhone] = useState('');
   const [txAmount, setTxAmount] = useState('');
-  const [txType, setTxType] = useState('plus'); // 'plus' = дал / долг нам, 'minus' = взял / оплата
+  const [txType, setTxType] = useState('plus'); // 'plus' = начислено / долг нам, 'minus' = оплата / возврат
   const [txNote, setTxNote] = useState('');
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0]);
-
-  const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
-  };
 
   const handleCreatePerson = (e) => {
     e.preventDefault();
@@ -72,10 +71,10 @@ export default function OtherSettlements() {
         <div>
           <h1 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
             <Users className="w-5 h-5 text-emerald-400" />
-            <span>Взаиморасчеты с контрагентами («Другие»)</span>
+            <span>Взаиморасчеты с контрагентами</span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Учет долгов и расчетов с мастерами, партнерами и физлицами
+            Мастера, партнеры, сервисы и физические лица
           </p>
         </div>
 
@@ -91,7 +90,7 @@ export default function OtherSettlements() {
             className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-all shadow-lg shadow-emerald-600/25"
           >
             <Plus className="w-4 h-4" />
-            <span>Добавить человека</span>
+            <span>Добавить контрагента</span>
           </button>
         </div>
       </div>
@@ -102,9 +101,13 @@ export default function OtherSettlements() {
         {/* Left Column: Persons Grid/List */}
         <div className="lg:col-span-4 space-y-2">
           {data.otherCounterparties.length === 0 ? (
-            <div className="bg-slate-900/60 p-8 rounded-2xl border border-slate-800 text-center text-slate-500 text-sm">
-              Список пуст. Добавьте первого человека (например, Махмуд, Ваня, Саня...).
-            </div>
+            <EmptyState
+              icon={Users}
+              title="Список контрагентов пуст"
+              description="Добавьте первого человека (мастер, партнер, сервис)."
+              actionLabel="Добавить контрагента"
+              onAction={() => setIsAddPersonModalOpen(true)}
+            />
           ) : (
             data.otherCounterparties.map((p) => {
               const st = getOtherCounterpartyStats(p.id);
@@ -129,7 +132,7 @@ export default function OtherSettlements() {
                     }`}>
                       {formatMoney(st?.balance || 0)}
                     </div>
-                    <span className="text-[10px] text-slate-500">сальдо</span>
+                    <span className="text-[10px] text-slate-500">текущий баланс</span>
                   </div>
                 </div>
               );
@@ -195,11 +198,9 @@ export default function OtherSettlements() {
                             {tx.date || new Date(tx.createdAt).toLocaleDateString('ru-RU')}
                           </td>
                           <td className="py-2.5 px-3">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
-                              isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                            }`}>
+                            <Badge variant={isPositive ? 'debt' : 'payment'} size="sm">
                               {isPositive ? '+ Долг нам' : '- Возврат / Оплата'}
-                            </span>
+                            </Badge>
                           </td>
                           <td className={`py-2.5 px-3 text-right font-mono font-bold whitespace-nowrap ${
                             isPositive ? 'text-emerald-400' : 'text-rose-400'
@@ -222,8 +223,14 @@ export default function OtherSettlements() {
                     })}
                     {currentStats.transactions.length === 0 && (
                       <tr>
-                        <td colSpan="5" className="py-6 text-center text-slate-500">
-                          Нет операций по этому человеку
+                        <td colSpan="5" className="py-6">
+                          <EmptyState
+                            icon={Users}
+                            title="Нет операций по контрагенту"
+                            description="Запишите первую операцию: начисление долга или возврат/оплату."
+                            actionLabel="Записать сумму"
+                            onAction={() => setIsAddTxModalOpen(true)}
+                          />
                         </td>
                       </tr>
                     )}
@@ -232,8 +239,12 @@ export default function OtherSettlements() {
               </div>
             </div>
           ) : (
-            <div className="bg-slate-900/60 p-12 rounded-2xl border border-slate-800 text-center text-slate-500">
-              Выберите человека из списка слева
+            <div className="bg-slate-900/60 p-12 rounded-2xl border border-slate-800 flex flex-col items-center justify-center">
+              <EmptyState
+                icon={Users}
+                title="Контрагент не выбран"
+                description="Выберите контрагента из списка слева для просмотра истории операций."
+              />
             </div>
           )}
         </div>
@@ -247,7 +258,7 @@ export default function OtherSettlements() {
             <label className="block text-xs font-medium text-slate-300 mb-1">Имя / Описание *</label>
             <input
               type="text"
-              placeholder="напр. Махмуд, Ваня ОД2, Саня..."
+              placeholder="напр. Мастер Ваня, СТО Автомир, Саня..."
               value={personName}
               onChange={(e) => setPersonName(e.target.value)}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
@@ -258,7 +269,7 @@ export default function OtherSettlements() {
             <label className="block text-xs font-medium text-slate-300 mb-1">Телефон (опционально)</label>
             <input
               type="text"
-              placeholder="+7 (999) 000-00-00"
+              placeholder="+380..."
               value={personPhone}
               onChange={(e) => setPersonPhone(e.target.value)}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
@@ -284,8 +295,8 @@ export default function OtherSettlements() {
                 onChange={(e) => setTxType(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
               >
-                <option value="plus">+ Долг нам (+ увеличение)</option>
-                <option value="minus">- Оплата / Возврат (- уменьшение)</option>
+                <option value="plus">+ Долг нам (начисление)</option>
+                <option value="minus">- Возврат / Оплата</option>
               </select>
             </div>
             <div>

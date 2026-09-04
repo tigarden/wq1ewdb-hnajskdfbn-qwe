@@ -67,7 +67,7 @@ export default function App() {
       />
 
       <footer className="border-t border-slate-900 py-4 text-center text-xs text-slate-500">
-        Debet.auto — Учет клиентов: Тотус, Тотус 2, Эрик, Витя • Доход & Очередь закупок • AES-256
+        Debet.auto — Учет взаиморасчетов, запчастей и доходов • Защита AES-256
       </footer>
     </div>
   );

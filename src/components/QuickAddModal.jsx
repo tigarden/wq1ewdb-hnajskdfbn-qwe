@@ -127,7 +127,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
           }`}
         >
           <UserPlus className="w-3.5 h-3.5" />
-          <span>Взаиморасчет</span>
+          <span>Контрагент</span>
         </button>
       </div>
 
@@ -355,7 +355,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
               </select>
             ) : (
               <p className="text-xs text-amber-400">
-                Сначала добавьте человека во вкладке «Другие расчеты»!
+                Сначала добавьте контрагента во вкладке «Контрагенты»!
               </p>
             )}
           </div>
@@ -368,8 +368,8 @@ export default function QuickAddModal({ isOpen, onClose }) {
                 onChange={(e) => setOtherType(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-hidden focus:border-blue-500"
               >
-                <option value="plus">+ Долг нам (+ должен нам)</option>
-                <option value="minus">- Оплата / Возврат (- уменьшение)</option>
+                <option value="plus">+ Долг нам (начисление)</option>
+                <option value="minus">- Возврат / Оплата</option>
               </select>
             </div>
             <div>

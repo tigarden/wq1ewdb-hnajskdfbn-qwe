@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import StatCard from '../components/StatCard';
+import Badge from '../components/Badge';
+import EmptyState from '../components/EmptyState';
+import { formatMoney, pluralize } from '../utils/format';
 import { 
   TrendingUp, 
   Clock, 
@@ -30,10 +34,6 @@ export default function IncomeAndQueue() {
   // Local draft state for inputs: { [txId]: { purchasePrice: '1200', supplierName: 'Склад' } }
   const [drafts, setDrafts] = useState({});
   const [savedSuccessId, setSavedSuccessId] = useState(null);
-
-  const formatMoney = (val) => {
-    return (val || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' грн';
-  };
 
   const handlePriceChange = (txId, val) => {
     setDrafts((prev) => ({
@@ -121,67 +121,37 @@ export default function IncomeAndQueue() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        
-        {/* Card 1: Чистый Доход (Маржа) */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-4 sm:p-5 rounded-2xl border border-emerald-500/30 shadow-xl shadow-emerald-950/10">
-          <div className="flex items-center justify-between text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-            <span>Чистый доход</span>
-            <TrendingUp className="w-4 h-4" />
-          </div>
-          <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400 mt-2">
-            {formatMoney(incomeStats.totalProfit)}
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            С {incomeStats.filledCount} рассчитанных деталей
-          </p>
-        </div>
+        <StatCard
+          title="Чистый доход"
+          value={`+${formatMoney(incomeStats.totalProfit)}`}
+          subtitle={`С ${incomeStats.filledCount} рассчитанных деталей`}
+          icon={TrendingUp}
+          variant="emerald"
+        />
 
-        {/* Card 2: Средняя Наценка */}
-        <div className="bg-slate-900/90 p-4 sm:p-5 rounded-2xl border border-slate-800">
-          <div className="flex items-center justify-between text-xs font-semibold text-blue-400 uppercase tracking-wider">
-            <span>Средняя наценка</span>
-            <Percent className="w-4 h-4" />
-          </div>
-          <div className="text-xl sm:text-2xl font-bold font-mono text-blue-300 mt-2">
-            +{incomeStats.marginPercent.toFixed(1)}%
-          </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Маржинальность продаж
-          </p>
-        </div>
+        <StatCard
+          title="Средняя наценка"
+          value={`+${incomeStats.marginPercent.toFixed(1)}%`}
+          subtitle="Маржинальность продаж"
+          icon={Percent}
+          variant="blue"
+        />
 
-        {/* Card 3: Выручка vs Себестоимость */}
-        <div className="bg-slate-900/90 p-4 sm:p-5 rounded-2xl border border-slate-800">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
-            <span>Закупка поставщикам</span>
-            <Truck className="w-4 h-4" />
-          </div>
-          <div className="text-lg sm:text-xl font-bold font-mono text-slate-300 mt-2">
-            {formatMoney(incomeStats.totalPurchaseCost)}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            Выручка: {formatMoney(incomeStats.totalRevenueWithCost)}
-          </p>
-        </div>
+        <StatCard
+          title="Закупка поставщикам"
+          value={formatMoney(incomeStats.totalPurchaseCost)}
+          subtitle={`Выручка: ${formatMoney(incomeStats.totalRevenueWithCost)}`}
+          icon={Truck}
+          variant="slate"
+        />
 
-        {/* Card 4: В очереди на цену */}
-        <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
-          incomeStats.pendingCount > 0
-            ? 'bg-amber-950/20 border-amber-500/30 text-amber-300'
-            : 'bg-slate-900/90 border-slate-800 text-slate-300'
-        }`}>
-          <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider">
-            <span>В очереди на цену</span>
-            <Clock className="w-4 h-4" />
-          </div>
-          <div className="text-xl sm:text-2xl font-bold font-mono mt-2">
-            {incomeStats.pendingCount} <span className="text-xs font-normal">позиций</span>
-          </div>
-          <p className="text-[11px] opacity-80 mt-1">
-            {incomeStats.pendingCount > 0 ? 'Требуется вписать себестоимость' : 'Все цены заполнены!'}
-          </p>
-        </div>
-
+        <StatCard
+          title="В очереди на цену"
+          value={`${incomeStats.pendingCount} дет.`}
+          subtitle={incomeStats.pendingCount > 0 ? 'Требуется вписать себестоимость' : 'Все цены заполнены!'}
+          icon={Clock}
+          variant={incomeStats.pendingCount > 0 ? 'amber' : 'slate'}
+        />
       </div>
 
       {/* Filter and Control Bar */}
@@ -405,10 +375,12 @@ export default function IncomeAndQueue() {
 
               {filteredItems.length === 0 && (
                 <tr>
-                  <td colSpan="9" className="py-12 text-center text-slate-500">
-                    {filterMode === 'pending'
-                      ? 'Все цены закупок заполнены! Очередь пуста.'
-                      : 'Нет позиций по заданному фильтру.'}
+                  <td colSpan="9" className="py-10">
+                    <EmptyState
+                      icon={CheckCircle2}
+                      title={filterMode === 'pending' ? 'Очередь цен пуста' : 'Нет подходящих позиций'}
+                      description={filterMode === 'pending' ? 'Все себестоимости деталей уже заполнены и рассчитаны.' : 'Попробуйте изменить параметры фильтрации или поисковый запрос.'}
+                    />
                   </td>
                 </tr>
               )}
