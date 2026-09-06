@@ -23,13 +23,22 @@ export function DataProviderInternal({ children }) {
   const handleDataUpdated = useCallback((newData) => {
     if (newData && typeof newData === 'object') {
       setData((prev) => {
-        const merged = {
+        // Protect local transactions and clients from being wiped out by empty incoming cloud data
+        const localTxs = Array.isArray(prev.clientTransactions) ? prev.clientTransactions : [];
+        const incomingTxs = Array.isArray(newData.clientTransactions) ? newData.clientTransactions : [];
+        const localClients = Array.isArray(prev.clients) ? prev.clients : [];
+        const incomingClients = Array.isArray(newData.clients) ? newData.clients : [];
+
+        if ((localTxs.length > 0 && incomingTxs.length === 0) || (localClients.length > 0 && incomingClients.length === 0)) {
+          console.warn('[Sync] Preserving local data over empty cloud payload');
+          return prev;
+        }
+
+        return {
           ...prev,
           ...newData,
           updatedAt: new Date().toISOString(),
         };
-        saveLocalData(merged);
-        return merged;
       });
     }
   }, []);
@@ -113,15 +122,25 @@ export function DataProviderInternal({ children }) {
       ...prev,
       clientTransactions: (prev.clientTransactions || []).map((t) => {
         if (t.id !== id) return t;
+        const pPrice =
+          updates.purchasePrice !== undefined
+            ? round2(updates.purchasePrice)
+            : t.purchasePrice;
         return {
           ...t,
           ...updates,
           article: updates.article !== undefined ? updates.article.trim().toUpperCase() : t.article,
+          description: updates.description !== undefined ? updates.description.trim() : t.description,
+          carName: updates.carName !== undefined ? updates.carName.trim() : t.carName,
+          supplierName: updates.supplierName !== undefined ? updates.supplierName.trim() : t.supplierName,
           amount: updates.amount !== undefined ? round2(updates.amount) : t.amount,
-          purchasePrice:
-            updates.purchasePrice !== undefined
-              ? round2(updates.purchasePrice)
-              : t.purchasePrice,
+          purchasePrice: pPrice,
+          date: updates.date !== undefined ? updates.date.trim() : t.date,
+          note: updates.note !== undefined ? updates.note.trim() : t.note,
+          costConfirmed:
+            updates.costConfirmed !== undefined
+              ? Boolean(updates.costConfirmed)
+              : Boolean(t.costConfirmed || (pPrice > 0)),
         };
       }),
     }));
@@ -134,14 +153,16 @@ export function DataProviderInternal({ children }) {
     }));
   }, []);
 
-  const updateItemPurchasePrice = useCallback((txId, purchasePrice, supplierName) => {
+  const updateItemPurchasePrice = useCallback((txId, purchasePrice, supplierName, costConfirmed = false) => {
     setData((prev) => ({
       ...prev,
       clientTransactions: (prev.clientTransactions || []).map((t) => {
         if (t.id !== txId) return t;
+        const pPrice = round2(purchasePrice);
         return {
           ...t,
-          purchasePrice: round2(purchasePrice),
+          purchasePrice: pPrice,
+          costConfirmed: costConfirmed || pPrice > 0,
           supplierName:
             supplierName !== undefined ? supplierName.trim() : t.supplierName,
         };
@@ -258,8 +279,72 @@ export function DataProviderInternal({ children }) {
     [data.clients, data.clientTransactions]
   );
 
+  const getOtherCounterpartyStats = useCallback(
+    (cpId) => {
+      const cp = (data.otherCounterparties || []).find((p) => p.id === cpId);
+      const cpName = (cp?.name || '').trim();
+      const cpNameLower = cpName.toLowerCase();
+
+      // 1. Direct transactions with supplier (payments or direct supply records)
+      const directTxs = (data.otherTransactions || []).filter((t) => t.counterpartyId === cpId);
+
+      // 2. Purchased parts from client orders for this supplier
+      const parts = cpNameLower
+        ? (data.clientTransactions || []).filter(
+            (t) =>
+              t.type === 'item' &&
+              (t.supplierName || '').trim().toLowerCase() === cpNameLower &&
+              ((Number(t.purchasePrice) > 0) || t.costConfirmed)
+          )
+        : [];
+
+      let totalSuppliedParts = 0;
+      parts.forEach((p) => {
+        totalSuppliedParts = round2(totalSuppliedParts + (Number(p.purchasePrice) || 0));
+      });
+
+      // Direct transactions interpretation:
+      // Positive amount: supply / debt to supplier (+)
+      // Negative amount: payment to supplier (-)
+      let directPurchases = 0;
+      let directPayments = 0;
+
+      directTxs.forEach((t) => {
+        const amt = round2(t.amount || 0);
+        if (amt >= 0) {
+          directPurchases = round2(directPurchases + amt);
+        } else {
+          directPayments = round2(directPayments + Math.abs(amt));
+        }
+      });
+
+      const totalPurchases = round2(totalSuppliedParts + directPurchases);
+      const totalPayments = round2(directPayments);
+      // Balance: what WE owe to the supplier (Accounts Payable)
+      // Positive balance (> 0) means We owe supplier (Кредиторка)
+      // Negative balance (< 0) means We overpaid supplier (Переплата)
+      const balance = round2(totalPurchases - totalPayments);
+
+      return {
+        balance,
+        totalPurchases,
+        totalPayments,
+        totalSuppliedParts,
+        directPurchases,
+        directPayments,
+        partsCount: parts.length,
+        parts,
+        directTransactions: directTxs,
+        transactions: directTxs,
+        transactionsCount: directTxs.length + parts.length,
+      };
+    },
+    [data.otherCounterparties, data.otherTransactions, data.clientTransactions]
+  );
+
   const globalSummary = useMemo(() => {
     let totalClientDebt = 0;
+    let totalClientPrepayment = 0;
     let totalItemsSum = 0;
     let totalPaymentsSum = 0;
     let debtorsCount = 0;
@@ -267,32 +352,53 @@ export function DataProviderInternal({ children }) {
     (data.clients || []).forEach((cli) => {
       const stats = getClientStats(cli.id);
       if (stats) {
-        totalClientDebt += stats.currentDebt;
-        totalItemsSum += stats.totalItems;
-        totalPaymentsSum += stats.totalPayments;
         if (stats.currentDebt > 0) {
+          totalClientDebt = round2(totalClientDebt + stats.currentDebt);
           debtorsCount += 1;
+        } else if (stats.currentDebt < 0) {
+          totalClientPrepayment = round2(totalClientPrepayment + Math.abs(stats.currentDebt));
+        }
+        totalItemsSum = round2(totalItemsSum + stats.totalItems);
+        totalPaymentsSum = round2(totalPaymentsSum + stats.totalPayments);
+      }
+    });
+
+    let totalSupplierDebt = 0; // We owe suppliers (Кредиторка)
+    let totalSupplierPrepayment = 0; // We overpaid suppliers
+
+    (data.otherCounterparties || []).forEach((cp) => {
+      const st = getOtherCounterpartyStats(cp.id);
+      if (st) {
+        if (st.balance > 0) {
+          totalSupplierDebt = round2(totalSupplierDebt + st.balance);
+        } else if (st.balance < 0) {
+          totalSupplierPrepayment = round2(totalSupplierPrepayment + Math.abs(st.balance));
         }
       }
     });
 
-    let otherSettlementsSum = 0;
-    (data.otherTransactions || []).forEach((ot) => {
-      otherSettlementsSum += round2(ot.amount || 0);
-    });
+    const netClientReceivables = round2(totalClientDebt - totalClientPrepayment);
+    const netSupplierPayables = round2(totalSupplierDebt - totalSupplierPrepayment);
+    // Net Position = Receivables (Clients owe us) - Payables (We owe suppliers)
+    const grandBalance = round2(netClientReceivables - netSupplierPayables);
 
     return {
-      grandBalance: round2(totalClientDebt + otherSettlementsSum),
-      totalClientDebt: round2(totalClientDebt),
-      totalItemsSum: round2(totalItemsSum),
-      totalPaymentsSum: round2(totalPaymentsSum),
+      grandBalance,
+      netClientReceivables,
+      netSupplierPayables,
+      totalClientDebt,
+      totalClientPrepayment,
+      totalSupplierDebt,
+      totalSupplierPrepayment,
+      totalItemsSum,
+      totalPaymentsSum,
       debtorsCount,
       totalClients: (data.clients || []).length,
       clientsCount: (data.clients || []).length,
-      otherSettlementsSum: round2(otherSettlementsSum),
-      totalOtherBalance: round2(otherSettlementsSum),
+      otherSettlementsSum: netSupplierPayables,
+      totalOtherBalance: netSupplierPayables,
     };
-  }, [data.clients, data.otherTransactions, getClientStats]);
+  }, [data.clients, data.otherCounterparties, getClientStats, getOtherCounterpartyStats]);
 
   const incomeStats = useMemo(() => {
     let pendingPurchaseCount = 0;
@@ -303,18 +409,25 @@ export function DataProviderInternal({ children }) {
 
     (data.clientTransactions || []).forEach((t) => {
       if (t.type === 'item') {
-        const pPrice = round2(t.purchasePrice || 0);
         const salePrice = round2(t.amount || 0);
-        if (pPrice <= 0) {
+        const isPriced =
+          (t.purchasePrice !== undefined && t.purchasePrice !== null && t.purchasePrice > 0) ||
+          t.costConfirmed === true;
+
+        if (!isPriced) {
           pendingPurchaseCount += 1;
         } else {
+          const pPrice = round2(t.purchasePrice || 0);
           filledCount += 1;
-          totalFilledSales += salePrice;
-          totalFilledPurchase += pPrice;
-          totalMargin += salePrice - pPrice;
+          totalFilledSales = round2(totalFilledSales + salePrice);
+          totalFilledPurchase = round2(totalFilledPurchase + pPrice);
+          totalMargin = round2(totalMargin + round2(salePrice - pPrice));
         }
       }
     });
+
+    const marginPercent = totalFilledSales > 0 ? round2((totalMargin / totalFilledSales) * 100) : 0;
+    const markupPercent = totalFilledPurchase > 0 ? round2((totalMargin / totalFilledPurchase) * 100) : 0;
 
     return {
       pendingCount: pendingPurchaseCount,
@@ -326,30 +439,15 @@ export function DataProviderInternal({ children }) {
       totalRevenueWithCost: round2(totalFilledSales),
       totalProfit: round2(totalMargin),
       totalMargin: round2(totalMargin),
-      marginPercent: totalFilledSales > 0 ? Math.round((totalMargin / totalFilledSales) * 100) : 0,
+      marginPercent,
+      markupPercent,
     };
   }, [data.clientTransactions]);
 
-  const getOtherCounterpartyStats = useCallback(
-    (cpId) => {
-      const txs = (data.otherTransactions || []).filter((t) => t.counterpartyId === cpId);
-      let balance = 0;
-      txs.forEach((t) => {
-        balance += round2(t.amount || 0);
-      });
-      return {
-        balance: round2(balance),
-        transactionsCount: txs.length,
-        transactions: txs,
-      };
-    },
-    [data.otherTransactions]
-  );
-
   // --- Export / Import ---
   const handleExportToExcel = useCallback(async () => {
-    return await exportToExcel(data, getClientStats, incomeStats);
-  }, [data, getClientStats, incomeStats]);
+    return await exportToExcel(data, getClientStats, incomeStats, getOtherCounterpartyStats, globalSummary);
+  }, [data, getClientStats, incomeStats, getOtherCounterpartyStats, globalSummary]);
 
   const exportJsonBackup = useCallback(() => {
     const jsonStr = JSON.stringify(data, null, 2);
@@ -396,6 +494,7 @@ export function DataProviderInternal({ children }) {
               supplierName: String(t.supplierName || '').trim(),
               amount: round2(t.amount || 0),
               purchasePrice: round2(t.purchasePrice || 0),
+              costConfirmed: Boolean(t.costConfirmed || (t.purchasePrice !== undefined && t.purchasePrice > 0)),
               date: String(t.date || '').trim(),
               note: String(t.note || '').trim(),
               createdAt: t.createdAt || new Date().toISOString(),

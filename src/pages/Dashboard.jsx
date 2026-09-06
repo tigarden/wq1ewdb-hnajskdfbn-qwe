@@ -73,13 +73,21 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
     }).length;
   }, [data.clients, getClientStats]);
 
-  // Search results for parts
+  // Search results for parts (multi-field search)
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase().trim();
     return (data.clientTransactions || [])
-      .filter((t) => t.type === 'item' && t.article && t.article.toLowerCase().includes(q))
-      .slice(0, 5);
+      .filter((t) => {
+        if (t.type !== 'item') return false;
+        const inArticle = t.article && t.article.toLowerCase().includes(q);
+        const inDesc = t.description && t.description.toLowerCase().includes(q);
+        const inCar = t.carName && t.carName.toLowerCase().includes(q);
+        const inNote = t.note && t.note.toLowerCase().includes(q);
+        const inSupplier = t.supplierName && t.supplierName.toLowerCase().includes(q);
+        return inArticle || inDesc || inCar || inNote || inSupplier;
+      })
+      .slice(0, 6);
   }, [data.clientTransactions, searchQuery]);
 
   // Pending price queue items (items waiting for purchase price)
@@ -158,18 +166,18 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <StatCard
           className="animate-slide-up stagger-1"
-          title="Сводный баланс"
-          value={formatMoney(globalSummary.grandBalance)}
+          title="Чистая позиция (баланс)"
+          value={formatMoney(globalSummary.netPosition ?? globalSummary.grandBalance)}
           subtitle={
-            globalSummary.grandBalance > 0
-              ? 'В вашу пользу'
-              : globalSummary.grandBalance < 0
-              ? 'Долг перед поставщиками'
-              : 'Все счета закрыты'
+            (globalSummary.netPosition ?? globalSummary.grandBalance) > 0
+              ? 'В вашу пользу (долги клиентов > долгов поставщикам)'
+              : (globalSummary.netPosition ?? globalSummary.grandBalance) < 0
+              ? 'Дефицит (долг перед поставщиками больше)'
+              : 'Баланс сведен к нулю'
           }
           icon={TrendingUp}
-          variant={globalSummary.grandBalance > 0 ? 'amber' : globalSummary.grandBalance < 0 ? 'rose' : 'slate'}
-          badgeText={globalSummary.grandBalance > 0 ? 'Актив' : globalSummary.grandBalance < 0 ? 'Долг' : 'Баланс'}
+          variant={(globalSummary.netPosition ?? globalSummary.grandBalance) > 0 ? 'emerald' : (globalSummary.netPosition ?? globalSummary.grandBalance) < 0 ? 'rose' : 'slate'}
+          badgeText={(globalSummary.netPosition ?? globalSummary.grandBalance) > 0 ? 'Профицит' : (globalSummary.netPosition ?? globalSummary.grandBalance) < 0 ? 'Дефицит' : 'Баланс'}
         />
 
         <StatCard
@@ -202,13 +210,13 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
 
         <StatCard
           className="animate-slide-up stagger-4"
-          title="Поставщики"
-          value={formatMoney(globalSummary.totalOtherBalance)}
+          title="Долг поставщикам"
+          value={formatMoney(globalSummary.totalSupplierDebt ?? globalSummary.totalOtherBalance)}
           subtitle={`${data.otherCounterparties?.length || 0} ${pluralize(data.otherCounterparties?.length || 0, ['поставщик и склад', 'поставщика и склада', 'поставщиков и складов'])}`}
           actionText="Открыть"
           icon={Truck}
-          variant={globalSummary.totalOtherBalance < 0 ? 'rose' : 'blue'}
-          badgeText={globalSummary.totalOtherBalance < 0 ? 'К оплате' : 'Баланс'}
+          variant={(globalSummary.totalSupplierDebt ?? globalSummary.totalOtherBalance) > 0 ? 'rose' : 'emerald'}
+          badgeText={(globalSummary.totalSupplierDebt ?? globalSummary.totalOtherBalance) > 0 ? 'К оплате' : 'Переплата'}
           onClick={() => setActiveTab('other')}
         />
       </div>
@@ -563,7 +571,7 @@ export default function Dashboard({ setActiveTab, onOpenQuickAdd, onSelectClient
               <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
               <input
                 type="text"
-                placeholder="Номер детали или артикул..."
+                placeholder="Артикул, название детали, авто..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {

@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 3,
   "updatedAt": "2026-09-04T23:48:13.121Z",
   "clients": [
     {
@@ -72,29 +72,5 @@
       "createdAt": "2026-09-04T22:19:20.682Z"
     }
   ],
-  "otherTransactions": [],
-  "carItems": [],
-  "carOrders": [],
-  "suppliers": [
-    {
-      "id": "sup-1",
-      "name": "Тотус",
-      "createdAt": "2026-09-03T20:53:04.600Z",
-      "initialBalance": 0
-    },
-    {
-      "id": "sup-2",
-      "name": "Эрнест",
-      "createdAt": "2026-09-03T20:53:04.600Z",
-      "initialBalance": 0
-    },
-    {
-      "id": "sup-3",
-      "name": "Витя",
-      "createdAt": "2026-09-03T20:53:04.600Z",
-      "initialBalance": 0
-    }
-  ],
-  "carPayments": [],
-  "supplierTransactions": []
+  "otherTransactions": []
 }

@@ -95,6 +95,7 @@ export function loadLocalData() {
       clientTransactions: (data.clientTransactions || []).map(t => ({
         ...t,
         purchasePrice: t.purchasePrice !== undefined ? parseFloat(t.purchasePrice) || 0 : 0,
+        costConfirmed: Boolean(t.costConfirmed || (t.purchasePrice !== undefined && parseFloat(t.purchasePrice) > 0)),
       })),
     };
   } catch (e) {

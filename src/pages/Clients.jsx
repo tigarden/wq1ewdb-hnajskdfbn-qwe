@@ -15,8 +15,9 @@ export default function Clients({ selectedClientId, onSelectClient }) {
     data,
     addClient,
     updateClient,
-    deleteClient,
+    getClientTransactions,
     addClientTransaction,
+    updateClientTransaction,
     deleteClientTransaction,
     getClientStats,
     addSupplierToDirectory,
@@ -114,6 +115,9 @@ export default function Clients({ selectedClientId, onSelectClient }) {
               <ClientLedger
                 transactions={transactions}
                 onDeleteTransaction={deleteClientTransaction}
+                onUpdateTransaction={updateClientTransaction}
+                suppliersList={data.suppliersList || []}
+                onAddSupplier={addSupplierToDirectory}
                 onOpenAddItem={() => setIsAddItemModalOpen(true)}
                 onOpenAddPayment={() => setIsAddPaymentModalOpen(true)}
               />

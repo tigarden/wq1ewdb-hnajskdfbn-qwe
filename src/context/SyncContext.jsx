@@ -32,39 +32,41 @@ export function SyncProvider({ children, data, onDataUpdated }) {
   }, []);
 
   const syncToSupabase = useCallback(async () => {
-    if (!supabaseConfig.url || !supabaseConfig.key) {
+    const cfg = supabaseConfigRef.current;
+    if (!cfg.url || !cfg.key) {
       return { success: false, error: 'Настройки Supabase не указаны' };
     }
     setSupabaseStatus('syncing');
-    const res = await saveSupabaseData(supabaseConfig.url, supabaseConfig.key, data);
+    const res = await saveSupabaseData(cfg.url, cfg.key, dataRef.current);
     if (res.success) {
       setSupabaseStatus('synced');
     } else {
       setSupabaseStatus('error');
     }
     return res;
-  }, [supabaseConfig, data]);
+  }, []);
 
   const pullFromSupabase = useCallback(async () => {
-    if (!supabaseConfig.url || !supabaseConfig.key) {
+    const cfg = supabaseConfigRef.current;
+    if (!cfg.url || !cfg.key) {
       return { success: false, error: 'Настройки Supabase не указаны' };
     }
     setSupabaseStatus('syncing');
-    const res = await fetchSupabaseData(supabaseConfig.url, supabaseConfig.key);
+    const res = await fetchSupabaseData(cfg.url, cfg.key);
     if (res.success && res.data) {
       isPullingRef.current = true;
       onDataUpdated(res.data);
       setSupabaseStatus('synced');
       return { success: true, loaded: true };
     } else if (res.success && !res.data) {
-      await saveSupabaseData(supabaseConfig.url, supabaseConfig.key, data);
+      await saveSupabaseData(cfg.url, cfg.key, dataRef.current);
       setSupabaseStatus('synced');
       return { success: true, loaded: false };
     } else {
       setSupabaseStatus('error');
       return { success: false, error: res.error };
     }
-  }, [supabaseConfig, data, onDataUpdated]);
+  }, [onDataUpdated]);
 
   // GitHub Settings & Sync
   const updateSettings = useCallback((newSettings) => {
@@ -178,7 +180,8 @@ export function SyncProvider({ children, data, onDataUpdated }) {
     if (supabaseConfigRef.current?.url && supabaseConfigRef.current?.key) {
       pullFromSupabase().catch(() => {});
     }
-  }, [pullFromGitHub, pullFromSupabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Event-driven auto-save: triggers ONLY on genuine data changes
   const isInitialMount = useRef(true);

@@ -30,6 +30,7 @@ export default function IncomeAndQueue() {
 
   const [filterMode, setFilterMode] = useState('pending'); // 'pending' | 'filled' | 'all'
   const [selectedClientFilter, setSelectedClientFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all'); // 'all' | 'this_month' | 'prev_month' | 'last_30_days'
   const [searchQuery, setSearchQuery] = useState('');
 
   const [drafts, setDrafts] = useState({});
@@ -67,23 +68,25 @@ export default function IncomeAndQueue() {
     }));
   };
 
-  const handleSaveItem = (tx) => {
+  const handleSaveItem = (tx, isFree = false) => {
     const draft = drafts[tx.id] || {};
-    const priceRaw = draft.purchasePrice !== undefined ? draft.purchasePrice : tx.purchasePrice;
+    const priceRaw = isFree ? '0' : (draft.purchasePrice !== undefined ? draft.purchasePrice : tx.purchasePrice);
     const supplierToSave = draft.supplierName !== undefined ? draft.supplierName : tx.supplierName;
 
     const parsedPrice = parseFloat(priceRaw);
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+    if (!isFree && (isNaN(parsedPrice) || parsedPrice < 0)) {
       setPriceErrorId(tx.id);
       setTimeout(() => setPriceErrorId(null), 2500);
       return;
     }
 
+    const finalPrice = isFree ? 0 : parsedPrice;
+
     if (supplierToSave && !data.suppliersList?.includes(supplierToSave)) {
       addSupplierToDirectory(supplierToSave);
     }
 
-    updateItemPurchasePrice(tx.id, parsedPrice, supplierToSave);
+    updateItemPurchasePrice(tx.id, finalPrice, supplierToSave, isFree || finalPrice > 0);
 
     setSavedSuccessId(tx.id);
     setTimeout(() => {
@@ -96,12 +99,36 @@ export default function IncomeAndQueue() {
 
   const filteredItems = allItems.filter((t) => {
     // Status filter
-    const hasPrice = (t.purchasePrice || 0) > 0;
+    const hasPrice = (Number(t.purchasePrice) > 0) || t.costConfirmed === true;
     if (filterMode === 'pending' && hasPrice) return false;
     if (filterMode === 'filled' && !hasPrice) return false;
 
     // Client filter
     if (selectedClientFilter !== 'all' && t.clientId !== selectedClientFilter) return false;
+
+    // Period filter
+    if (periodFilter !== 'all') {
+      const txDateStr = t.date || (t.createdAt ? t.createdAt.split('T')[0] : '');
+      if (txDateStr) {
+        const txDate = new Date(txDateStr);
+        const now = new Date();
+        if (periodFilter === 'this_month') {
+          if (txDate.getFullYear() !== now.getFullYear() || txDate.getMonth() !== now.getMonth()) {
+            return false;
+          }
+        } else if (periodFilter === 'prev_month') {
+          const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          if (txDate.getFullYear() !== prevMonthDate.getFullYear() || txDate.getMonth() !== prevMonthDate.getMonth()) {
+            return false;
+          }
+        } else if (periodFilter === 'last_30_days') {
+          const diffDays = (now - txDate) / (1000 * 60 * 60 * 24);
+          if (diffDays < 0 || diffDays > 30) {
+            return false;
+          }
+        }
+      }
+    }
 
     // Search query
     if (searchQuery) {
@@ -114,6 +141,48 @@ export default function IncomeAndQueue() {
 
     return true;
   });
+
+  // Calculate dynamic stats for current view / period
+  const displayStats = useMemo(() => {
+    if (periodFilter === 'all' && selectedClientFilter === 'all') {
+      return incomeStats;
+    }
+    let pendingCount = 0;
+    let filledCount = 0;
+    let totalFilledSales = 0;
+    let totalFilledPurchase = 0;
+    let totalMargin = 0;
+
+    filteredItems.forEach((t) => {
+      const salePrice = Number(t.amount) || 0;
+      const isPriced = (Number(t.purchasePrice) > 0) || t.costConfirmed === true;
+      if (!isPriced) {
+        pendingCount += 1;
+      } else {
+        const pPrice = Number(t.purchasePrice) || 0;
+        filledCount += 1;
+        totalFilledSales += salePrice;
+        totalFilledPurchase += pPrice;
+        totalMargin += (salePrice - pPrice);
+      }
+    });
+
+    const marginPercent = totalFilledSales > 0 ? (totalMargin / totalFilledSales) * 100 : 0;
+    const markupPercent = totalFilledPurchase > 0 ? (totalMargin / totalFilledPurchase) * 100 : 0;
+
+    return {
+      pendingCount,
+      filledCount,
+      totalFilledSales,
+      totalFilledPurchase,
+      totalPurchaseCost: totalFilledPurchase,
+      totalRevenueWithCost: totalFilledSales,
+      totalProfit: totalMargin,
+      totalMargin,
+      marginPercent,
+      markupPercent,
+    };
+  }, [incomeStats, periodFilter, selectedClientFilter, filteredItems]);
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -141,11 +210,11 @@ export default function IncomeAndQueue() {
           </div>
         </div>
 
-        {incomeStats.pendingCount > 0 ? (
+        {displayStats.pendingCount > 0 ? (
           <div className="flex items-center space-x-2 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono">
             <span className="w-2 h-2 rounded-full bg-amber-400" />
             <Clock className="w-3.5 h-3.5 text-amber-400" />
-            <span>Ожидают цену: <strong>{incomeStats.pendingCount} дет.</strong></span>
+            <span>Ожидают цену: <strong>{displayStats.pendingCount} дет.</strong></span>
           </div>
         ) : (
           <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-mono">
@@ -158,35 +227,35 @@ export default function IncomeAndQueue() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <StatCard
-          title="Чистый доход"
-          value={`+${formatMoney(incomeStats.totalProfit)}`}
-          subtitle={`С ${incomeStats.filledCount} рассчитанных позиций`}
+          title="Чистая прибыль"
+          value={`+${formatMoney(displayStats.totalProfit)}`}
+          subtitle={`С ${displayStats.filledCount} рассчитанных позиций`}
           icon={TrendingUp}
           variant="emerald"
         />
 
         <StatCard
-          title="Средняя наценка"
-          value={`+${incomeStats.marginPercent.toFixed(1)}%`}
-          subtitle="Маржинальность продаж"
+          title="Маржинальность"
+          value={`+${displayStats.marginPercent.toFixed(1)}%`}
+          subtitle={`Наценка: +${displayStats.markupPercent.toFixed(1)}%`}
           icon={Percent}
           variant="blue"
         />
 
         <StatCard
           title="Закупка поставщикам"
-          value={formatMoney(incomeStats.totalPurchaseCost)}
-          subtitle={`Выручка: ${formatMoney(incomeStats.totalRevenueWithCost)}`}
+          value={formatMoney(displayStats.totalPurchaseCost)}
+          subtitle={`Выручка: ${formatMoney(displayStats.totalRevenueWithCost)}`}
           icon={Truck}
           variant="slate"
         />
 
         <StatCard
           title="Ожидают закупку"
-          value={`${incomeStats.pendingCount} дет.`}
-          subtitle={incomeStats.pendingCount > 0 ? 'Нужно указать себестоимость' : 'Все цены закупки заполнены'}
+          value={`${displayStats.pendingCount} дет.`}
+          subtitle={displayStats.pendingCount > 0 ? 'Нужно указать себестоимость' : 'Все цены закупки заполнены'}
           icon={Clock}
-          variant={incomeStats.pendingCount > 0 ? 'amber' : 'slate'}
+          variant={displayStats.pendingCount > 0 ? 'amber' : 'slate'}
         />
       </div>
 
@@ -204,7 +273,7 @@ export default function IncomeAndQueue() {
             }`}
           >
             <Clock className="w-3 h-3" />
-            <span>Ожидают цену ({incomeStats.pendingCount})</span>
+            <span>Ожидают цену ({displayStats.pendingCount})</span>
           </button>
 
           <button
@@ -216,7 +285,7 @@ export default function IncomeAndQueue() {
             }`}
           >
             <CheckCircle2 className="w-3 h-3" />
-            <span>С ценой ({incomeStats.filledCount})</span>
+            <span>С ценой ({displayStats.filledCount})</span>
           </button>
 
           <button
@@ -227,12 +296,25 @@ export default function IncomeAndQueue() {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <span>Все детали ({allItems.length})</span>
+            <span>Все детали ({filteredItems.length})</span>
           </button>
         </div>
 
-        {/* Client filter & Search */}
+        {/* Period, Client filter & Search */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Period selector */}
+          <select
+            value={periodFilter}
+            onChange={(e) => setPeriodFilter(e.target.value)}
+            className="input-md sm:input-sm h-10 sm:h-8 rounded-xl sm:rounded-md text-xs cursor-pointer font-medium"
+          >
+            <option value="all" className="bg-[#0b0f19] text-white">Все время</option>
+            <option value="this_month" className="bg-[#0b0f19] text-white">Этот месяц</option>
+            <option value="prev_month" className="bg-[#0b0f19] text-white">Прошлый месяц</option>
+            <option value="last_30_days" className="bg-[#0b0f19] text-white">Последние 30 дней</option>
+          </select>
+
+          {/* Client selector */}
           <select
             value={selectedClientFilter}
             onChange={(e) => setSelectedClientFilter(e.target.value)}
@@ -251,7 +333,7 @@ export default function IncomeAndQueue() {
               placeholder="Поиск по коду, названию, авто..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-64 input-md sm:input-sm input-search"
+              className="w-full sm:w-56 input-md sm:input-sm input-search"
             />
           </div>
         </div>
@@ -271,10 +353,12 @@ export default function IncomeAndQueue() {
             : (tx.supplierName || '');
 
           const numPurchase = parseFloat(currentPurchaseVal) || 0;
-          const profit = numPurchase > 0 ? (tx.amount - numPurchase) : 0;
-          const marginPercent = numPurchase > 0 ? ((profit / numPurchase) * 100) : 0;
+          const isConfirmedOrPurchased = numPurchase > 0 || tx.costConfirmed;
+          const profit = isConfirmedOrPurchased ? (tx.amount - numPurchase) : 0;
+          const marginPercent = tx.amount > 0 ? ((profit / tx.amount) * 100) : 0;
+          const markupPercent = numPurchase > 0 ? ((profit / numPurchase) * 100) : 0;
           const isSaved = savedSuccessId === tx.id;
-          const hasPendingCost = !numPurchase;
+          const hasPendingCost = !isConfirmedOrPurchased;
 
           return (
             <div 
@@ -338,6 +422,8 @@ export default function IncomeAndQueue() {
                           ? 'bg-rose-950/40 text-rose-300 border-2 border-rose-500 ring-2 ring-rose-500/20'
                           : numPurchase > 0
                           ? 'bg-[#090d16] text-white border border-white/15 focus:border-emerald-500'
+                          : tx.costConfirmed
+                          ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/40'
                           : 'bg-amber-950/20 text-amber-300 border border-amber-500/40 focus:border-amber-400'
                       }`}
                     />
@@ -362,13 +448,13 @@ export default function IncomeAndQueue() {
               {/* Live profit & full-touch Save button */}
               <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/5">
                 <div>
-                  {numPurchase > 0 ? (
+                  {isConfirmedOrPurchased ? (
                     <div className="text-xs font-mono">
                       <span className="text-slate-400">Доход: </span>
                       <span className={`font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                         +{formatMoney(profit)}
                       </span>
-                      <span className="text-slate-500 ml-1.5">({marginPercent.toFixed(0)}%)</span>
+                      <span className="text-slate-500 ml-1.5">({marginPercent.toFixed(0)}% маржа)</span>
                     </div>
                   ) : (
                     <span className="text-[11px] text-amber-400 font-mono">
@@ -377,26 +463,38 @@ export default function IncomeAndQueue() {
                   )}
                 </div>
 
-                <button
-                  onClick={() => handleSaveItem(tx)}
-                  className={`h-11 px-5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm active:scale-95 ${
-                    isSaved
-                      ? 'bg-emerald-500 text-slate-950 shadow-emerald-500/25'
-                      : 'btn-primary'
-                  }`}
-                >
-                  {isSaved ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Готово</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      <span>Записать</span>
-                    </>
+                <div className="flex items-center space-x-2">
+                  {!tx.costConfirmed && numPurchase === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleSaveItem(tx, true)}
+                      className="h-11 px-3 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-300 active:scale-95 cursor-pointer"
+                      title="Подтвердить: Свой склад / 0 себестоимость"
+                    >
+                      0 грн
+                    </button>
                   )}
-                </button>
+                  <button
+                    onClick={() => handleSaveItem(tx)}
+                    className={`h-11 px-5 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm active:scale-95 ${
+                      isSaved
+                        ? 'bg-emerald-500 text-slate-950 shadow-emerald-500/25'
+                        : 'btn-primary'
+                    }`}
+                  >
+                    {isSaved ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Готово</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>Записать</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -441,10 +539,12 @@ export default function IncomeAndQueue() {
                   : (tx.supplierName || '');
 
                 const numPurchase = parseFloat(currentPurchaseVal) || 0;
-                const profit = numPurchase > 0 ? (tx.amount - numPurchase) : 0;
-                const marginPercent = numPurchase > 0 ? ((profit / numPurchase) * 100) : 0;
+                const isConfirmedOrPurchased = numPurchase > 0 || tx.costConfirmed;
+                const profit = isConfirmedOrPurchased ? (tx.amount - numPurchase) : 0;
+                const marginPercent = tx.amount > 0 ? ((profit / tx.amount) * 100) : 0;
+                const markupPercent = numPurchase > 0 ? ((profit / numPurchase) * 100) : 0;
                 const isSaved = savedSuccessId === tx.id;
-                const hasPendingCost = !numPurchase;
+                const hasPendingCost = !isConfirmedOrPurchased;
 
                 return (
                   <tr 
@@ -538,6 +638,8 @@ export default function IncomeAndQueue() {
                               ? 'bg-rose-950/40 text-rose-300 border-2 border-rose-500 ring-2 ring-rose-500/20'
                               : numPurchase > 0
                               ? 'bg-[#0b0f19] text-white border border-white/10 focus:border-emerald-500'
+                              : tx.costConfirmed
+                              ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/40'
                               : 'bg-amber-950/30 text-amber-200 border border-amber-500/50 focus:border-amber-400'
                           }`}
                         />
@@ -547,7 +649,7 @@ export default function IncomeAndQueue() {
 
                     {/* Profit / Margin Result */}
                     <td className="py-3 px-3.5 text-right whitespace-nowrap">
-                      {numPurchase > 0 ? (
+                      {isConfirmedOrPurchased ? (
                         <div>
                           <div className={`font-mono font-bold text-xs sm:text-sm 2xl:text-base ${
                             profit > 0 ? 'text-emerald-400' : profit === 0 ? 'text-slate-400' : 'text-rose-400'
@@ -555,7 +657,7 @@ export default function IncomeAndQueue() {
                             {profit > 0 ? `+${formatMoney(profit)}` : formatMoney(profit)}
                           </div>
                           <div className="text-xs font-mono text-slate-400 mt-0.5">
-                            +{marginPercent.toFixed(0)}%
+                            {marginPercent.toFixed(0)}% маржа {markupPercent > 0 ? `(+${markupPercent.toFixed(0)}% нац)` : ''}
                           </div>
                         </div>
                       ) : (
@@ -565,28 +667,40 @@ export default function IncomeAndQueue() {
                       )}
                     </td>
 
-                    {/* Save Button */}
+                    {/* Save Button & 0 UAH Quick button */}
                     <td className="py-3 px-3.5 text-center whitespace-nowrap">
-                      <button
-                        onClick={() => handleSaveItem(tx)}
-                        className={`btn-sm 2xl:btn-md h-8 2xl:h-9 px-3 rounded-md text-xs 2xl:text-sm font-semibold cursor-pointer transition-colors ${
-                          isSaved
-                            ? 'bg-emerald-500 text-slate-950 font-bold'
-                            : 'btn-primary'
-                        }`}
-                      >
-                        {isSaved ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
-                            <span>Готово</span>
-                          </>
-                        ) : (
-                          <>
-                            <Save className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
-                            <span>Записать</span>
-                          </>
+                      <div className="flex items-center justify-center space-x-1.5">
+                        {!tx.costConfirmed && numPurchase === 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleSaveItem(tx, true)}
+                            className="btn-sm h-8 2xl:h-9 px-2 rounded-md text-xs font-semibold bg-white/5 hover:bg-white/10 text-slate-300 cursor-pointer"
+                            title="Свой склад / Гарантия (себестоимость 0 грн)"
+                          >
+                            0 ₴
+                          </button>
                         )}
-                      </button>
+                        <button
+                          onClick={() => handleSaveItem(tx)}
+                          className={`btn-sm 2xl:btn-md h-8 2xl:h-9 px-3 rounded-md text-xs 2xl:text-sm font-semibold cursor-pointer transition-colors ${
+                            isSaved
+                              ? 'bg-emerald-500 text-slate-950 font-bold'
+                              : 'btn-primary'
+                          }`}
+                        >
+                          {isSaved ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
+                              <span>Готово</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-3.5 h-3.5 2xl:w-4 2xl:h-4" />
+                              <span>Записать</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </td>
 
                   </tr>

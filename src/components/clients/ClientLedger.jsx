@@ -1,14 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Package, CreditCard, Copy, Check, Trash2, Search, Calendar, Truck, Car, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { Package, CreditCard, Copy, Check, Trash2, Search, Calendar, Truck, Car, ArrowDownRight, ArrowUpRight, Pencil } from 'lucide-react';
 import Badge from '../Badge';
 import EmptyState from '../EmptyState';
 import ConfirmModal from '../ConfirmModal';
+import EditTransactionModal from './modals/EditTransactionModal';
 import { formatMoney } from '../../utils/format';
 import { copyToClipboard } from '../../utils/clipboard';
 
 export default function ClientLedger({
   transactions = [],
   onDeleteTransaction,
+  onUpdateTransaction,
+  suppliersList = [],
+  onAddSupplier,
   onOpenAddItem,
   onOpenAddPayment,
 }) {
@@ -16,6 +20,7 @@ export default function ClientLedger({
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState(null);
   const [deletingTxId, setDeletingTxId] = useState(null);
+  const [editingTx, setEditingTx] = useState(null);
 
   const handleCopy = async (text, id) => {
     if (!text) return;
@@ -209,20 +214,46 @@ export default function ClientLedger({
                     )}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setDeletingTxId(tx.id)}
-                    title="Удалить запись"
-                    aria-label="Удалить запись"
-                    className="w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:text-rose-400 active:bg-rose-500/20 flex items-center justify-center transition-colors opacity-100 sm:opacity-60 sm:group-hover:opacity-100 cursor-pointer shrink-0"
-                  >
-                    <Trash2 className="w-4.5 h-4.5 sm:w-4 sm:h-4" />
-                  </button>
+                  <div className="flex items-center space-x-1">
+                    {onUpdateTransaction && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingTx(tx)}
+                        title="Редактировать запись"
+                        aria-label="Редактировать запись"
+                        className="w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-md text-slate-400 hover:text-blue-400 hover:bg-blue-500/15 active:text-blue-400 active:bg-blue-500/20 flex items-center justify-center transition-colors opacity-100 sm:opacity-60 sm:group-hover:opacity-100 cursor-pointer shrink-0"
+                      >
+                        <Pencil className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setDeletingTxId(tx.id)}
+                      title="Удалить запись"
+                      aria-label="Удалить запись"
+                      className="w-10 h-10 sm:w-8 sm:h-8 rounded-xl sm:rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 active:text-rose-400 active:bg-rose-500/20 flex items-center justify-center transition-colors opacity-100 sm:opacity-60 sm:group-hover:opacity-100 cursor-pointer shrink-0"
+                    >
+                      <Trash2 className="w-4.5 h-4.5 sm:w-4 sm:h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Edit Transaction Modal */}
+      {onUpdateTransaction && (
+        <EditTransactionModal
+          isOpen={Boolean(editingTx)}
+          onClose={() => setEditingTx(null)}
+          transaction={editingTx}
+          onUpdateTransaction={onUpdateTransaction}
+          suppliersList={suppliersList}
+          onAddSupplier={onAddSupplier}
+        />
       )}
 
       <ConfirmModal

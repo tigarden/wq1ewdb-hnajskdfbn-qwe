@@ -30,7 +30,8 @@ export default function QuickAddModal({ isOpen, onClose }) {
   const [otherCounterpartyId, setOtherCounterpartyId] = useState('');
   const [otherAmount, setOtherAmount] = useState('');
   const [otherNote, setOtherNote] = useState('');
-  const [otherType, setOtherType] = useState('plus');
+  const [otherType, setOtherType] = useState('minus'); // 'minus' = оплата поставщику, 'plus' = поставка/начисление долга
+  const [otherDate, setOtherDate] = useState(new Date().toISOString().split('T')[0]);
 
   // UI state
   const [error, setError] = useState('');
@@ -196,6 +197,7 @@ export default function QuickAddModal({ isOpen, onClose }) {
       counterpartyId: otherCounterpartyId,
       amount: finalAmt,
       note: otherNote.trim(),
+      date: otherDate || new Date().toISOString().split('T')[0],
     });
 
     onClose();
@@ -584,8 +586,8 @@ export default function QuickAddModal({ isOpen, onClose }) {
                   onChange={(e) => setOtherType(e.target.value)}
                   className="w-full input-md font-semibold bg-[#0b0f19] text-white"
                 >
-                  <option value="plus" className="bg-[#0b0f19] text-white">+ Долг нам (начисление)</option>
-                  <option value="minus" className="bg-[#0b0f19] text-white">- Оплата поставщику / Возврат</option>
+                  <option value="minus" className="bg-[#0b0f19] text-white">- Оплата поставщику</option>
+                  <option value="plus" className="bg-[#0b0f19] text-white">+ Поставка / Начисление</option>
                 </select>
               </div>
               <div>
@@ -605,15 +607,26 @@ export default function QuickAddModal({ isOpen, onClose }) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Примечание</label>
-              <input
-                type="text"
-                placeholder="За что, подробности..."
-                value={otherNote}
-                onChange={(e) => setOtherNote(e.target.value)}
-                className="w-full input-md"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Дата</label>
+                <input
+                  type="date"
+                  value={otherDate}
+                  onChange={(e) => setOtherDate(e.target.value)}
+                  className="w-full input-md font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Примечание</label>
+                <input
+                  type="text"
+                  placeholder="За что, подробности..."
+                  value={otherNote}
+                  onChange={(e) => setOtherNote(e.target.value)}
+                  className="w-full input-md"
+                />
+              </div>
             </div>
 
             <button
