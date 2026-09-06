@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import StatCard from '../components/StatCard';
 import Badge from '../components/Badge';
